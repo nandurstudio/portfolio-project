@@ -346,6 +346,7 @@ E:\Portfolio Nandur\folioflix\
 ├── index.html              # Main page HTML
 ├── docker-compose.yml      # Keep synced with server
 ├── contact-form.php        # Legacy (deprecated, not used)
+├── undangan/               # External site (separate git repo: nandurstudio/undangan)
 │
 ├── assets/
 │   ├── css/
