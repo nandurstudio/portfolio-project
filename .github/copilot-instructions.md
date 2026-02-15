@@ -628,6 +628,20 @@ location /n8n/ {
 - **Production**: `prod` branch (main development branch)
 - **Deployment**: Push to `prod` → SSH to server → `git pull` → restart services
 
+### Working with `undangan/` (separate repo)
+- `undangan/` is a separate Git repository (remote: `nandurstudio/undangan`) and is listed in the root `.gitignore`.
+- Workflow:
+  - Edit files inside `undangan/` as normal.
+  - Track/commit/push inside that folder: `cd undangan && git status && git add . && git commit -m "msg" && git push origin <branch>`
+  - Changes inside `undangan/` are NOT tracked by `portfolio-project` (intentionally).
+- Quick checks from workspace root:
+  - `git -C undangan status -sb` — show uncommitted changes and branch
+  - `git -C undangan log --oneline @{u}..HEAD` — show local unpushed commits (if upstream set)
+- Helpers included in this workspace:
+  - `scripts/check-undangan.ps1` (Windows PowerShell) and `scripts/check-undangan.sh` (bash)
+  - VS Code task: `Tasks: Run Task` → `Check undangan changes`
+  - Local git hook (warning-only): `.githooks/pre-commit` — enable with `git config core.hooksPath .githooks`
+
 ### Commit Conventions
 - Descriptive messages: `"Feature: Add admin dashboard"`, `"Fix: Contact form CORS"`, `"Config: Update n8n WebSocket auth"`
 - Atomic commits: One logical change per commit
