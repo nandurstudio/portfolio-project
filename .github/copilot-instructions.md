@@ -672,6 +672,76 @@ curl -k https://localhost/flask/health
 curl -k https://localhost/n8n/healthz
 ```
 
+### Automation alias: `deploy-kkmrat` ✅
+
+- Purpose: sync `undangan/` → `/opt/stack/web/kkmrat`, update server `.env` with `KKMRAT_*` values, optionally create MySQL DB/user, restart PHP/nginx and run basic checks.
+- Files added: `scripts/deploy-kkmrat.sh` (bash) and `scripts/deploy-kkmrat.ps1` (PowerShell).
+
+Usage examples:
+
+- Run (Linux/macOS):
+
+```bash
+./scripts/deploy-kkmrat.sh --create-db
+```
+
+- Run (Windows PowerShell):
+
+```powershell
+.\scripts\deploy-kkmrat.ps1 -CreateDb
+```
+
+- Local shell alias (optional):
+
+```bash
+alias deploy-kkmrat='./scripts/deploy-kkmrat.sh --create-db'
+```
+
+What the scripts do:
+1. Upload `undangan/` site files to the server path `/opt/stack/web/kkmrat`.
+2. Upload local `docker-compose.yml` and `services/nginx/conf.d/default.conf` (if present).
+3. Add/replace `KKMRAT_DB_USER`, `KKMRAT_DB_PASS`, `KKMRAT_DB_NAME`, `KKMRAT_AES_KEY` in `/opt/stack/.env` (reads local `.env.kkmrat` if present).
+4. Restart containers (`php` + `nginx`) and test nginx config.
+5. If `--create-db` is used, create the MySQL database/user using the server's `MYSQL_ROOT_PASSWORD` from `/opt/stack/.env`.
+
+Assistant automation note:
+
+> If you forget, GitHub Copilot can run the same deployment steps for you. The assistant will run the repository script `./scripts/deploy-kkmrat.sh --create-db` (or the PowerShell equivalent) and follow the documented checks above — only with your SSH access.
+
+SSL for `kkmrat.web.id` (recommended steps):
+
+- Add DNS A record: `kkmrat.web.id` → 146.190.87.175 (TTL 300).
+- After `./scripts/deploy-kkmrat.sh` has uploaded the site, obtain a Let's Encrypt certificate on the droplet using webroot (host path `/opt/stack/web`):
+
+```bash
+ssh portfolio-droplet
+sudo certbot certonly --webroot -w /opt/stack/web -d kkmrat.web.id -d www.kkmrat.web.id --email your-email@domain.com --agree-tos --no-eff-email
+```
+
+- Copy the issued certs into the nginx SSL folder used by Docker and set secure permissions:
+
+```bash
+sudo cp /etc/letsencrypt/live/kkmrat.web.id/fullchain.pem /opt/stack/services/nginx/ssl/kkmrat.fullchain.pem
+sudo cp /etc/letsencrypt/live/kkmrat.web.id/privkey.pem /opt/stack/services/nginx/ssl/kkmrat.privkey.pem
+sudo chown root:root /opt/stack/services/nginx/ssl/kkmrat.* && sudo chmod 640 /opt/stack/services/nginx/ssl/kkmrat.privkey.pem
+```
+
+- Reload nginx in the stack and verify:
+
+```bash
+cd /opt/stack
+sudo docker compose exec nginx nginx -t
+sudo docker compose restart nginx
+curl -I https://kkmrat.web.id
+```
+
+- Renewal: `certbot renew` will update `/etc/letsencrypt` — add a cron hook to copy renewed certs into `/opt/stack/services/nginx/ssl/` or mount `/etc/letsencrypt` into the nginx container (advanced).
+
+Security & safety:
+- `./scripts/.env.kkmrat` is supported for local secrets (do not commit; `.gitignore` already excludes `.env.*`).
+- Scripts are idempotent for files and will not overwrite unrelated server config without moving uploaded files into place.
+
+```
 ## Quick Reference Commands
 
 ### Daily Operations
