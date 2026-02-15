@@ -642,6 +642,39 @@ location /n8n/ {
   - VS Code task: `Tasks: Run Task` → `Check undangan changes`
   - Local git hook (warning-only): `.githooks/pre-commit` — enable with `git config core.hooksPath .githooks`
 
+#### Undangan / kkmrat.web.id (hosting & deploy) 🔧
+- Purpose & live URL: public digital invitation site deployed from the `undangan/` repo — live at `https://kkmrat.web.id`.
+- Source & server paths:
+  - Local repo: `undangan/` (separate Git repo, intentionally ignored by main workspace).
+  - Server webroot: `/opt/stack/web/kkmrat` → served by nginx from `/var/www/html/kkmrat`.
+  - **PHP container must** mount the site (example in `docker-compose.yml`): `./web/kkmrat:/var/www/html/kkmrat`.
+- Environment (set in `/opt/stack/.env` or local `.env.kkmrat`): `KKMRAT_DB_USER`, `KKMRAT_DB_PASS`, `KKMRAT_DB_NAME`, `KKMRAT_AES_KEY` (do NOT commit secrets).
+- Important files:
+  - `web/kkmrat/index.php`, `web/kkmrat/php/connection.php` (uses `getenv('KKMRAT_DB_USER')` etc.)
+  - `web/kkmrat/sql_tables/db_undangan_rat.sql` — database schema for first-run import
+  - `scripts/deploy-kkmrat.sh` / `scripts/deploy-kkmrat.ps1` — upload + optional `--create-db`
+  - `scripts/create-kkmrat-db.sh` — helper to create DB/user (idempotent)
+  - `scripts/monitor-cert-kkmrat.ps1` — DNS monitor + Certbot automation
+  - `services/php/Dockerfile` — must include `mysqli` for legacy PHP code
+  - `services/nginx/conf.d/default.conf` — vhost + ACME/webroot locations
+- Quick deploy / verification checklist:
+  1. Push site to `undangan/`, then run: `./scripts/deploy-kkmrat.sh --create-db`.
+  2. Rebuild PHP if you change extensions: `sudo docker compose build --no-cache php && sudo docker compose up -d php`.
+  3. Verify `mysqli` is enabled: `sudo docker compose exec php php -m | grep -i mysqli`.
+  4. Verify DB and user: `sudo docker compose exec db mysql -u root -p -e "SHOW DATABASES LIKE 'db_undangan_rat';"`.
+  5. If tables missing: `sudo docker compose exec -T db mysql -u root -p$MYSQL_ROOT_PASSWORD db_undangan_rat < /opt/stack/web/kkmrat/sql_tables/db_undangan_rat.sql`.
+  6. Obtain/refresh certificate (webroot) or run `scripts/monitor-cert-kkmrat.ps1`.
+  7. Test HTTPS: `curl -I https://kkmrat.web.id`.
+- Recent fixes (applied):
+  - Added `mysqli` to `services/php/Dockerfile` and rebuilt the PHP image (fixes "Call to undefined function mysqli_connect()").
+  - Created `db_undangan_rat` and `kkmrat_user` with privileges; imported `db_undangan_rat.sql` (fixes Access denied / missing-table errors).
+  - Issued Let's Encrypt cert via Certbot (webroot) and installed into nginx SSL folder.
+- Troubleshooting (common symptoms):
+  - "Call to undefined function mysqli_connect()" → rebuild PHP image with `mysqli`.
+  - "Access denied for user 'kkmrat_user'" → run `./scripts/deploy-kkmrat.sh --create-db` or `scripts/create-kkmrat-db.sh`.
+  - "Table 'db_undangan_rat.*' doesn't exist" → import `web/kkmrat/sql_tables/db_undangan_rat.sql`.
+- Security note: rotate default passwords, keep `.env.kkmrat` out of git, and store secrets only in `/opt/stack/.env` or a secrets manager.
+
 ### Commit Conventions
 - Descriptive messages: `"Feature: Add admin dashboard"`, `"Fix: Contact form CORS"`, `"Config: Update n8n WebSocket auth"`
 - Atomic commits: One logical change per commit
