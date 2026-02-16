@@ -7,6 +7,16 @@
 
 Personal portfolio website showcasing 3D art and development projects with dynamic contact form and workflow automation.
 
+## What's new (since Feb 16, 2026)
+- Deployed `undangan` site → **https://kkmrat.web.id**; imported SQL dump and verified data.
+- Fixed production SQL runtime error (ONLY_FULL_GROUP_BY) in `web/kkmrat/index.php` (aggregation query corrected).
+- Added `scripts/deploy-undangan.sh`, `scripts/create-undangan-db.sh`, `scripts/monitor-cert-undangan.ps1`, and `scripts/cleanup-undangan.sh` for safe deploy / DB provisioning / cert automation.
+- Introduced `backups/` (encrypted backups of local sensitive files); `backups/` is gitignored.
+- Moved all real secrets to `/.env` (local) and `/opt/stack/.env` (server); added `.env.sample` for repo-friendly placeholders.
+- Removed tracked `vendor/` from the `undangan` project and marked several legacy scripts DEPRECATED.
+
+> Note: secrets are NOT committed. Always update `/.env` or use `scripts/deploy-undangan.sh` with a local `.env.kkmrat` for secure deploy.
+
 ---
 
 ## 🚀 Quick Start
@@ -14,9 +24,10 @@ Personal portfolio website showcasing 3D art and development projects with dynam
 ### Access Production Services
 
 - **Portfolio Website:** https://nandurstudio.com
+- **Undangan site:** https://kkmrat.web.id
 - **Laravel API:** https://nandurstudio.com/api/
 - **Flask API:** https://nandurstudio.com/flask/
-- **n8n Automation:** https://nandurstudio.com/n8n/ (requires Basic Auth)
+- **n8n Automation:** https://nandurstudio.com/n8n/ (configured via environment — rotate credentials after deploy)
 
 ### SSH Access to Server
 
@@ -78,6 +89,13 @@ folioflix/
 ### Branches
 - **prod** - Production branch (main development branch)
 - All work happens on `prod` branch
+
+### New / important scripts
+- `scripts/deploy-undangan.sh` / `scripts/deploy-undangan.ps1` — deploy `undangan/` → `/opt/stack/web/kkmrat` (supports `--create-db`, `--import-sql`).
+- `scripts/create-undangan-db.sh` — idempotent DB + user creation for `kkmrat`.
+- `scripts/monitor-cert-undangan.ps1` — monitor DNS and request Let's Encrypt for `kkmrat.web.id`.
+- `scripts/cleanup-undangan.sh` — remove temp artifacts (dry‑run by default).
+- `backups/` — encrypted local backups (gitignored).
 
 ### Standard Workflow
 1. **Development**: Work on `prod` branch in VSCode
@@ -197,8 +215,8 @@ If `ssh portfolio-droplet` fails:
 ## 🔐 Security Notes
 
 ### Credentials
-- **n8n Basic Auth:** admin / n8n_admin_pass (⚠️ CHANGE IMMEDIATELY)
-- **MySQL Root:** Stored in `/opt/stack/.env` on server
+- **n8n Basic Auth:** configured via `N8N_PASSWORD` in `/opt/stack/.env` — **rotate immediately after deploy** (do not commit credentials).
+- **MySQL Root & app DB passwords:** stored in `/opt/stack/.env` on server — rotate securely and do not commit.
 - **SSH Key:** `~/.ssh/id_ed25519_portfolio` (Ed25519 key)
 
 ### SSL/TLS
