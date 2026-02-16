@@ -53,7 +53,7 @@ fi
 
 # read local env values if available
 KK_USER_DEFAULT=kkmrat_user
-KK_PASS_DEFAULT=kkmrat_pass
+KK_PASS_DEFAULT=
 KK_DB_DEFAULT=db_undangan_rat
 KK_AES_DEFAULT="change_me_replace_this_key"
 
@@ -72,8 +72,8 @@ fi
 : ${KKMRAT_AES_KEY:=$KK_AES_DEFAULT}
 
 # Basic validation to avoid deploying placeholder secrets
-if [[ "$KKMRAT_DB_PASS" == "kkmrat_pass" || "$KKMRAT_AES_KEY" == "change_me_replace_this_key" ]]; then
-  echo "ERROR: KKMRAT_* contains placeholder values. Update $LOCAL_ENV_FILE before deploying." >&2
+if [[ -z "$KKMRAT_DB_PASS" || "$KKMRAT_DB_PASS" == "change_this_kkmrat_db_password" || "$KKMRAT_AES_KEY" == "change_me_replace_this_key" ]]; then
+  echo "ERROR: KKMRAT_* contains placeholder or empty values. Update $LOCAL_ENV_FILE before deploying." >&2
   exit 1
 fi
 

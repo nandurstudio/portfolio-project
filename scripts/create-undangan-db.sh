@@ -11,12 +11,12 @@ set +o allexport
 
 # values (can be set in /opt/stack/.env or passed in environment)
 KKMRAT_DB_USER="${KKMRAT_DB_USER:-kkmrat_user}"
-KKMRAT_DB_PASS="${KKMRAT_DB_PASS:-kkmrat_pass}"
+KKMRAT_DB_PASS="${KKMRAT_DB_PASS}"
 KKMRAT_DB_NAME="${KKMRAT_DB_NAME:-db_undangan_rat}"
 
-# Safety: refuse to run with placeholder defaults
-if [ "${KKMRAT_DB_PASS}" = "kkmrat_pass" ] || [ "${KKMRAT_AES_KEY:-}" = "change_me_replace_this_key" ]; then
-  echo "ERROR: KKMRAT_* contains placeholder values. Update /opt/stack/.env or .env.kkmrat before running." >&2
+# Safety: refuse to run with empty or placeholder values
+if [ -z "${KKMRAT_DB_PASS}" ] || [ "${KKMRAT_DB_PASS}" = "change_this_kkmrat_db_password" ] || [ "${KKMRAT_AES_KEY:-}" = "change_me_replace_this_key" ]; then
+  echo "ERROR: KKMRAT_* contains placeholder or empty values. Update /opt/stack/.env or .env.kkmrat before running." >&2
   exit 1
 fi
 
