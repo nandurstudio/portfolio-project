@@ -1,0 +1,18 @@
+#!/bin/sh
+# Non-blocking pre-commit warning if 'undangan/' has local changes or unpushed commits
+REPO="undangan"
+if [ -d "$REPO/.git" ]; then
+  CHANGES=$(git -C "$REPO" status --porcelain)
+  if [ -n "$CHANGES" ]; then
+    echo "\n⚠️  Warning: you have uncommitted changes in '$REPO':\n$CHANGES\n"
+  fi
+  BRANCH=$(git -C "$REPO" rev-parse --abbrev-ref HEAD 2>/dev/null || true)
+  if git -C "$REPO" rev-parse --abbrev-ref @{u} >/dev/null 2>&1; then
+    UNPUSHED=$(git -C "$REPO" rev-list --count @{u}..HEAD)
+    if [ "$UNPUSHED" -gt 0 ]; then
+      echo "\n⚠️  Warning: '$REPO' has $UNPUSHED unpushed commits on branch '$BRANCH'.\n"
+    fi
+  fi
+fi
+# Do NOT block the commit (user asked for warning only)
+exit 0
