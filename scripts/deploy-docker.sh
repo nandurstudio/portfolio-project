@@ -2,7 +2,8 @@
 # Docker Stack Deployment Script
 # This script deploys the Docker stack to the production server
 
-set -e
+set -euo pipefail
+IFS=$'\n\t'
 
 echo "=== Docker Stack Deployment ==="
 
@@ -13,7 +14,7 @@ REMOTE_DIR="/opt/stack"
 LOCAL_DIR="."
 
 echo "1. Copying files to droplet..."
-rsync -avz --exclude='vendor' --exclude='node_modules' --exclude='.git' \
+rsync -avz --exclude='.env*' --exclude='vendor' --exclude='node_modules' --exclude='.git' \
   ${LOCAL_DIR}/ ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/
 
 echo "2. Setting up environment on droplet..."
