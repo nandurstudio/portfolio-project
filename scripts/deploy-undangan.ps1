@@ -29,10 +29,11 @@ if (-not (Test-Path $localSite -PathType Container)) {
 }
 
 # collect KKMRAT_* values from local env file if present
-$KKMRAT_DB_USER = 'kkmrat_user'
-$KKMRAT_DB_PASS = 'kkmrat_pass'
-$KKMRAT_DB_NAME = 'db_undangan_rat'
-$KKMRAT_AES_KEY = 'change_me_replace_this_key'
+$KKMRAT_DB_USER = $env:KKMRAT_DB_USER
+$KKMRAT_DB_PASS = $env:KKMRAT_DB_PASS
+$KKMRAT_DB_NAME = $env:KKMRAT_DB_NAME
+$KKMRAT_AES_KEY = $env:KKMRAT_AES_KEY
+# Defaults should be provided via .env.kkmrat or /opt/stack/.env; do NOT hard-code secrets in scripts.
 if (Test-Path $localEnvFile) {
   $lines = Get-Content $localEnvFile
   foreach ($l in $lines) {
