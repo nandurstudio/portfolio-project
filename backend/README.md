@@ -61,6 +61,19 @@ In order to ensure that the Laravel community is welcoming to all, please review
 
 If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
 
+## Project-specific (backend)
+
+- Setup:
+  1. Copy `.env.example` → `.env` and set database credentials. Do **not** commit `.env`.
+  2. Run `composer install` and `php artisan key:generate`.
+  3. Run migrations: `php artisan migrate`.
+  4. Run tests: `php artisan test`.
+
+- Notes:
+  - This project uses **MySQL 8** in Docker; `ONLY_FULL_GROUP_BY` is enforced — ensure SQL queries use proper aggregation (a recent production fix addressed this in the `undangan` site).
+  - Contact form is handled by the Laravel API (`POST /api/messages`) — CORS and request/response must remain JSON.
+  - Keep secrets and DB passwords in the top-level `/opt/stack/.env` (production) or local `.env` (development). Do not commit secrets.
+
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
