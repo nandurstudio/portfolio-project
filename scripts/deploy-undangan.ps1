@@ -1,13 +1,20 @@
 param(
-  [switch]$CreateDb
+  [switch]$CreateDb,
+  [switch]$ImportSql,
+  [switch]$Force
 )
 
-# Windows PowerShell deploy helper for kkmrat.web.id
+# Windows PowerShell deploy helper for undangan (deploys local `undangan/` → server `/opt/stack/web/kkmrat`)
 # Requires OpenSSH (ssh/scp) available in PATH.
-# Usage: .\scripts\deploy-kkmrat.ps1 [-CreateDb]
+# Usage: .\scripts\deploy-undangan.ps1 [-CreateDb] [-ImportSql] [-Force]
+# Note: script will refuse to run if .env.kkmrat contains placeholder values unless -Force is supplied.
 
 $ErrorActionPreference = 'Stop'
-$sshHost = $env:SSH_HOST -or 'portfolio-droplet'
+if ($env:SSH_HOST -and $env:SSH_HOST.Trim() -ne '') { `
+  $sshHost = $env:SSH_HOST `
+} else { `
+  $sshHost = 'portfolio-droplet' `
+}
 $remoteStack = '/opt/stack'
 $localSite = 'undangan'
 $localEnvFile = '.env.kkmrat'
@@ -29,10 +36,10 @@ $KKMRAT_AES_KEY = 'change_me_replace_this_key'
 if (Test-Path $localEnvFile) {
   $lines = Get-Content $localEnvFile
   foreach ($l in $lines) {
-    if ($l -match '^KKMRAT_DB_USER=(.*)') { $KKMRAT_DB_USER = $matches[1].Trim("'\"") }
-    if ($l -match '^KKMRAT_DB_PASS=(.*)') { $KKMRAT_DB_PASS = $matches[1].Trim("'\"") }
-    if ($l -match '^KKMRAT_DB_NAME=(.*)') { $KKMRAT_DB_NAME = $matches[1].Trim("'\"") }
-    if ($l -match '^KKMRAT_AES_KEY=(.*)') { $KKMRAT_AES_KEY = $matches[1].Trim("'\"") }
+    if ($l -match '^KKMRAT_DB_USER=(.*)') { $KKMRAT_DB_USER = $matches[1].Trim('"',"'") }
+    if ($l -match '^KKMRAT_DB_PASS=(.*)') { $KKMRAT_DB_PASS = $matches[1].Trim('"',"'") }
+    if ($l -match '^KKMRAT_DB_NAME=(.*)') { $KKMRAT_DB_NAME = $matches[1].Trim('"',"'") }
+    if ($l -match '^KKMRAT_AES_KEY=(.*)') { $KKMRAT_AES_KEY = $matches[1].Trim('"',"'") }
   }
   Write-Host "Read KKMRAT_* values from $localEnvFile"
 }
@@ -40,7 +47,7 @@ if (Test-Path $localEnvFile) {
 $timestamp = [int][double]::Parse((Get-Date -UFormat %s))
 $tmpName = "kkmrat-site-$timestamp"
 
-Write-Host "Uploading site folder to $sshHost:/tmp/$tmpName ..."
+Write-Host "Uploading site folder to ${sshHost}:/tmp/${tmpName} ..."
 scp -r $localSite "${sshHost}:/tmp/${tmpName}"
 Write-Host "Uploading docker-compose.yml and nginx vhost (if present) ..."
 scp docker-compose.yml "${sshHost}:/tmp/docker-compose.yml"
@@ -92,4 +99,4 @@ sudo docker compose exec -T db mysql -u root -p\"\$MYSQL_ROOT_PASSWORD\" -e \"CR
   Write-Host "Database create step finished."
 }
 
-Write-Host "deploy-kkmrat finished. Test site after DNS + SSL issuance."
+Write-Host "deploy-undangan finished. Test site after DNS + SSL issuance."

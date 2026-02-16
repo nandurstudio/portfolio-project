@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# DEPRECATED: server-setup.sh installs Apache/PHP directly — the project now uses a Docker Compose stack.
+# Keep this script for historical reference only.
+echo "ERROR: server-setup.sh is deprecated — use the Docker-based deployment (see README)." >&2
+exit 1
+
 # Portfolio Production Server Setup Script
 # Run this on your DigitalOcean droplet after creation
 

@@ -23,4 +23,10 @@ try {
   Write-Output "Unable to determine unpushed commits."
 }
 
+# Extra checks: warn if sensitive or large files are tracked
+$trackedVendor = (git -C $repo ls-files vendor 2>$null).Trim()
+if ($trackedVendor) { Write-Warning "vendor/ is tracked in $repo — consider removing from git and add to .gitignore" }
+$trackedEnv = git -C $repo ls-files | Select-String -Pattern '^\.env(|\.|$)' -Quiet
+if ($trackedEnv) { Write-Warning "One or more .env* files are tracked in $repo — remove sensitive files from git" }
+
 Write-Output "== End of check =="

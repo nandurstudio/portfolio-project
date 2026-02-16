@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# DEPRECATED: use ./scripts/deploy-docker.sh or ./scripts/deploy-undangan.sh instead.
+# This script is retained for historical reference only.
+echo "ERROR: ./scripts/deploy.sh is deprecated — use ./scripts/deploy-docker.sh or ./scripts/deploy-undangan.sh" >&2
+exit 1
+
+# (original content retained below for reference)
 # Deployment script for portfolio project (Windows compatible)
 # Usage: .\deploy.sh
 

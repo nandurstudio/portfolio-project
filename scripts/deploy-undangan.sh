@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Deploy helper for kkmrat.web.id
+# Deploy helper for undangan (deploys local `undangan/` → server `/opt/stack/web/kkmrat`)
 # - syncs local `undangan/` -> /opt/stack/web/kkmrat on server
 # - uploads docker-compose + nginx vhost, updates /opt/stack/.env with KKMRAT_* values
 # - optionally creates MySQL database/user (uses server's MYSQL_ROOT_PASSWORD from /opt/stack/.env)
-# Usage: ./scripts/deploy-kkmrat.sh [--create-db]
+# Usage: ./scripts/deploy-undangan.sh [--create-db]
 
 set -euo pipefail
 IFS=$'\n\t'
@@ -13,13 +13,15 @@ REMOTE_STACK_DIR=/opt/stack
 LOCAL_SITE_DIR=undangan
 LOCAL_ENV_FILE=.env.kkmrat
 CREATE_DB=0
+IMPORT_SQL=0
 
 usage() {
   cat <<EOF
-Usage: $0 [--create-db] [--help]
+Usage: $0 [--create-db] [--import-sql] [--help]
 
 Options:
   --create-db   Create MySQL database + user on the server (uses KKMRAT_* values from server .env)
+  --import-sql  Import web/kkmrat/sql_tables/db_undangan_rat.sql after deploy (if present on server)
   --help        Show this help
 
 Notes:
@@ -32,6 +34,7 @@ EOF
 while [[ ${#} -gt 0 ]]; do
   case "$1" in
     --create-db) CREATE_DB=1; shift ;;
+    --import-sql) IMPORT_SQL=1; shift ;;
     --help) usage; exit 0 ;;
     *) echo "Unknown arg: $1"; usage; exit 1 ;;
   esac
@@ -67,6 +70,12 @@ fi
 : ${KKMRAT_DB_PASS:=$KK_PASS_DEFAULT}
 : ${KKMRAT_DB_NAME:=$KK_DB_DEFAULT}
 : ${KKMRAT_AES_KEY:=$KK_AES_DEFAULT}
+
+# Basic validation to avoid deploying placeholder secrets
+if [[ "$KKMRAT_DB_PASS" == "kkmrat_pass" || "$KKMRAT_AES_KEY" == "change_me_replace_this_key" ]]; then
+  echo "ERROR: KKMRAT_* contains placeholder values. Update $LOCAL_ENV_FILE before deploying." >&2
+  exit 1
+fi
 
 echo "Preparing deploy to ${SSH_HOST} — site: ${LOCAL_SITE_DIR} → ${REMOTE_STACK_DIR}/web/kkmrat"
 TMP_NAME="kkmrat-site-$$"

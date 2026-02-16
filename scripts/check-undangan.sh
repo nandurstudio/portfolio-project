@@ -16,5 +16,13 @@ else
   echo "No upstream set for branch '$BRANCH'"
 fi
 
+# Extra checks: warn if vendor/ or .env* are tracked
+if git -C "$REPO" ls-files --error-unmatch vendor >/dev/null 2>&1; then
+  echo "WARNING: vendor/ is tracked in $REPO — consider removing and adding to .gitignore"
+fi
+if git -C "$REPO" ls-files | grep -E '^\.env(|\.|$)' >/dev/null 2>&1; then
+  echo "WARNING: .env* file is tracked in $REPO — remove sensitive files from git"
+fi
+
 echo "== End of check =="
 exit 0

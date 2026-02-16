@@ -652,26 +652,41 @@ location /n8n/ {
 - Important files:
   - `web/kkmrat/index.php`, `web/kkmrat/php/connection.php` (uses `getenv('KKMRAT_DB_USER')` etc.)
   - `web/kkmrat/sql_tables/db_undangan_rat.sql` — database schema for first-run import
-  - `scripts/deploy-kkmrat.sh` / `scripts/deploy-kkmrat.ps1` — upload + optional `--create-db`
-  - `scripts/create-kkmrat-db.sh` — helper to create DB/user (idempotent)
-  - `scripts/monitor-cert-kkmrat.ps1` — DNS monitor + Certbot automation
+  - `scripts/deploy-undangan.sh` / `scripts/deploy-undangan.ps1` — upload + optional `--create-db`
+  - `scripts/create-undangan-db.sh` — helper to create DB/user (idempotent)
+  - `scripts/monitor-cert-undangan.ps1` — DNS monitor + Certbot automation
   - `services/php/Dockerfile` — must include `mysqli` for legacy PHP code
   - `services/nginx/conf.d/default.conf` — vhost + ACME/webroot locations
 - Quick deploy / verification checklist:
-  1. Push site to `undangan/`, then run: `./scripts/deploy-kkmrat.sh --create-db`.
+  1. Push site to `undangan/`, then run: `./scripts/deploy-undangan.sh --create-db`.
   2. Rebuild PHP if you change extensions: `sudo docker compose build --no-cache php && sudo docker compose up -d php`.
   3. Verify `mysqli` is enabled: `sudo docker compose exec php php -m | grep -i mysqli`.
   4. Verify DB and user: `sudo docker compose exec db mysql -u root -p -e "SHOW DATABASES LIKE 'db_undangan_rat';"`.
   5. If tables missing: `sudo docker compose exec -T db mysql -u root -p$MYSQL_ROOT_PASSWORD db_undangan_rat < /opt/stack/web/kkmrat/sql_tables/db_undangan_rat.sql`.
-  6. Obtain/refresh certificate (webroot) or run `scripts/monitor-cert-kkmrat.ps1`.
+  6. Obtain/refresh certificate (webroot) or run `scripts/monitor-cert-undangan.ps1`.
   7. Test HTTPS: `curl -I https://kkmrat.web.id`.
 - Recent fixes (applied):
-  - Added `mysqli` to `services/php/Dockerfile` and rebuilt the PHP image (fixes "Call to undefined function mysqli_connect()").
-  - Created `db_undangan_rat` and `kkmrat_user` with privileges; imported `db_undangan_rat.sql` (fixes Access denied / missing-table errors).
-  - Issued Let's Encrypt cert via Certbot (webroot) and installed into nginx SSL folder.
+  - Imported provided SQL dump `web/kkmrat/sql_tables/db_undangan_rat.sql` into `db_undangan_rat` and verified table counts (tr_tamu=72, tr_ucapan=70).
+  - Fixed production SQL error (ONLY_FULL_GROUP_BY) in `web/kkmrat/index.php` — corrected aggregated SELECT (use `COALESCE(SUM(...))`, removed non-aggregated column) so the query is MySQL 8 compatible.
+  - Created `undangan/.env.sample` and merged runtime `.env` values to server `/opt/stack/.env` (KKMRAT_*); deployment scripts now respect `.env.kkmrat`.
+  - Removed tracked `vendor/` from the `undangan/` repo and added `vendor/` to `.gitignore` (keep vendor locally for Laragon).
+  - Replaced Windows junction/symlink with a proper `undangan/` Git repository in the workspace.
+  - Rebuilt `services/php` with `mysqli` enabled (fixes mysqli runtime errors).
+  - Issued Let's Encrypt cert via Certbot and installed into nginx SSL folder.
+- Current status / next steps:
+  - Local edits in `php/wish.php` and `sql_tables/db_undangan_rat.sql` restored from stash — pending local testing on Laragon and commit/push.
+  - Site status: live at `https://kkmrat.web.id` (HTTP 200). Production bug fixed and verified.
+
+**Maintenance actions added:**
+- Parameterized `create-undangan-db.sh` to read `KKMRAT_*` from `/opt/stack/.env` and refuse to run with placeholder credentials. ✅
+- `deploy-undangan.sh` / `deploy-undangan.ps1` now validate `.env.kkmrat` placeholders, support `--import-sql`/`-ImportSql`, and avoid logging secret values. ✅
+- `create-junctions-and-hosts.ps1`, `deploy.sh`, and `server-setup.sh` are now marked DEPRECATED (legacy). ✅
+- Added `scripts/cleanup-undangan.sh` to remove common temporary files and artifacts (dry-run by default). ✅
+- `check-undangan.*` now warns if `vendor/` or `.env*` are tracked in the `undangan/` repo. ✅
+
 - Troubleshooting (common symptoms):
   - "Call to undefined function mysqli_connect()" → rebuild PHP image with `mysqli`.
-  - "Access denied for user 'kkmrat_user'" → run `./scripts/deploy-kkmrat.sh --create-db` or `scripts/create-kkmrat-db.sh`.
+  - "Access denied for user 'kkmrat_user'" → run `./scripts/deploy-undangan.sh --create-db` or `scripts/create-undangan-db.sh`.
   - "Table 'db_undangan_rat.*' doesn't exist" → import `web/kkmrat/sql_tables/db_undangan_rat.sql`.
 - Security note: rotate default passwords, keep `.env.kkmrat` out of git, and store secrets only in `/opt/stack/.env` or a secrets manager.
 
@@ -705,10 +720,10 @@ curl -k https://localhost/flask/health
 curl -k https://localhost/n8n/healthz
 ```
 
-### Automation alias: `deploy-kkmrat` ✅
+### Automation alias: `deploy-undangan` ✅
 
 - Purpose: sync `undangan/` → `/opt/stack/web/kkmrat`, update server `.env` with `KKMRAT_*` values, optionally create MySQL DB/user, restart PHP/nginx and run basic checks.
-- Files added: `scripts/deploy-kkmrat.sh` (bash) and `scripts/deploy-kkmrat.ps1` (PowerShell).
+- Files added: `scripts/deploy-undangan.sh` (bash) and `scripts/deploy-undangan.ps1` (PowerShell).
 
 Usage examples:
 
@@ -721,13 +736,13 @@ Usage examples:
 - Run (Windows PowerShell):
 
 ```powershell
-.\scripts\deploy-kkmrat.ps1 -CreateDb
+.\scripts\deploy-undangan.ps1 -CreateDb
 ```
 
 - Local shell alias (optional):
 
 ```bash
-alias deploy-kkmrat='./scripts/deploy-kkmrat.sh --create-db'
+alias deploy-undangan='./scripts/deploy-undangan.sh --create-db'
 ```
 
 What the scripts do:
@@ -739,7 +754,7 @@ What the scripts do:
 
 Assistant automation note:
 
-> If you forget, GitHub Copilot can run the same deployment steps for you. The assistant will run the repository script `./scripts/deploy-kkmrat.sh --create-db` (or the PowerShell equivalent) and follow the documented checks above — only with your SSH access.
+> If you forget, GitHub Copilot can run the same deployment steps for you. The assistant will run the repository script `./scripts/deploy-undangan.sh --create-db` (or the PowerShell equivalent) and follow the documented checks above — only with your SSH access.
 
 SSL for `kkmrat.web.id` (recommended steps):
 
@@ -892,5 +907,5 @@ curl -I https://nandurstudio.com/
 
 ---
 
-**Last Updated:** January 21, 2026  
+**Last Updated:** February 16, 2026  
 **Maintainer:** Nandang Duryat (founder@nandurstudio.com)
