@@ -94,6 +94,7 @@ folioflix/
 - `scripts/deploy-undangan.sh` / `scripts/deploy-undangan.ps1` — deploy `undangan/` → `/opt/stack/web/kkmrat` (supports `--create-db`, `--import-sql`).
 - `scripts/create-undangan-db.sh` — idempotent DB + user creation for `kkmrat`.
 - `scripts/monitor-cert-undangan.ps1` — monitor DNS and request Let's Encrypt for `kkmrat.web.id`.
+- `scripts/monitor-services.sh` — periodic health checks for core services (runs via cron; writes to `/opt/stack/logs/monitor-services.log`).
 - `scripts/cleanup-undangan.sh` — remove temp artifacts (dry‑run by default).
 - `backups/` — encrypted local backups (gitignored).
 
