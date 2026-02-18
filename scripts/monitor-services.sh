@@ -21,6 +21,9 @@ if [ -f /opt/stack/.env ]; then
   set +o allexport
 fi
 
+# ensure working dir so `docker compose` finds the stack file
+cd /opt/stack || true
+
 failures=0
 
 check_url() {
