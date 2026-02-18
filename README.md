@@ -9,6 +9,7 @@ Personal portfolio website showcasing 3D art and development projects with dynam
 
 ## What's new (since Feb 16, 2026)
 - Deployed `undangan` site → **https://kkmrat.web.id**; imported SQL dump and verified data.
+- Migrated `kkmrat` admin/dashboard into `undangan/admin` (preserves history) — see https://github.com/nandurstudio/undangan/pull/4
 - Fixed production SQL runtime error (ONLY_FULL_GROUP_BY) in `web/kkmrat/index.php` (aggregation query corrected).
 - Added `scripts/deploy-undangan.sh`, `scripts/create-undangan-db.sh`, `scripts/monitor-cert-undangan.ps1`, and `scripts/cleanup-undangan.sh` for safe deploy / DB provisioning / cert automation.
 - Introduced `backups/` (encrypted backups of local sensitive files); `backups/` is gitignored.
