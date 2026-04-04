@@ -35,6 +35,8 @@ services:
       - ./apps/laravel:/var/www/laravel
       - php_vendor:/var/www/laravel/vendor
       - ./web/kkmrat:/var/www/html/kkmrat
+      - ./web/undangan:/var/www/html/undangan
+      - ./web/kkmsmartvote:/var/www/html/kkmsmartvote
     environment:
       - DB_CONNECTION=mysql
       - DB_HOST=db
