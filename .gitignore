@@ -79,3 +79,10 @@ temp/
 *.tmp
 # local backups
 /backups/
+
+# Do NOT commit local htpasswd files for nginx
+services/nginx/ssl/.htpasswd*
+
+# FileBrowser persistence and runtime DB
+services/filebrowser/database/
+services/filebrowser/database/*
