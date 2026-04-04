@@ -12,12 +12,15 @@ FolioFlix is Nandang Duryat's personal portfolio website with a Docker-based mic
 - n8n Automation: https://nandurstudio.com/n8n/ (Basic Auth: admin/password)
 - Laravel API: https://nandurstudio.com/api/*
 - Flask API: https://nandurstudio.com/flask/*
+- KKM Smart Vote: https://kkmsmartvote.web.id (voting platform - new domain)
+- Undangan/Doorprize: https://undangan.kkmrat.web.id (invitation site)
+- Koperasi Admin: https://kkmrat.web.id (voting/koperasi app)
 
 ## Architecture & Data Flow
 
 ### Current Production Stack (Docker Compose)
 
-**6 Services Running:**
+**9+ Services Running:**
 1. **nginx:1.24-alpine** - Reverse proxy, SSL termination, static files
 2. **php:8.3-fpm** (custom) - Laravel backend
 3. **mysql:8.0** - Laravel database
@@ -641,6 +644,65 @@ location /n8n/ {
   - `scripts/check-undangan.ps1` (Windows PowerShell) and `scripts/check-undangan.sh` (bash)
   - VS Code task: `Tasks: Run Task` → `Check undangan changes`
   - Local git hook (warning-only): `.githooks/pre-commit` — enable with `git config core.hooksPath .githooks`
+
+#### KKM Smart Vote / kkmsmartvote.web.id (hosting & deploy) 🆕
+- Purpose & live URL: Smart voting platform for KKM (Ketua Komisi Moral/Komisi Mahasiswa) — deployed at `https://kkmsmartvote.web.id`.
+- Source & server paths:
+  - Local repo: `web/kkmsmartvote/` (part of main portfolio-project repo).
+  - Server webroot: `/opt/stack/web/kkmsmartvote` → served by nginx from `/var/www/html/kkmsmartvote/public`.
+  - **PHP container must** mount the site (in `docker-compose.yml`): `./web/kkmsmartvote:/var/www/html/kkmsmartvote`.
+- Directory structure:
+  - `web/kkmsmartvote/public/` — Web entry point (index.php, assets, uploaded files)
+  - `web/kkmsmartvote/php/` — Reusable PHP utilities and database helpers
+- Environment (set in `/opt/stack/.env` if needed): Application can use shared MySQL DB or a separate database (TBD based on app requirements).
+- Important files:
+  - `web/kkmsmartvote/public/index.php` — Main application entry point
+  - `services/php/Dockerfile` — PHP runtime with mysqli, pdo_mysql extensions
+  - `services/nginx/conf.d/default.conf` — kkmsmartvote.web.id vhost + ACME/webroot locations
+  - `docker-compose.yml` — Volume mount for kkmsmartvote
+- Quick deployment workflow:
+  1. Edit app code in `web/kkmsmartvote/` locally.
+  2. Commit to git: `git add web/kkmsmartvote/ && git commit -m "Feature: ..."`.
+  3. Push: `git push origin feature/kkmsmartvote-domain-2026` (or merge to prod when ready).
+  4. Obtain Let's Encrypt certificate:
+     ```bash
+     ssh portfolio-droplet
+     cd /opt/stack
+     sudo certbot certonly --webroot -w web -d kkmsmartvote.web.id -d www.kkmsmartvote.web.id
+     sudo cp /etc/letsencrypt/live/kkmsmartvote.web.id/fullchain.pem services/nginx/ssl/kkmsmartvote.fullchain.pem
+     sudo cp /etc/letsencrypt/live/kkmsmartvote.web.id/privkey.pem services/nginx/ssl/kkmsmartvote.privkey.pem
+     sudo chown root:root services/nginx/ssl/kkmsmartvote.* && sudo chmod 640 services/nginx/ssl/kkmsmartvote.privkey.pem
+     ```
+  5. Deploy to server:
+     ```bash
+     scp -r web/kkmsmartvote portfolio-droplet:/tmp/
+     scp docker-compose.yml portfolio-droplet:/tmp/
+     scp services/nginx/conf.d/default.conf portfolio-droplet:/tmp/
+     
+     ssh portfolio-droplet
+     cd /opt/stack
+     sudo mv /tmp/kkmsmartvote web/
+     sudo mv /tmp/docker-compose.yml .
+     sudo mv /tmp/default.conf services/nginx/conf.d/
+     sudo docker compose up -d php nginx
+     sudo docker compose exec nginx nginx -t
+     curl -I https://kkmsmartvote.web.id
+     ```
+- Verification checklist:
+  1. DNS A record: `kkmsmartvote.web.id` → `146.190.87.175` (DigitalOcean IP)
+  2. SSL certificate: `/etc/nginx/ssl/kkmsmartvote.fullchain.pem` and `privkey.pem` present
+  3. Nginx config syntax: `sudo docker compose exec nginx nginx -t` returns OK
+  4. HTTP → HTTPS redirect: `curl -I http://kkmsmartvote.web.id` returns 301
+  5. HTTPS access: `curl -I https://kkmsmartvote.web.id` returns 200 (placeholder page)
+  6. PHP execution: `https://kkmsmartvote.web.id` displays "KKM Smart Vote - Coming Soon" page
+- Current status:
+  - ✅ Branch created: `feature/kkmsmartvote-domain-2026`
+  - ✅ Directory structure: `web/kkmsmartvote/public` and `web/kkmsmartvote/php`
+  - ✅ Placeholder index.php with coming-soon page
+  - ✅ Docker-compose updated: PHP container volume mount added
+  - ✅ Nginx vhost configured: HTTP→HTTPS redirect + HTTPS block with SSL/TLS settings
+  - ⏳ Awaiting: DNS setup, Let's Encrypt certificate, production deployment
+  - 📝 Next: Application development can begin once DNS & SSL are configured
 
 #### Undangan / kkmrat.web.id (hosting & deploy) 🔧
 - Purpose & live URL: public digital invitation site deployed from the `undangan/` repo — live at `https://kkmrat.web.id`.
