@@ -652,8 +652,20 @@ location /n8n/ {
   - Server webroot: `/opt/stack/web/kkmsmartvote` → served by nginx from `/var/www/html/kkmsmartvote/public`.
   - **PHP container must** mount the site (in `docker-compose.yml`): `./web/kkmsmartvote:/var/www/html/kkmsmartvote`.
 - Directory structure:
-  - `web/kkmsmartvote/public/` — Web entry point (index.php, assets, uploaded files)
-  - `web/kkmsmartvote/php/` — Reusable PHP utilities and database helpers
+  - `web/kkmsmartvote/backend/` — Laravel 11 API (voting system backend)
+    - `app/Models/` — Data models: User, Member, Candidate, Vote, ElectionSetting, AuditLog
+    - `app/Http/Controllers/` — API controllers: Auth, Candidate, Member, Vote, ElectionSetting, AuditLog, User, Admin
+    - `routes/api.php` — RESTful API endpoints
+    - `config/` — App config with JWT, CORS, database settings
+    - `database/migrations/` — Schema: users, members, candidates, votes, settings
+    - `composer.json` — Laravel 11.48.0, JWT auth (lcobucci/jwt 4.0.4), dependencies
+  - `web/kkmsmartvote/frontend/` — Vite + Node.js frontend (voting UI)
+    - `src/` —  React/Vue components, pages, utilities
+    - `vite.config.ts` — Build configuration with API proxy
+    - `package.json` — 96 dependencies (React, Vite, etc.)
+    - `nginx.conf` — Frontend routing config (backed up, needs integration)
+  - `web/kkmsmartvote/public/` — Web entry point (currently placeholder index.php)
+  - `docker-compose.yml` (backed up) — Original koperasi-vote compose configuration
 - Environment (set in `/opt/stack/.env` if needed): Application can use shared MySQL DB or a separate database (TBD based on app requirements).
 - Important files:
   - `web/kkmsmartvote/public/index.php` — Main application entry point
@@ -697,12 +709,21 @@ location /n8n/ {
   6. PHP execution: `https://kkmsmartvote.web.id` displays "KKM Smart Vote - Coming Soon" page
 - Current status:
   - ✅ Branch created: `feature/kkmsmartvote-domain-2026`
-  - ✅ Directory structure: `web/kkmsmartvote/public` and `web/kkmsmartvote/php`
-  - ✅ Placeholder index.php with coming-soon page
+  - ✅ Directory structure: `web/kkmsmartvote/{backend,frontend,public}`
+  - ✅ Placeholder index.php with coming-soon page (live & accessible)
   - ✅ Docker-compose updated: PHP container volume mount added
   - ✅ Nginx vhost configured: HTTP→HTTPS redirect + HTTPS block with SSL/TLS settings
-  - ⏳ Awaiting: DNS setup, Let's Encrypt certificate, production deployment
-  - 📝 Next: Application development can begin once DNS & SSL are configured
+  - ✅ DNS A records configured: `kkmsmartvote.web.id` → 146.190.87.175
+  - ✅ SSL certificate issued: Let's Encrypt (expires July 3, 2026)
+  - ✅ Domain live: https://kkmsmartvote.web.id (HTTP/2 200)
+  - ✅ Project migrated: koperasi-vote → `web/kkmsmartvote/` (101 files, 610.7KB)
+  - ✅ Sensitive files backed up: `.backups/koperasi-vote-sensitive-20260405-024108/` (4 files)
+  - ✅ .gitignore updated: vendor/, node_modules/, .env patterns added
+  - ✅ Frontend dependencies: npm install complete (96 packages)
+  - ✅ Backend dependencies: Partial install (PHP extensions issue - will use Docker)
+  - ✅ Environment files: .env files copied from backup
+  - ⏳ Next: Deploy actual application code to server, database migration, testing
+  - 📝 Remaining: Merge backend docker-compose, integrate frontend routing in nginx
 
 #### Undangan / kkmrat.web.id (hosting & deploy) 🔧
 - Purpose & live URL: public digital invitation site deployed from the `undangan/` repo — live at `https://kkmrat.web.id`.
