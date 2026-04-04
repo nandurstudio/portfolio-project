@@ -86,3 +86,23 @@ services/nginx/ssl/.htpasswd*
 # FileBrowser persistence and runtime DB
 services/filebrowser/database/
 services/filebrowser/database/*
+
+# ===== KKM Smart Vote (kkmsmartvote.web.id) =====
+# Backend (Laravel) dependencies and runtime
+web/kkmsmartvote/backend/vendor/
+web/kkmsmartvote/backend/.env
+web/kkmsmartvote/backend/storage/logs/*.log
+web/kkmsmartvote/backend/storage/framework/cache/*
+web/kkmsmartvote/backend/storage/framework/sessions/*
+web/kkmsmartvote/backend/storage/framework/views/*
+
+# Frontend (Node.js) dependencies
+web/kkmsmartvote/frontend/node_modules/
+web/kkmsmartvote/frontend/.env
+web/kkmsmartvote/frontend/.env.local
+web/kkmsmartvote/frontend/dist/
+web/kkmsmartvote/frontend/build/
+
+# Sensitive configs (versioned in backup only)
+web/kkmsmartvote/docker-compose.yml
+web/kkmsmartvote/frontend/nginx.conf

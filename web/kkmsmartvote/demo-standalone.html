@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pemilihan Ketua Koperasi Karya Mandiri 2026–2029</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue-50:#E6F1FB;--blue-100:#B5D4F4;--blue-200:#85B7EB;--blue-400:#378ADD;--blue-600:#185FA5;--blue-800:#0C447C;--blue-900:#042C53;
+    --green-50:#EAF3DE;--green-100:#C0DD97;--green-400:#639922;--green-600:#3B6D11;--green-800:#27500A;
+    --amber-50:#FAEEDA;--amber-400:#BA7517;--amber-600:#854F0B;
+    --red-50:#FCEBEB;--red-100:#F7C1C1;--red-400:#E24B4A;--red-600:#A32D2D;
+    --gray-50:#F1EFE8;--gray-100:#D3D1C7;--gray-200:#B4B2A9;--gray-400:#888780;--gray-600:#5F5E5A;--gray-800:#444441;--gray-900:#2C2C2A;
+    --purple-50:#EEEDFE;--purple-100:#CECBF6;--purple-600:#534AB7;--purple-800:#3C3489;
+    --teal-50:#E1F5EE;--teal-600:#0F6E56;--teal-800:#085041;
+    --bg:#F8F7F4;--surface:#FFFFFF;--surface2:#F1EFE8;--border:#E2E0D8;--border2:#D3D1C7;
+    --text:#2C2C2A;--text2:#5F5E5A;--text3:#888780;
+    --font:'Plus Jakarta Sans',sans-serif;--mono:'DM Mono',monospace;
+    --r:10px;--r2:14px;--shadow:0 1px 3px rgba(0,0,0,0.06),0 4px 12px rgba(0,0,0,0.04);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--font);font-size:14px;color:var(--text);background:var(--bg);min-height:100vh;-webkit-font-smoothing:antialiased}
+  
+  /* Buttons */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 18px;border-radius:var(--r);border:1px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;font-family:var(--font);font-size:13px;font-weight:500;transition:all 0.15s;white-space:nowrap}
+  .btn:hover{background:var(--surface2);border-color:var(--border2)}
+  .btn:active{transform:scale(0.98)}
+  .btn-primary{background:var(--blue-600);color:var(--blue-50);border-color:var(--blue-600)}
+  .btn-primary:hover{background:var(--blue-800);border-color:var(--blue-800)}
+  .btn-success{background:var(--green-600);color:var(--green-50);border-color:var(--green-600)}
+  .btn-success:hover{background:var(--green-800)}
+  .btn-danger{background:var(--red-600);color:var(--red-50);border-color:var(--red-600)}
+  .btn-danger:hover{background:#791F1F}
+  .btn-sm{padding:6px 12px;font-size:12px}
+  .btn-block{width:100%}
+  .btn:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+
+  /* Cards */
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:20px 24px;box-shadow:var(--shadow)}
+  .card-sm{padding:14px 18px}
+
+  /* Form */
+  .form-group{margin-bottom:16px}
+  label.field-label{display:block;font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px}
+  input[type=text],input[type=password],select,textarea{width:100%;padding:9px 13px;border:1px solid var(--border2);border-radius:var(--r);background:var(--surface);color:var(--text);font-family:var(--font);font-size:13px;transition:border-color 0.15s,box-shadow 0.15s}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue-400);box-shadow:0 0 0 3px rgba(55,138,221,0.12)}
+  select{cursor:pointer}
+
+  /* Badges */
+  .badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:0.02em}
+  .badge-blue{background:var(--blue-50);color:var(--blue-800)}
+  .badge-green{background:var(--green-50);color:var(--green-600)}
+  .badge-amber{background:var(--amber-50);color:var(--amber-600)}
+  .badge-red{background:var(--red-50);color:var(--red-600)}
+  .badge-purple{background:var(--purple-50);color:var(--purple-600)}
+  .badge-gray{background:var(--gray-50);color:var(--gray-600)}
+
+  /* Alerts */
+  .alert{padding:11px 15px;border-radius:var(--r);font-size:13px;margin-bottom:14px;display:flex;align-items:flex-start;gap:8px}
+  .alert-success{background:var(--green-50);color:var(--green-600);border:1px solid #C0DD97}
+  .alert-error{background:var(--red-50);color:var(--red-600);border:1px solid #F09595}
+  .alert-info{background:var(--blue-50);color:var(--blue-600);border:1px solid var(--blue-200)}
+  .alert-warning{background:var(--amber-50);color:var(--amber-600);border:1px solid #FAC775}
+
+  /* Layout */
+  .app-shell{display:flex;min-height:100vh}
+  .sidebar{width:220px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:0}
+  .sidebar-brand{padding:20px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+  .brand-icon{width:36px;height:36px;background:var(--blue-600);border-radius:var(--r);display:flex;align-items:center;justify-content:center;color:var(--blue-50);font-size:16px;font-weight:700;flex-shrink:0}
+  .brand-text{font-size:12px;font-weight:600;color:var(--text);line-height:1.3}
+  .brand-sub{font-size:10px;color:var(--text3);font-weight:400}
+  .sidebar-nav{padding:12px 10px;flex:1;display:flex;flex-direction:column;gap:2px}
+  .nav-section{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;padding:10px 8px 4px}
+  .nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--r);cursor:pointer;font-size:13px;font-weight:500;color:var(--text2);transition:all 0.12s}
+  .nav-item:hover{background:var(--surface2);color:var(--text)}
+  .nav-item.active{background:var(--blue-50);color:var(--blue-600)}
+  .nav-item .nav-icon{font-size:15px;width:20px;text-align:center}
+  .sidebar-footer{padding:14px 10px;border-top:1px solid var(--border)}
+  .user-pill{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--r);background:var(--surface2)}
+  .user-avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0}
+  .main-area{flex:1;overflow-y:auto;min-width:0}
+  .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+  .page-content{padding:24px}
+
+  /* Stats */
+  .stat-grid{display:grid;gap:12px}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:16px 20px}
+  .stat-num{font-size:28px;font-weight:700;line-height:1;margin-bottom:2px}
+  .stat-label{font-size:12px;color:var(--text2)}
+  .stat-change{font-size:11px;color:var(--green-600);font-weight:500}
+
+  /* Progress */
+  .progress-wrap{height:7px;background:var(--surface2);border-radius:4px;overflow:hidden}
+  .progress-bar{height:100%;border-radius:4px;background:var(--blue-600);transition:width 0.6s cubic-bezier(.4,0,.2,1)}
+
+  /* Table */
+  .table-wrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;padding:10px 14px;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid var(--border);white-space:nowrap}
+  td{padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:var(--bg)}
+
+  /* Candidate cards */
+  .cand-card{border:2px solid var(--border);border-radius:var(--r2);padding:20px;cursor:pointer;transition:all 0.15s;text-align:center;background:var(--surface)}
+  .cand-card:hover{border-color:var(--blue-200);box-shadow:0 0 0 3px rgba(55,138,221,0.08)}
+  .cand-card.selected{border-color:var(--blue-600);background:var(--blue-50)}
+  .cand-avatar{width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;margin:0 auto 12px}
+
+  /* Modal */
+  .modal-overlay{position:fixed;inset:0;background:rgba(44,44,42,0.5);display:flex;align-items:center;justify-content:center;z-index:200;padding:20px;backdrop-filter:blur(2px)}
+  .modal-box{background:var(--surface);border-radius:var(--r2);border:1px solid var(--border);padding:28px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.16)}
+  .modal-title{font-size:17px;font-weight:700;margin-bottom:16px}
+
+  /* Divider */
+  hr{border:none;border-top:1px solid var(--border);margin:16px 0}
+
+  /* Login */
+  .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--bg)}
+  .login-card{width:100%;max-width:400px}
+  .login-logo{text-align:center;margin-bottom:28px}
+  .logo-mark{width:56px;height:56px;background:var(--blue-600);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;color:var(--blue-50);font-size:24px;font-weight:800}
+
+  /* Voter page */
+  .voter-wrap{min-height:100vh;background:var(--bg);padding:20px}
+  .voter-inner{max-width:540px;margin:0 auto}
+  .voter-header{text-align:center;margin-bottom:28px;padding-top:20px}
+
+  /* Countdown */
+  .countdown-row{display:flex;gap:8px;justify-content:center;margin-top:12px}
+  .countdown-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:8px 14px;text-align:center;min-width:56px}
+  .countdown-num{font-size:20px;font-weight:700;font-family:var(--mono);color:var(--blue-600)}
+  .countdown-lbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-top:1px}
+
+  /* Success */
+  .success-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+  .success-inner{max-width:440px;width:100%;text-align:center}
+  .success-icon{width:72px;height:72px;background:var(--green-50);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:32px}
+
+  /* Animations */
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .fade-in{animation:fadeIn 0.25s ease forwards}
+
+  /* Mono */
+  .mono{font-family:var(--mono);font-size:12px}
+
+  /* Scrollbar */
+  ::-webkit-scrollbar{width:5px;height:5px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+  /* Responsive */
+  @media(max-width:700px){
+    .sidebar{display:none}
+    .stat-grid{grid-template-columns:1fr 1fr!important}
+    .page-content{padding:16px}
+    th:nth-child(n+4),td:nth-child(n+4){display:none}
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// ── DATA STORE ──────────────────────────────────────────────────────────────
+const DB = {
+  users: [
+    {id:1,username:'admin',password:'admin123',role:'admin',name:'Budi Santoso'},
+    {id:2,username:'panitia1',password:'panitia123',role:'panitia',name:'Siti Rahayu'},
+  ],
+  members: [
+    {id:'KRY001',name:'Ahmad Fauzi',site:'Site A',hasVoted:false},
+    {id:'KRY002',name:'Dewi Susanti',site:'Site B',hasVoted:false},
+    {id:'KRY003',name:'Hendra Wijaya',site:'Site A',hasVoted:false},
+    {id:'KRY004',name:'Rina Marlina',site:'Site C',hasVoted:false},
+    {id:'KRY005',name:'Bambang Sumarto',site:'Site B',hasVoted:false},
+    {id:'KRY006',name:'Fitri Handayani',site:'Site C',hasVoted:false},
+  ],
+  candidates: [
+    {id:1,name:'Drs. Agus Supriadi',initials:'AS',bio:'Pengalaman 15 tahun di bidang koperasi dan manajemen SDM.',position:'Kandidat No. 1',votes:0,isActive:true},
+    {id:2,name:'Ir. Sri Wahyuni, M.M.',initials:'SW',bio:'Berpengalaman dalam manajemen keuangan dan pengembangan usaha.',position:'Kandidat No. 2',votes:0,isActive:true},
+  ],
+  votes: [],
+  auditLog: [
+    {id:1,time:fmtDate(new Date()),actor:'System',action:'Sistem diinisialisasi',detail:'Aplikasi Pemilihan dimulai'},
+  ],
+  settings:{
+    electionName:'Pemilihan Ketua Koperasi Karya Mandiri',
+    period:'2026–2029',
+    startDate:'2026-04-13',
+    endDate:'2026-04-17',
+    endTime:'15:00',
+    isActive:true,
+    isFinalized:false,
+    sites:['Site A','Site B','Site C']
+  }
+};
+
+function fmtDate(d){return d.toLocaleString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}
+
+// ── STATE ───────────────────────────────────────────────────────────────────
+let S = {
+  page: 'voter',           // 'voter' | 'login' | 'admin'
+  user: null,
+  adminTab: 'dashboard',
+  modal: null,
+  alert: null,
+  form: {},
+  voteStep: 'verify',      // 'verify' | 'select' | 'success'
+  selCand: null,
+  verMember: null,
+};
+
+function set(patch){ Object.assign(S, patch); render(); }
+function audit(actor, action, detail=''){
+  DB.auditLog.unshift({id:DB.auditLog.length+1, time:fmtDate(new Date()), actor, action, detail});
+}
+
+// ── ACTIONS ─────────────────────────────────────────────────────────────────
+function adminLogin(){
+  const u=S.form.u?.trim(), p=S.form.p?.trim();
+  const usr=DB.users.find(x=>x.username===u&&x.password===p);
+  if(!usr){set({alert:{t:'error',m:'Username atau password salah.'}}); return;}
+  audit(usr.name,'Login',`Role: ${usr.role}`);
+  set({user:usr, page:'admin', alert:null, form:{}, adminTab:'dashboard'});
+}
+
+function logout(){
+  audit(S.user.name,'Logout','');
+  set({user:null, page:'voter', alert:null, form:{}, voteStep:'verify', selCand:null, verMember:null});
+}
+
+function verifyVoter(){
+  const name=S.form.vn?.trim(), nik=S.form.vk?.trim(), site=S.form.vs;
+  if(!name||!nik||!site){set({alert:{t:'error',m:'Semua field wajib diisi!'}}); return;}
+  const m=DB.members.find(x=>x.id===nik && x.name.toLowerCase()===name.toLowerCase() && x.site===site);
+  if(!m){set({alert:{t:'error',m:'Data tidak ditemukan. Pastikan Nama, NIK, dan Site sesuai data keanggotaan koperasi.'}}); return;}
+  if(m.hasVoted){set({alert:{t:'warning',m:'Anda sudah menggunakan hak suara Anda. Terima kasih!'}}); return;}
+  audit(m.name,'Verifikasi Identitas',`NIK: ${nik} | Site: ${site}`);
+  set({verMember:m, voteStep:'select', alert:null});
+}
+
+function castVote(){
+  if(!S.selCand){set({alert:{t:'error',m:'Pilih kandidat terlebih dahulu!'}}); return;}
+  const m=S.verMember;
+  const c=DB.candidates.find(x=>x.id===S.selCand);
+  m.hasVoted=true; c.votes++;
+  DB.votes.push({id:DB.votes.length+1,memberId:m.id,memberName:m.name,site:m.site,candidateId:c.id,candidateName:c.name,time:fmtDate(new Date()),valid:true});
+  audit(m.name,'Suara Dicatat',`Kandidat terpilih dirahasiakan`);
+  set({modal:null, voteStep:'success', alert:null});
+}
+
+function invalidateVote(vid){
+  const v=DB.votes.find(x=>x.id===vid);
+  if(!v||!v.valid) return;
+  v.valid=false;
+  const m=DB.members.find(x=>x.id===v.memberId); if(m) m.hasVoted=false;
+  const c=DB.candidates.find(x=>x.id===v.candidateId); if(c&&c.votes>0) c.votes--;
+  audit(S.user.name,'Suara Diinvalidasi',`NIK: ${v.memberId}`);
+  render();
+}
+
+function saveCandidate(){
+  const f=S.form;
+  if(f.cid){ // edit
+    const c=DB.candidates.find(x=>x.id===f.cid);
+    if(c){c.name=f.cn||c.name; c.bio=f.cb||c.bio; c.position=f.cp||c.position; c.initials=initials(f.cn||c.name);}
+    audit(S.user.name,'Kandidat Diperbarui',f.cn);
+  } else { // add
+    if(!f.cn) return;
+    DB.candidates.push({id:Date.now(),name:f.cn,initials:initials(f.cn),bio:f.cb||'',position:f.cp||'',votes:0,isActive:true});
+    audit(S.user.name,'Kandidat Ditambah',f.cn);
+  }
+  set({modal:null,form:{}});
+}
+
+function saveMember(){
+  const f=S.form;
+  if(!f.mn||!f.mk||!f.ms){return;}
+  if(DB.members.find(x=>x.id===f.mk)){alert('NIK sudah terdaftar!'); return;}
+  DB.members.push({id:f.mk,name:f.mn,site:f.ms,hasVoted:false});
+  audit(S.user.name,'Anggota Ditambah',`NIK: ${f.mk}`);
+  set({modal:null,form:{}});
+}
+
+function saveUser(){
+  const f=S.form;
+  if(!f.un||!f.uu||!f.up||!f.ur) return;
+  DB.users.push({id:Date.now(),name:f.un,username:f.uu,password:f.up,role:f.ur});
+  audit(S.user.name,'User Ditambah',`${f.uu} (${f.ur})`);
+  set({modal:null,form:{}});
+}
+
+function saveSettings(){
+  const f=S.form;
+  if(f.sn) DB.settings.electionName=f.sn;
+  if(f.sp) DB.settings.period=f.sp;
+  if(f.sd) DB.settings.startDate=f.sd;
+  if(f.se) DB.settings.endDate=f.se;
+  audit(S.user.name,'Pengaturan Diperbarui','');
+  set({modal:null,form:{},alert:{t:'success',m:'Pengaturan berhasil disimpan.'}});
+}
+
+function finalizeElection(){
+  DB.settings.isFinalized=true;
+  audit(S.user.name,'Pemilihan Difinalisasi','Hasil dikunci.');
+  set({modal:null});
+}
+
+function initials(name){return name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();}
+
+// ── HELPERS ─────────────────────────────────────────────────────────────────
+function alertBox(a){ return a?`<div class="alert alert-${a.t==='error'?'error':a.t==='success'?'success':a.t==='warning'?'warning':'info'}">${a.m}</div>`:''; }
+
+function avatarColors(i){ const cs=[['#E6F1FB','#185FA5'],['#EAF3DE','#3B6D11'],['#FAEEDA','#854F0B'],['#EEEDFE','#534AB7'],['#E1F5EE','#0F6E56']]; return cs[i%cs.length]; }
+
+function countdown(){
+  const end=new Date(DB.settings.endDate+'T'+DB.settings.endTime+':00+07:00');
+  const now=new Date(); const diff=end-now;
+  if(diff<=0) return '<p style="color:var(--red-600);font-size:12px;font-weight:600;text-align:center;margin-top:8px">Periode voting telah berakhir</p>';
+  const d=Math.floor(diff/86400000), h=Math.floor((diff%86400000)/3600000), m=Math.floor((diff%3600000)/60000), s=Math.floor((diff%60000)/1000);
+  return `<div class="countdown-row">
+    <div class="countdown-block"><div class="countdown-num">${String(d).padStart(2,'0')}</div><div class="countdown-lbl">Hari</div></div>
+    <div class="countdown-block"><div class="countdown-num">${String(h).padStart(2,'0')}</div><div class="countdown-lbl">Jam</div></div>
+    <div class="countdown-block"><div class="countdown-num">${String(m).padStart(2,'0')}</div><div class="countdown-lbl">Menit</div></div>
+    <div class="countdown-block"><div class="countdown-num">${String(s).padStart(2,'0')}</div><div class="countdown-lbl">Detik</div></div>
+  </div>`;
+}
+
+// ── PAGES ────────────────────────────────────────────────────────────────────
+
+function pageVoter(){
+  const total=DB.members.length, voted=DB.votes.filter(v=>v.valid).length, pct=total?Math.round(voted/total*100):0;
+
+  if(S.voteStep==='success') return `
+<div class="success-wrap fade-in">
+  <div class="success-inner">
+    <div class="success-icon">✓</div>
+    <h2 style="font-size:22px;font-weight:700;color:var(--green-600);margin-bottom:8px">Suara Berhasil Dicatat!</h2>
+    <p style="color:var(--text2);font-size:14px;margin-bottom:24px">Terima kasih, <strong>${S.verMember?.name}</strong>. Suara Anda dirahasiakan dan telah tercatat dengan aman.</p>
+    <div class="card" style="text-align:left;margin-bottom:20px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div><p style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:2px">Nama</p><p style="font-weight:600">${S.verMember?.name}</p></div>
+        <div><p style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:2px">NIK</p><p class="mono">${S.verMember?.id}</p></div>
+        <div><p style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:2px">Site</p><p><span class="badge badge-purple">${S.verMember?.site}</span></p></div>
+        <div><p style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:2px">Waktu</p><p style="font-size:12px">${fmtDate(new Date())}</p></div>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-block" onclick="set({voteStep:'verify',selCand:null,verMember:null,alert:null,form:{}})">Selesai</button>
+  </div>
+</div>`;
+
+  if(S.voteStep==='select') return `
+<div class="voter-wrap fade-in">
+  <div class="voter-inner">
+    <div class="voter-header">
+      <span class="badge badge-green" style="margin-bottom:10px">✓ Terverifikasi</span>
+      <h2 style="font-size:20px;font-weight:700">Pilih Kandidat Anda</h2>
+      <p style="color:var(--text2);font-size:13px;margin-top:4px">Halo <strong>${S.verMember?.name}</strong>, silakan pilih 1 kandidat</p>
+    </div>
+    ${alertBox(S.alert)}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
+      ${DB.candidates.filter(c=>c.isActive).map((c,i)=>{const [bg,fg]=avatarColors(i); return `
+      <div class="cand-card ${S.selCand===c.id?'selected':''}" onclick="set({selCand:${c.id}})">
+        ${S.selCand===c.id?'<div style="float:right;width:18px;height:18px;background:var(--blue-600);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:10px;font-weight:700">✓</div>':''}
+        <div class="cand-avatar" style="background:${S.selCand===c.id?'var(--blue-600)':bg};color:${S.selCand===c.id?'var(--blue-50)':fg}">${c.initials}</div>
+        <p style="font-weight:700;font-size:14px;margin-bottom:4px">${c.name}</p>
+        <p style="font-size:11px;color:var(--blue-600);font-weight:600;margin-bottom:8px">${c.position}</p>
+        <p style="font-size:12px;color:var(--text2);line-height:1.5">${c.bio}</p>
+      </div>`}).join('')}
+    </div>
+    <button class="btn btn-primary btn-block" ${!S.selCand?'disabled':''} onclick="set({modal:'confirmVote'})">Konfirmasi Pilihan →</button>
+    <button class="btn btn-block" style="margin-top:8px" onclick="set({voteStep:'verify',selCand:null,verMember:null,alert:null,form:{}})">← Kembali</button>
+  </div>
+</div>`;
+
+  return `
+<div class="voter-wrap fade-in">
+  <div class="voter-inner">
+    <div class="voter-header">
+      <div style="width:48px;height:48px;background:var(--blue-600);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;color:var(--blue-50);font-size:20px;font-weight:800">K</div>
+      <h1 style="font-size:20px;font-weight:700;margin-bottom:4px">${DB.settings.electionName}</h1>
+      <p style="color:var(--text2);font-size:13px">Periode ${DB.settings.period}</p>
+      <div style="margin-top:14px">
+        <p style="font-size:11px;color:var(--text3);margin-bottom:6px">Sisa Waktu Voting</p>
+        ${countdown()}
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <p style="font-size:12px;font-weight:600;color:var(--text2)">Partisipasi Anggota</p>
+        <p style="font-size:13px;font-weight:700;color:var(--blue-600)">${pct}%</p>
+      </div>
+      <div class="progress-wrap"><div class="progress-bar" style="width:${pct}%"></div></div>
+      <p style="font-size:11px;color:var(--text3);margin-top:6px">${voted} dari ${total} anggota telah menggunakan hak suara</p>
+    </div>
+
+    <div class="card">
+      <p style="font-size:15px;font-weight:700;margin-bottom:4px">Verifikasi Identitas</p>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:16px">Masukkan data sesuai keanggotaan koperasi Anda</p>
+      ${alertBox(S.alert)}
+      <div class="form-group"><label class="field-label">Nama Lengkap</label><input type="text" placeholder="Nama sesuai data keanggotaan" oninput="S.form.vn=this.value" value="${S.form.vn||''}"></div>
+      <div class="form-group"><label class="field-label">NIK (Nomor Induk Karyawan)</label><input type="text" placeholder="Contoh: KRY001" oninput="S.form.vk=this.value" value="${S.form.vk||''}"></div>
+      <div class="form-group"><label class="field-label">Site</label>
+        <select onchange="S.form.vs=this.value">
+          <option value="">— Pilih Site —</option>
+          ${DB.settings.sites.map(s=>`<option ${S.form.vs===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="verifyVoter()">Verifikasi & Lanjutkan →</button>
+      <hr>
+      <div style="text-align:center"><button class="btn btn-sm" onclick="set({page:'login',alert:null,form:{}})">🔐 Masuk sebagai Admin / Panitia</button></div>
+      <p style="font-size:11px;color:var(--text3);text-align:center;margin-top:10px">Data demo: Ahmad Fauzi · KRY001 · Site A</p>
+    </div>
+  </div>
+</div>`;
+}
+
+function pageLogin(){
+  return `
+<div class="login-wrap fade-in">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-mark">K</div>
+      <h2 style="font-size:20px;font-weight:700">Panel Admin</h2>
+      <p style="color:var(--text2);font-size:13px;margin-top:4px">Koperasi Karya Mandiri</p>
+    </div>
+    <div class="card">
+      ${alertBox(S.alert)}
+      <div class="form-group"><label class="field-label">Username</label><input type="text" placeholder="Username" oninput="S.form.u=this.value" value="${S.form.u||''}" onkeydown="if(event.key==='Enter')adminLogin()"></div>
+      <div class="form-group"><label class="field-label">Password</label><input type="password" placeholder="Password" oninput="S.form.p=this.value" onkeydown="if(event.key==='Enter')adminLogin()"></div>
+      <button class="btn btn-primary btn-block" onclick="adminLogin()">Masuk</button>
+      <hr>
+      <div style="background:var(--bg);border-radius:var(--r);padding:10px 12px">
+        <p style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600">AKUN DEMO</p>
+        <p style="font-size:12px;color:var(--text2)">admin / admin123 &nbsp;·&nbsp; panitia1 / panitia123</p>
+      </div>
+      <hr>
+      <button class="btn btn-sm btn-block" onclick="set({page:'voter',alert:null,form:{}})">← Kembali ke Halaman Voting</button>
+    </div>
+  </div>
+</div>`;
+}
+
+function pageAdmin(){
+  const tab=S.adminTab, u=S.user;
+  const totalV=DB.votes.filter(v=>v.valid).length;
+  const totalM=DB.members.length;
+  const pct=totalM?Math.round(totalV/totalM*100):0;
+
+  const navs=[
+    {id:'dashboard',icon:'📊',label:'Dashboard',roles:['admin','panitia']},
+    {id:'candidates',icon:'👤',label:'Kandidat',roles:['admin','panitia']},
+    {id:'members',icon:'👥',label:'Anggota',roles:['admin','panitia']},
+    {id:'votes',icon:'🗳️',label:'Rekap Suara',roles:['admin','panitia']},
+    {id:'audit',icon:'📋',label:'Audit Trail',roles:['admin','panitia']},
+    {id:'users',icon:'🔑',label:'Pengguna',roles:['admin']},
+    {id:'settings',icon:'⚙️',label:'Pengaturan',roles:['admin']},
+  ].filter(n=>n.roles.includes(u.role));
+
+  const [abg,afg]=avatarColors(0);
+  const sidebar=`
+<div class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">K</div>
+    <div><div class="brand-text">Karya Mandiri</div><div class="brand-sub">Panel Admin</div></div>
+  </div>
+  <div class="sidebar-nav">
+    ${navs.map(n=>`<div class="nav-item ${tab===n.id?'active':''}" onclick="set({adminTab:'${n.id}',alert:null})"><span class="nav-icon">${n.icon}</span>${n.label}</div>`).join('')}
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-pill">
+      <div class="user-avatar" style="background:${abg};color:${afg}">${initials(u.name)}</div>
+      <div style="flex:1;min-width:0"><p style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.name}</p><p style="font-size:10px;color:var(--text3)">${u.role}</p></div>
+    </div>
+    <button class="btn btn-sm btn-block" style="margin-top:8px" onclick="logout()">Keluar</button>
+  </div>
+</div>`;
+
+  let body='';
+
+  if(tab==='dashboard'){
+    const sorted=[...DB.candidates].sort((a,b)=>b.votes-a.votes);
+    body=`
+<h1 style="font-size:20px;font-weight:700;margin-bottom:20px">Dashboard</h1>
+${alertBox(S.alert)}
+<div class="stat-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">
+  <div class="stat-card"><p class="stat-label">Suara Sah</p><p class="stat-num" style="color:var(--blue-600)">${totalV}</p></div>
+  <div class="stat-card"><p class="stat-label">Total Anggota</p><p class="stat-num">${totalM}</p></div>
+  <div class="stat-card"><p class="stat-label">Partisipasi</p><p class="stat-num" style="color:var(--green-600)">${pct}%</p></div>
+  <div class="stat-card"><p class="stat-label">Tidak Sah</p><p class="stat-num" style="color:var(--red-600)">${DB.votes.filter(v=>!v.valid).length}</p></div>
+</div>
+<div class="card" style="margin-bottom:16px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+    <p style="font-size:15px;font-weight:700">Perolehan Suara</p>
+    ${!DB.settings.isFinalized&&u.role==='admin'?`<button class="btn btn-sm btn-success" onclick="set({modal:'finalize'})">Finalisasi Hasil</button>`:''}
+    ${DB.settings.isFinalized?'<span class="badge badge-green">✓ Difinalisasi</span>':''}
+  </div>
+  ${sorted.map((c,i)=>{const p2=totalV?Math.round(c.votes/totalV*100):0;const [bg,fg]=avatarColors(i);return `
+  <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+    <div class="user-avatar" style="background:${bg};color:${fg};width:38px;height:38px;font-size:13px">${c.initials}</div>
+    <div style="flex:1">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+        <span style="font-size:13px;font-weight:600">${c.name}</span>
+        <span style="font-size:13px;color:var(--text2)">${c.votes} suara · ${p2}%</span>
+      </div>
+      <div class="progress-wrap"><div class="progress-bar" style="width:${p2}%;background:${i===0?'var(--blue-600)':'var(--green-400)'}"></div></div>
+    </div>
+  </div>`}).join('')}
+</div>
+<div class="card">
+  <p style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:10px">Info Pemilihan</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px">
+    <div><span style="color:var(--text3)">Nama</span><p style="font-weight:500;margin-top:2px">${DB.settings.electionName}</p></div>
+    <div><span style="color:var(--text3)">Periode</span><p style="font-weight:500;margin-top:2px">${DB.settings.period}</p></div>
+    <div><span style="color:var(--text3)">Mulai</span><p class="mono" style="margin-top:2px">${DB.settings.startDate}</p></div>
+    <div><span style="color:var(--text3)">Selesai</span><p class="mono" style="margin-top:2px">${DB.settings.endDate} ${DB.settings.endTime} WIB</p></div>
+  </div>
+</div>`;
+  }
+
+  if(tab==='candidates'){
+    body=`
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+  <h1 style="font-size:20px;font-weight:700">Kandidat</h1>
+  ${u.role==='admin'?`<button class="btn btn-primary btn-sm" onclick="set({modal:'addCand',form:{}})">+ Tambah Kandidat</button>`:''}
+</div>
+<div style="display:grid;gap:12px">
+${DB.candidates.map((c,i)=>{const[bg,fg]=avatarColors(i);return `
+<div class="card card-sm">
+  <div style="display:flex;align-items:center;gap:16px">
+    <div class="user-avatar" style="background:${bg};color:${fg};width:52px;height:52px;font-size:17px;border-radius:50%">${c.initials}</div>
+    <div style="flex:1">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <p style="font-size:15px;font-weight:700">${c.name}</p>
+        <span class="badge badge-blue">${c.position}</span>
+        <span class="badge ${c.isActive?'badge-green':'badge-gray'}">${c.isActive?'Aktif':'Nonaktif'}</span>
+      </div>
+      <p style="font-size:12px;color:var(--text2);margin-top:4px">${c.bio}</p>
+    </div>
+    <div style="text-align:right;flex-shrink:0">
+      <p style="font-size:26px;font-weight:700;color:var(--blue-600)">${c.votes}</p>
+      <p style="font-size:11px;color:var(--text3)">suara</p>
+    </div>
+    ${u.role==='admin'?`<button class="btn btn-sm" onclick="set({modal:'editCand',form:{cid:${c.id},cn:'${c.name}',cb:'${c.bio}',cp:'${c.position}'}})">Edit</button>`:''}
+  </div>
+</div>`}).join('')}
+</div>`;
+  }
+
+  if(tab==='members'){
+    body=`
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+  <h1 style="font-size:20px;font-weight:700">Daftar Anggota</h1>
+  ${u.role==='admin'?`<button class="btn btn-primary btn-sm" onclick="set({modal:'addMember',form:{}})">+ Tambah Anggota</button>`:''}
+</div>
+<div class="card" style="padding:0;overflow:hidden">
+<div class="table-wrap"><table>
+<thead><tr><th>NIK</th><th>Nama</th><th>Site</th><th>Status</th></tr></thead>
+<tbody>
+${DB.members.map(m=>`<tr>
+  <td><span class="mono">${m.id}</span></td>
+  <td style="font-weight:500">${m.name}</td>
+  <td><span class="badge badge-purple">${m.site}</span></td>
+  <td><span class="badge ${m.hasVoted?'badge-green':'badge-amber'}">${m.hasVoted?'✓ Sudah Memilih':'Belum Memilih'}</span></td>
+</tr>`).join('')}
+</tbody></table></div></div>`;
+  }
+
+  if(tab==='votes'){
+    body=`
+<h1 style="font-size:20px;font-weight:700;margin-bottom:20px">Rekap Suara</h1>
+<div class="card" style="padding:0;overflow:hidden">
+${DB.votes.length===0?`<p style="padding:32px;text-align:center;color:var(--text3)">Belum ada suara masuk.</p>`:`
+<div class="table-wrap"><table>
+<thead><tr><th>NIK</th><th>Nama</th><th>Site</th><th>Kandidat</th><th>Waktu</th><th>Status</th>${u.role==='admin'?'<th></th>':''}</tr></thead>
+<tbody>
+${DB.votes.map(v=>`<tr>
+  <td><span class="mono">${v.memberId}</span></td>
+  <td style="font-weight:500">${v.memberName}</td>
+  <td><span class="badge badge-purple">${v.site}</span></td>
+  <td style="color:var(--text3);font-style:italic">Dirahasiakan</td>
+  <td style="font-size:12px;color:var(--text2)">${v.time}</td>
+  <td><span class="badge ${v.valid?'badge-green':'badge-red'}">${v.valid?'Sah':'Tidak Sah'}</span></td>
+  ${u.role==='admin'?`<td>${v.valid?`<button class="btn btn-sm btn-danger" onclick="if(confirm('Invalidasi suara ini?'))invalidateVote(${v.id})">Invalidasi</button>`:''}</td>`:''}</tr>`).join('')}
+</tbody></table></div>`}
+</div>`;
+  }
+
+  if(tab==='audit'){
+    body=`
+<h1 style="font-size:20px;font-weight:700;margin-bottom:20px">Audit Trail</h1>
+<div class="card" style="padding:0;overflow:hidden">
+<div class="table-wrap"><table>
+<thead><tr><th>Waktu</th><th>Aktor</th><th>Aksi</th><th>Detail</th></tr></thead>
+<tbody>
+${DB.auditLog.map(a=>`<tr>
+  <td style="white-space:nowrap"><span class="mono" style="font-size:11px">${a.time}</span></td>
+  <td style="font-weight:600">${a.actor}</td>
+  <td>${a.action}</td>
+  <td style="color:var(--text2);font-size:12px">${a.detail}</td>
+</tr>`).join('')}
+</tbody></table></div></div>`;
+  }
+
+  if(tab==='users' && u.role==='admin'){
+    body=`
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+  <h1 style="font-size:20px;font-weight:700">Manajemen Pengguna</h1>
+  <button class="btn btn-primary btn-sm" onclick="set({modal:'addUser',form:{}})">+ Tambah User</button>
+</div>
+<div class="card" style="padding:0;overflow:hidden">
+<div class="table-wrap"><table>
+<thead><tr><th>Nama</th><th>Username</th><th>Role</th></tr></thead>
+<tbody>
+${DB.users.map(x=>`<tr>
+  <td style="font-weight:500">${x.name}</td>
+  <td><span class="mono">${x.username}</span></td>
+  <td><span class="badge ${x.role==='admin'?'badge-red':x.role==='panitia'?'badge-blue':'badge-green'}">${x.role}</span></td>
+</tr>`).join('')}
+</tbody></table></div></div>`;
+  }
+
+  if(tab==='settings' && u.role==='admin'){
+    body=`
+<h1 style="font-size:20px;font-weight:700;margin-bottom:20px">Pengaturan Pemilihan</h1>
+${alertBox(S.alert)}
+<div class="card">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div style="grid-column:1/-1" class="form-group"><label class="field-label">Nama Pemilihan</label><input type="text" value="${DB.settings.electionName}" oninput="S.form.sn=this.value"></div>
+    <div class="form-group"><label class="field-label">Periode</label><input type="text" value="${DB.settings.period}" oninput="S.form.sp=this.value"></div>
+    <div></div>
+    <div class="form-group"><label class="field-label">Tanggal Mulai</label><input type="text" value="${DB.settings.startDate}" oninput="S.form.sd=this.value"></div>
+    <div class="form-group"><label class="field-label">Tanggal Selesai</label><input type="text" value="${DB.settings.endDate}" oninput="S.form.se=this.value"></div>
+  </div>
+  <button class="btn btn-primary" onclick="saveSettings()">Simpan Pengaturan</button>
+</div>`;
+  }
+
+  return `<div class="app-shell fade-in">${sidebar}
+<div class="main-area">
+  <div class="topbar">
+    <p style="font-size:14px;font-weight:600">${DB.settings.electionName}</p>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="badge ${DB.settings.isActive?'badge-green':'badge-red'}">${DB.settings.isActive?'● Aktif':'● Nonaktif'}</span>
+      <button class="btn btn-sm" onclick="set({page:'voter',voteStep:'verify',selCand:null,verMember:null,alert:null,form:{}})">Lihat Halaman Voting</button>
+    </div>
+  </div>
+  <div class="page-content">${body}</div>
+</div></div>`;
+}
+
+function renderModal(){
+  if(!S.modal) return '';
+  const m=S.modal;
+  let inner='';
+
+  if(m==='confirmVote'){
+    const c=DB.candidates.find(x=>x.id===S.selCand);
+    inner=`
+<p class="modal-title">Konfirmasi Pilihan Anda</p>
+<div class="alert alert-info">Anda akan memilih <strong>${c?.name}</strong>. Tindakan ini tidak dapat dibatalkan.</div>
+<div style="display:flex;gap:8px;margin-top:16px">
+  <button class="btn" style="flex:1" onclick="set({modal:null})">Batal</button>
+  <button class="btn btn-primary" style="flex:1" onclick="castVote()">Ya, Konfirmasi →</button>
+</div>`;
+  }
+
+  if(m==='finalize'){
+    const total=DB.votes.filter(v=>v.valid).length;
+    const winner=[...DB.candidates].sort((a,b)=>b.votes-a.votes)[0];
+    const p=total?Math.round(winner.votes/total*100):0;
+    inner=`
+<p class="modal-title">Finalisasi Hasil Pemilihan</p>
+<p style="font-size:13px;color:var(--text2);margin-bottom:16px">Hasil akan dikunci dan tidak dapat diubah. Pastikan semua data sudah diverifikasi.</p>
+<div class="card card-sm" style="margin-bottom:16px;border-color:var(--green-100)">
+  <p style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-weight:600">Kandidat Terpilih</p>
+  <p style="font-size:18px;font-weight:700;margin-top:4px">${winner.name}</p>
+  <p style="font-size:13px;color:var(--green-600)">${winner.votes} suara sah · ${p}%</p>
+</div>
+<div style="display:flex;gap:8px">
+  <button class="btn" style="flex:1" onclick="set({modal:null})">Batal</button>
+  <button class="btn btn-success" style="flex:1" onclick="finalizeElection()">Finalisasi</button>
+</div>`;
+  }
+
+  if(m==='addCand'||m==='editCand'){
+    inner=`
+<p class="modal-title">${m==='editCand'?'Edit':'Tambah'} Kandidat</p>
+<div class="form-group"><label class="field-label">Nama Lengkap</label><input type="text" value="${S.form.cn||''}" oninput="S.form.cn=this.value" placeholder="Nama kandidat"></div>
+<div class="form-group"><label class="field-label">Posisi / Nomor Urut</label><input type="text" value="${S.form.cp||''}" oninput="S.form.cp=this.value" placeholder="Kandidat No. X"></div>
+<div class="form-group"><label class="field-label">Biografi Singkat</label><input type="text" value="${S.form.cb||''}" oninput="S.form.cb=this.value" placeholder="Pengalaman dan latar belakang..."></div>
+<div style="display:flex;gap:8px;margin-top:16px">
+  <button class="btn" style="flex:1" onclick="set({modal:null,form:{}})">Batal</button>
+  <button class="btn btn-primary" style="flex:1" onclick="saveCandidate()">Simpan</button>
+</div>`;
+  }
+
+  if(m==='addMember'){
+    inner=`
+<p class="modal-title">Tambah Anggota</p>
+<div class="form-group"><label class="field-label">NIK</label><input type="text" oninput="S.form.mk=this.value" placeholder="KRY007"></div>
+<div class="form-group"><label class="field-label">Nama Lengkap</label><input type="text" oninput="S.form.mn=this.value" placeholder="Nama lengkap anggota"></div>
+<div class="form-group"><label class="field-label">Site</label>
+  <select onchange="S.form.ms=this.value">
+    <option value="">— Pilih Site —</option>
+    ${DB.settings.sites.map(s=>`<option>${s}</option>`).join('')}
+  </select>
+</div>
+<div style="display:flex;gap:8px;margin-top:16px">
+  <button class="btn" style="flex:1" onclick="set({modal:null,form:{}})">Batal</button>
+  <button class="btn btn-primary" style="flex:1" onclick="saveMember()">Tambah</button>
+</div>`;
+  }
+
+  if(m==='addUser'){
+    inner=`
+<p class="modal-title">Tambah Pengguna</p>
+<div class="form-group"><label class="field-label">Nama Lengkap</label><input type="text" oninput="S.form.un=this.value" placeholder="Nama lengkap"></div>
+<div class="form-group"><label class="field-label">Username</label><input type="text" oninput="S.form.uu=this.value" placeholder="Username login"></div>
+<div class="form-group"><label class="field-label">Password</label><input type="password" oninput="S.form.up=this.value" placeholder="Password"></div>
+<div class="form-group"><label class="field-label">Role</label>
+  <select onchange="S.form.ur=this.value">
+    <option value="">— Pilih Role —</option>
+    <option value="admin">Admin</option>
+    <option value="panitia">Panitia</option>
+  </select>
+</div>
+<div style="display:flex;gap:8px;margin-top:16px">
+  <button class="btn" style="flex:1" onclick="set({modal:null,form:{}})">Batal</button>
+  <button class="btn btn-primary" style="flex:1" onclick="saveUser()">Tambah</button>
+</div>`;
+  }
+
+  return `<div class="modal-overlay" onclick="if(event.target===this)set({modal:null})"><div class="modal-box fade-in">${inner}</div></div>`;
+}
+
+// ── RENDER ───────────────────────────────────────────────────────────────────
+function render(){
+  let html='';
+  if(S.page==='voter') html=pageVoter();
+  else if(S.page==='login') html=pageLogin();
+  else if(S.page==='admin') html=pageAdmin();
+  document.getElementById('app').innerHTML=html+renderModal();
+}
+
+render();
+
+// Countdown update
+setInterval(()=>{
+  if(S.page==='voter'&&S.voteStep==='verify'){
+    const el=document.querySelector('.countdown-row');
+    if(el){
+      const end=new Date(DB.settings.endDate+'T'+DB.settings.endTime+':00+07:00');
+      const diff=end-new Date();
+      if(diff>0){
+        const d=Math.floor(diff/86400000),h=Math.floor((diff%86400000)/3600000),m=Math.floor((diff%3600000)/60000),s=Math.floor((diff%60000)/1000);
+        const nums=el.querySelectorAll('.countdown-num');
+        if(nums[0]) nums[0].textContent=String(d).padStart(2,'0');
+        if(nums[1]) nums[1].textContent=String(h).padStart(2,'0');
+        if(nums[2]) nums[2].textContent=String(m).padStart(2,'0');
+        if(nums[3]) nums[3].textContent=String(s).padStart(2,'0');
+      }
+    }
+  }
+},1000);
+</script>
+</body>
+</html>
