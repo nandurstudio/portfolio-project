@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { publicApi, voterApi } from '../services/api'
 import { Alert, Countdown, ProgressBar } from '../components/shared/UI'
 import type { Candidate, ElectionSetting } from '../types'
@@ -11,6 +12,7 @@ const AVATAR_COLORS = [
 ]
 
 export default function VoterPage() {
+  const location = useLocation()
   const [step, setStep] = useState<Step>('verify')
   const [election, setElection] = useState<ElectionSetting | null>(null)
   const [stats, setStats] = useState({ total_members: 0, total_votes: 0, participation_pct: 0 })
@@ -24,10 +26,23 @@ export default function VoterPage() {
   const [loading, setLoading] = useState(false)
   const [voteTime, setVoteTime] = useState('')
 
+  // Get member data from OTP verification or other sources
   useEffect(() => {
-    publicApi.electionInfo().then(r => setElection(r.data)).catch(() => {})
-    publicApi.electionStats().then(r => setStats(r.data)).catch(() => {})
-    publicApi.candidates().then(r => setCandidates(r.data)).catch(() => {})
+    if (location.state?.member) {
+      setVerifiedMember(location.state.member)
+      setStep('select')
+    }
+    // Get voting token from localStorage if available (set by OTP verification)
+    const token = localStorage.getItem('voting_token')
+    if (token) {
+      setVoterToken(token)
+    }
+  }, [location.state])
+
+  useEffect(() => {
+    publicApi.electionInfo().then(r => setElection(r.data)).catch(() => { })
+    publicApi.electionStats().then(r => setStats(r.data)).catch(() => { })
+    publicApi.candidates().then(r => setCandidates(r.data)).catch(() => { })
   }, [])
 
   async function handleVerify(e: React.FormEvent) {
@@ -61,7 +76,7 @@ export default function VoterPage() {
   function reset() {
     setStep('verify'); setForm({ name: '', nik: '', site: '' })
     setVoterToken(''); setVerifiedMember(null); setSelectedCand(null); setAlert(null)
-    publicApi.electionStats().then(r => setStats(r.data)).catch(() => {})
+    publicApi.electionStats().then(r => setStats(r.data)).catch(() => { })
   }
 
   // ── Success ──────────────────────────────────────────────────────────────
@@ -155,6 +170,7 @@ export default function VoterPage() {
         <div style={{ width: 48, height: 48, background: 'var(--blue)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px', color: '#E6F1FB', fontSize: 20, fontWeight: 800 }}>K</div>
         <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>{election?.election_name ?? 'Pemilihan Ketua Koperasi'}</h1>
         <p style={{ color: 'var(--text2)', fontSize: 13 }}>Periode {election?.period}</p>
+        <p style={{ fontSize: 10, color: 'var(--text3)', marginTop: 8 }}>KKM Smart Vote v1.0.0</p>
         {election && (
           <div style={{ marginTop: 14 }}>
             <p style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 6 }}>Sisa Waktu Voting</p>

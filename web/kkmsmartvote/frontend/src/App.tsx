@@ -1,6 +1,8 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './hooks/useAuth'
+import VotingVerificationPage from './pages/VotingVerificationPage'
 import VoterPage from './pages/VoterPage'
+import OtpVotingPage from './pages/OtpVotingPage'
 import AdminLoginPage from './pages/AdminLoginPage'
 import AdminLayout from './pages/admin/AdminLayout'
 import Dashboard from './pages/admin/Dashboard'
@@ -27,8 +29,14 @@ function RequireAdmin({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <Routes>
-      {/* Public voter route */}
-      <Route path="/" element={<VoterPage />} />
+      {/* Public voter OTP route */}
+      <Route path="/otp" element={<OtpVotingPage />} />
+
+      {/* Public voter route - Email OTP verification */}
+      <Route path="/" element={<VotingVerificationPage />} />
+
+      {/* Fallback voter page (kept for backward compatibility) */}
+      <Route path="/vote" element={<VoterPage />} />
 
       {/* Admin login */}
       <Route path="/admin/login" element={<AdminLoginPage />} />

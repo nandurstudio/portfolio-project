@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\VoteController;
+use App\Http\Controllers\VotingController;
 use App\Http\Controllers\CandidateController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\AdminController;
@@ -15,9 +15,9 @@ use Illuminate\Support\Facades\Route;
 // Auth
 Route::post('/auth/admin/login', [AuthController::class, 'adminLogin']);
 
-// Voter verification & voting (no login required)
-Route::post('/voter/verify', [VoteController::class, 'verify']);
-Route::post('/voter/cast', [VoteController::class, 'cast']);
+// Voting with Email OTP (no login required)
+Route::post('/voting/request-otp', [VotingController::class, 'requestOtp']);
+Route::post('/voting/verify-otp', [VotingController::class, 'verifyOtp']);
 
 // Public data
 Route::get('/candidates', [CandidateController::class, 'publicIndex']);

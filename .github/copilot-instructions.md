@@ -1,13 +1,166 @@
 # Copilot Instructions for FolioFlix Portfolio
 
+---
+
+## 🔐 ⚠️ CRITICAL RULES - MANDATORY (April 5, 2026)
+
+**Authority:** Nandang Duryat | **Enforcement:** MANDATORY - Zero flexibility on rules 1-3
+
+### Rule 1: Git Commit Authorization Flow
+
+**BEFORE EVERY `git commit` OPERATION:**
+
+```
+Step 1: Analyze changes
+        git status --short
+
+Step 2: Show files to user
+        "📊 Files to commit:
+         ✓ file1
+         ✓ file2"
+
+Step 3: Show commit message
+        "📝 Commit message: 'message here'"
+
+Step 4: ASK FOR APPROVAL
+        "🔔 OK untuk di-commit? (Ketik: OK atau Y)"
+
+Step 5: WAIT FOR USER RESPONSE
+        If user says "OK" or "Y" → proceed
+        If user says "N" or anything else → STOP
+
+Step 6: Execute git commit
+        git commit -m "message"
+
+Step 7: Report success
+        "✅ Committed: [hash]"
+```
+
+**Violations:**
+
+- ❌ Committing without showing files first = VIOLATION
+- ❌ Committing without asking approval = VIOLATION
+- ❌ Committing without user confirmation = VIOLATION
+
+---
+
+### Rule 2: Context Window Management
+
+**WHEN context grows (>150 exchanges):**
+
+- Proactively re-read this section
+- Remind user: "📖 Context refresh recommended. Rules still apply."
+
+**TRIGGERS for immediate re-read:**
+
+- User says: "baca rules" → immediately reload
+- User says: "ingatkan aturan" → immediately reload
+- > 10 consecutive exchanges with git involved → ask to refresh
+- Before ANY destructive operation (reset, force-push, rm -rf)
+
+---
+
+### Rule 3: Source of Truth Workflow for koperasi-vote/kkmsmartvote
+
+**🔴 CRITICAL: ALWAYS edit portfolio repo FIRST, then sync to Laragon**
+
+**Portfolio Repo:** `E:\Portfolio Nandur\folioflix\web\kkmsmartvote\` ← SOURCE OF TRUTH
+**Laragon Testing:** `F:\laragon\www\koperasi-vote\` ← TESTING ONLY (read-only)
+
+**CORRECT WORKFLOW:**
+
+```
+Step 1: Make changes in PORTFOLIO REPO
+        ✅ Edit: E:\Portfolio Nandur\folioflix\web\kkmsmartvote\backend\...
+        📁 Location: Portfolio repo (git-tracked)
+
+Step 2: Test in Laragon (if needed)
+        ✅ Sync: .\scripts\sync-to-laragon.ps1
+        📁 Location: f:\laragon\www\koperasi-vote\ (testing only)
+        🧪 Run: .\scripts\run-local.ps1
+        ✔️ Verify API & UI work
+
+Step 3: Commit changes ONLY from portfolio repo
+        ✅ git add web/kkmsmartvote/...
+        ✅ git commit -m "..."
+        (NEVER commit files in F:\laragon\www\)
+
+Step 4: Deploy
+        ✅ Server pulls from portfolio repo
+        ✌️ Laragon is temporary testing copy
+```
+
+**VIOLATIONS (❌ NEVER DO):**
+
+- ❌ Edit files directly in `F:\laragon\www\koperasi-vote\`
+  → Changes will be lost when you sync next time!
+- ❌ Commit from Laragon directory
+  → Changes outside of git repo, not tracked
+- ❌ Make changes in portfolio repo AND Laragon separately
+  → Causes conflicts and confusion
+
+**IF USER EDITS IN LARAGON BY MISTAKE:**
+
+```
+⚠️ IMPORTANT NOTICE
+Changes detected in F:\laragon\www\koperasi-vote\ (not in portfolio repo)
+
+These changes will be OVERWRITTEN when syncing next time!
+
+🔔 Did you mean to edit:
+   E:\Portfolio Nandur\folioflix\web\kkmsmartvote\ instead?
+
+   Please:
+   1. Copy your changes from Laragon
+   2. Edit in portfolio repo
+   3. Sync again
+```
+
+---
+
+### Rule 4: No Destructive Actions Without Approval
+
+**OPERATIONS REQUIRING EXPLICIT APPROVAL:**
+
+- `git reset --hard` → Ask first
+- `git push --force` → Ask first
+- `git rebase -i` → Ask first
+- `rm -rf [folder]` → Ask first
+- Database drop/truncate → Ask first
+- Docker compose down → Ask first
+
+**Template:**
+
+```
+⚠️ DESTRUCTIVE OPERATION ALERT
+Operation: git reset --hard HEAD
+Impact: Will discard ALL uncommitted changes
+Files affected: X files
+
+🔔 CONFIRM? This cannot be undone. (Type: CONFIRM or N)
+```
+
+---
+
+### Rule 5: Keep Documentation Updated
+
+- Update `.github/copilot-instructions.md` when architecture changes
+- Keep `docs/LARAGON-LOCAL-TESTING.md` current
+- Document status in project README
+
+---
+
 ## Project Overview
+
 FolioFlix is Nandang Duryat's personal portfolio website with a Docker-based microservices architecture:
+
 - **Frontend**: Static HTML5/CSS3/JS with Bootstrap 4, jQuery, WOW.js animations
 - **Backend**: Laravel 10 API + Flask microservices
 - **Automation**: n8n workflow automation with PostgreSQL backend
 - **Hosting**: DigitalOcean Ubuntu droplet (Singapore, 146.190.87.175) with Docker + nginx
 
 **Live URLs:**
+
 - Main Site: https://nandurstudio.com
 - n8n Automation: https://nandurstudio.com/n8n/ (Basic Auth: admin/password)
 - Laravel API: https://nandurstudio.com/api/*
@@ -21,6 +174,7 @@ FolioFlix is Nandang Duryat's personal portfolio website with a Docker-based mic
 ### Current Production Stack (Docker Compose)
 
 **9+ Services Running:**
+
 1. **nginx:1.24-alpine** - Reverse proxy, SSL termination, static files
 2. **php:8.3-fpm** (custom) - Laravel backend
 3. **mysql:8.0** - Laravel database
@@ -29,6 +183,7 @@ FolioFlix is Nandang Duryat's personal portfolio website with a Docker-based mic
 6. **n8nio/n8n:latest** - Workflow automation
 
 ### Frontend (Static Site)
+
 - **Entry Point**: `index.html` - Single-page application with smooth scrolling
 - **Key Sections**: Hero (typing effect), Portfolio (filter/modals), Contact form, Skills
 - **Build**: No build step; files served directly via nginx
@@ -37,9 +192,10 @@ FolioFlix is Nandang Duryat's personal portfolio website with a Docker-based mic
 ### Backend Services
 
 #### Laravel API (PHP 8.3 + MySQL 8.0)
+
 - **Framework**: Laravel 10 with Sanctum for API authentication
 - **Database**: MySQL 8.0 (container: portfolio_db)
-- **Key Routes**: 
+- **Key Routes**:
   - `GET /api/test` - Health check ✅
   - `POST /api/test` - Echo test ✅
   - `POST /api/messages` - Contact form (⚠️ has 302 redirect issue)
@@ -47,6 +203,7 @@ FolioFlix is Nandang Duryat's personal portfolio website with a Docker-based mic
 - **Path**: `/var/www/laravel` in php container → mapped from `/opt/stack/apps/laravel/`
 
 #### Flask API (Python 3.12)
+
 - **Framework**: Flask with Gunicorn WSGI server
 - **Routes**:
   - `GET /flask/` - Service info ✅
@@ -55,6 +212,7 @@ FolioFlix is Nandang Duryat's personal portfolio website with a Docker-based mic
 - **Path**: `/app` in flask container → mapped from `/opt/stack/apps/flask/`
 
 #### n8n Workflow Automation (Node.js + PostgreSQL 16)
+
 - **Database**: PostgreSQL 16-alpine (container: portfolio_postgres)
 - **Access**: https://nandurstudio.com/n8n/ (Basic Auth required)
 - **Features**:
@@ -76,6 +234,7 @@ FolioFlix is Nandang Duryat's personal portfolio website with a Docker-based mic
   - `DB_TYPE=postgresdb`
 
 ### Frontend-Backend Integration
+
 1. User fills contact form in HTML (`#contactpage`)
 2. jQuery validation in `assets/js/contact-form.js` validates fields
 3. AJAX POST to `/api/messages` (Laravel endpoint via nginx)
@@ -87,6 +246,7 @@ FolioFlix is Nandang Duryat's personal portfolio website with a Docker-based mic
 ## Critical Development Workflows
 
 ### SSH Access to DigitalOcean Droplet
+
 **Note:** ISP may block port 22 (SSH). Use Cloudflare WARP to bypass.
 
 ```bash
@@ -146,6 +306,7 @@ ssh portfolio-droplet "cd /opt/stack && curl -k https://localhost/n8n/healthz"
 ### Configuration Sync (Local ↔ Server)
 
 **Critical Files to Keep Synchronized:**
+
 1. `docker-compose.yml` - Container orchestration
 2. `services/nginx/conf.d/default.conf` - nginx routing
 
@@ -303,6 +464,7 @@ curl -X GET https://nandurstudio.com/n8n/healthz -u admin:password
 ## Project Structure & Key Files
 
 ### Production Server Structure (`/opt/stack/`)
+
 ```
 /opt/stack/
 ├── docker-compose.yml          # Container orchestration
@@ -344,6 +506,7 @@ curl -X GET https://nandurstudio.com/n8n/healthz -u admin:password
 ```
 
 ### Local Workspace Structure
+
 ```
 E:\Portfolio Nandur\folioflix\
 ├── index.html              # Main page HTML
@@ -394,23 +557,27 @@ E:\Portfolio Nandur\folioflix\
 ## Code Patterns & Conventions
 
 ### Contact Form Handling (Frontend → Backend)
+
 **Old Pattern** (deprecated): `contact-form.php` uses `$_POST` and `mail()` function
 **Current Pattern**: `contact-form.js` → Laravel API → Database
 
 Always use Laravel API for new features. The `contact-form.php` file is legacy but still referenced for email notifications.
 
 ### Frontend JavaScript Patterns
+
 - **jQuery-based**: No modern framework (Vue/React); uses jQuery 3.6.0
 - **Event Listeners**: Portfolio filter buttons use vanilla JS event delegation
 - **Animation**: WOW.js for scroll-triggered animations (`.wow`, `.fadeIn`, etc.)
 - **Styling Selectors**: `#dynamicName`, `.filterDiv`, `.filterbuttons`
 
 ### CSS Organization
+
 - **Utility Classes**: `super-classes.css` contains flex/grid/spacing helpers
 - **Responsive**: Mobile-first approach; breakpoints defined in `mobile.css`
 - **Bootstrap Integration**: Form components use Bootstrap 4 utilities
 
 ### Laravel Conventions
+
 - **Models**: Single model `Message` with mass-assignable `fillable` array
 - **Routing**: Grouped under `api` middleware; no resource routes needed yet
 - **Migrations**: Database agnostic; schemas in `database/migrations/`
@@ -419,11 +586,12 @@ Always use Laravel API for new features. The `contact-form.php` file is legacy b
 ## Important Integration Points & Gotchas
 
 ### SSH & Droplet Access
+
 - **Droplet IP**: 146.190.87.175 (Singapore region)
 - **SSH Port**: 22 (standard)
 - **Root User**: root with password authentication enabled
 - **SSH Key**: Ed25519 key at `~/.ssh/id_ed25519_portfolio`
-- **Access Method**: 
+- **Access Method**:
   - Preferred: DigitalOcean Console (web-based, no port blocking)
   - Alternative: SSH via key (if ISP allows port 22)
 - **ISP Note**: Port 22 may be blocked by ISP; use DigitalOcean Console if SSH times out
@@ -431,6 +599,7 @@ Always use Laravel API for new features. The `contact-form.php` file is legacy b
 ### Docker Services Configuration
 
 **Container Names:**
+
 - `portfolio_nginx` - Frontend + reverse proxy
 - `portfolio_php` - Laravel PHP-FPM
 - `portfolio_db` - MySQL 8.0
@@ -439,6 +608,7 @@ Always use Laravel API for new features. The `contact-form.php` file is legacy b
 - `portfolio_n8n` - n8n automation
 
 **Port Mappings:**
+
 - `80, 443` (nginx) - Public HTTP/HTTPS
 - `9000` (php) - Internal PHP-FPM
 - `3306` (mysql) - Internal MySQL
@@ -447,6 +617,7 @@ Always use Laravel API for new features. The `contact-form.php` file is legacy b
 - `5678` (n8n) - Internal n8n (no external port)
 
 **Environment Variables (docker-compose.yml):**
+
 ```yaml
 # MySQL
 MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_secure_pass}
@@ -514,7 +685,7 @@ location /n8nrest/ {
     proxy_set_header X-Forwarded-Proto $scheme;
     proxy_set_header Authorization $http_authorization;
     proxy_pass_header Authorization;
-    
+
     # WebSocket support for /rest/push
     proxy_http_version 1.1;
     proxy_set_header Upgrade $http_upgrade;
@@ -551,6 +722,7 @@ location /n8n/ {
 ```
 
 **Key nginx Settings:**
+
 - `Accept-Encoding: ""` - Prevents HTTP/2 protocol errors with compressed responses
 - `proxy_buffering off` - Streams large JavaScript files without delay
 - `proxy_http_version 1.1` - Required for WebSocket upgrade
@@ -559,6 +731,7 @@ location /n8n/ {
 ### Common Issues & Troubleshooting
 
 **Issue 1: n8n "Connection issue or server is down"**
+
 - **Symptom**: n8n UI loads but shows connection error
 - **Cause**: WebSocket `/n8nrest/push` getting 401 Unauthorized
 - **Solution**: Ensure nginx `/n8nrest/` location has:
@@ -571,34 +744,40 @@ location /n8n/ {
   ```
 
 **Issue 2: n8n assets fail to load (ERR_HTTP2_PROTOCOL_ERROR)**
+
 - **Symptom**: JavaScript/CSS files return protocol errors
 - **Cause**: nginx requesting compressed response, modifying Content-Length, HTTP/2 mismatch
 - **Solution**: Add `proxy_set_header Accept-Encoding "";` to force uncompressed
 
 **Issue 3: n8n assets stalled/pending**
+
 - **Symptom**: Large JS bundles stuck in "Pending" state
 - **Cause**: Default proxy buffering + timeout too short
 - **Solution**: Add `proxy_buffering off; proxy_read_timeout 60s;`
 
 **Issue 4: Laravel `/api/messages` returns 302 redirect**
+
 - **Symptom**: Contact form AJAX gets redirect instead of JSON
 - **Cause**: Middleware or validation logic issue
 - **Status**: Under investigation
 - **Workaround**: Use `/api/test` endpoint for testing
 
 **Issue 5: Docker container not starting**
+
 - **Check logs**: `sudo docker compose logs [service] --tail=50`
 - **Check status**: `sudo docker compose ps`
 - **Rebuild**: `sudo docker compose build --no-cache [service]`
 - **Restart**: `sudo docker compose restart [service]`
 
 **Issue 6: Configuration sync drift**
+
 - **Symptom**: Local and server configs don't match
 - **Check**: `fc.exe docker-compose.yml docker-compose.yml.server-backup`
 - **Download**: `scp portfolio-droplet:/opt/stack/docker-compose.yml docker-compose.yml`
 - **Upload**: `scp docker-compose.yml portfolio-droplet:/tmp/ && ssh portfolio-droplet "cd /opt/stack && sudo mv /tmp/docker-compose.yml ."`
 
 ### CORS Configuration
+
 - Laravel `config/cors.php`:
   - Ensure frontend domain is whitelisted for `/api/messages` POST requests
   - Allowed origins: `https://nandurstudio.com`
@@ -606,21 +785,25 @@ location /n8n/ {
   - Credentials: Supported
 
 ### Database Migrations
+
 - Always create migration for schema changes: `php artisan make:migration`
 - Current migration path: `backend/database/migrations/`
 - Run on server: `sudo docker compose exec php php artisan migrate --force`
 
 ### Contact Form Fields Mismatch
+
 - Frontend HTML fields: `name`, `phone`, `emailHelp` (NOT standard), `subject`, `comments`
 - Backend Message model expects: `name`, `email`, `subject`, `message`
 - **Mismatch Note**: Frontend `emailHelp` → backend `email`; frontend `comments` → backend `message`
 
 ### Authentication
+
 - **n8n**: Basic Auth (admin/password) - Change password via environment variable
 - **Laravel**: Sanctum API token authentication (configured, not yet used)
 - **SSH**: Ed25519 key authentication + password authentication enabled
 
 ### Static Assets
+
 - Images live in `assets/image/` (local) → `/var/www/html/assets/image/` (nginx container)
 - Reference relative paths: `assets/image/portfolio-model-img1.jfif`
 - No asset versioning; rely on browser cache busting if needed
@@ -628,10 +811,12 @@ location /n8n/ {
 ## Git Workflow & Deployment
 
 ### Branching
+
 - **Production**: `prod` branch (main development branch)
 - **Deployment**: Push to `prod` → SSH to server → `git pull` → restart services
 
 ### Working with `undangan/` (separate repo)
+
 - `undangan/` is a separate Git repository (remote: `nandurstudio/undangan`) and is listed in the root `.gitignore`.
 - Workflow:
   - Edit files inside `undangan/` as normal.
@@ -646,6 +831,7 @@ location /n8n/ {
   - Local git hook (warning-only): `.githooks/pre-commit` — enable with `git config core.hooksPath .githooks`
 
 #### KKM Smart Vote / kkmsmartvote.web.id (hosting & deploy) 🆕
+
 - Purpose & live URL: Smart voting platform for KKM (Ketua Komisi Moral/Komisi Mahasiswa) — deployed at `https://kkmsmartvote.web.id`.
 - Source & server paths:
   - Local repo: `web/kkmsmartvote/` (part of main portfolio-project repo).
@@ -660,7 +846,7 @@ location /n8n/ {
     - `database/migrations/` — Schema: users, members, candidates, votes, settings
     - `composer.json` — Laravel 11.48.0, JWT auth (lcobucci/jwt 4.0.4), dependencies
   - `web/kkmsmartvote/frontend/` — Vite + Node.js frontend (voting UI)
-    - `src/` —  React/Vue components, pages, utilities
+    - `src/` — React/Vue components, pages, utilities
     - `vite.config.ts` — Build configuration with API proxy
     - `package.json` — 96 dependencies (React, Vite, etc.)
     - `nginx.conf` — Frontend routing config (backed up, needs integration)
@@ -686,11 +872,12 @@ location /n8n/ {
      sudo chown root:root services/nginx/ssl/kkmsmartvote.* && sudo chmod 640 services/nginx/ssl/kkmsmartvote.privkey.pem
      ```
   5. Deploy to server:
+
      ```bash
      scp -r web/kkmsmartvote portfolio-droplet:/tmp/
      scp docker-compose.yml portfolio-droplet:/tmp/
      scp services/nginx/conf.d/default.conf portfolio-droplet:/tmp/
-     
+
      ssh portfolio-droplet
      cd /opt/stack
      sudo mv /tmp/kkmsmartvote web/
@@ -700,6 +887,7 @@ location /n8n/ {
      sudo docker compose exec nginx nginx -t
      curl -I https://kkmsmartvote.web.id
      ```
+
 - Verification checklist:
   1. DNS A record: `kkmsmartvote.web.id` → `146.190.87.175` (DigitalOcean IP)
   2. SSL certificate: `/etc/nginx/ssl/kkmsmartvote.fullchain.pem` and `privkey.pem` present
@@ -725,7 +913,93 @@ location /n8n/ {
   - ⏳ Next: Deploy actual application code to server, database migration, testing
   - 📝 Remaining: Merge backend docker-compose, integrate frontend routing in nginx
 
+##### OTP Voting System (Email-based Verification)
+
+**Architecture:**
+
+- 3-step flow: Email input → OTP sent via Brevo SMTP → OTP verification → Get voting JWT token
+- Email-based system with 300/day quota (Brevo free tier limit)
+- Daily auto-reset at midnight using `whereDate('created_at', today())`
+
+**Email Service (Brevo SMTP):**
+
+```
+MAIL_HOST=smtp-relay.brevo.com
+MAIL_PORT=587
+MAIL_USERNAME=a729fa001@smtp-brevo.com (Brevo-generated SMTP login, NOT account email)
+MAIL_PASSWORD=REMOVED_FOR_SECURITY (SMTP-specific key)
+MAIL_FROM_ADDRESS=nandang.dhe@gmail.com (account email, must be verified as sender in Brevo)
+MAIL_ENCRYPTION=tls
+```
+
+**Critical Fix Applied:**
+
+- Removed invalid `'sent_at' => now()` from `EmailOtp::create()` — this column doesn't exist in schema
+- Schema has only: email, member_id, otp_code, expires_at, attempts, is_used, created_at, updated_at
+
+**Local Development Workflow (Laragon):**
+
+1. **Edit in portfolio repo FIRST** (source of truth):
+
+   ```powershell
+   # Edit at: E:\Portfolio Nandur\folioflix\web\kkmsmartvote\
+   # ✅ backend/app/Http/Controllers/VotingController.php
+   # ✅ frontend/src/pages/VotingVerificationPage.tsx
+   # ✅ backend/.env (mail configuration)
+   ```
+
+2. **Sync to Laragon:**
+
+   ```powershell
+   cd "E:\Portfolio Nandur\folioflix\web\kkmsmartvote"
+   .\run-and-sync.ps1
+   # This syncs: portfolio → F:\laragon\www\koperasi-vote
+   # Then starts backend (port 8000) + frontend (port 5173)
+   ```
+
+3. **Test OTP flow:**
+   - Frontend: http://localhost:5173/otp
+   - Backend API: http://localhost:8000/api/voting/request-otp
+   - Expected 15-minute countdown timer after OTP sent
+
+**Troubleshooting 500 Errors:**
+
+| Symptom                          | Cause                          | Solution                                                                                    |
+| -------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------- |
+| 500 on `/api/voting/request-otp` | Composer vendor missing        | Run: `cd backend && composer install --ignore-platform-reqs` (missing openssl, fileinfo)    |
+| 500 on `/api/voting/request-otp` | Database table doesn't exist   | Script auto-runs migrations, if not: `php artisan migrate --force`                          |
+| 500 on `/api/voting/request-otp` | Mail config wrong in .env      | Verify `.env` has correct Brevo credentials (username ≠ account email, password = SMTP key) |
+| CORS error on request            | API proxy not working          | Check `vite.config.ts` has correct proxy config pointing to `http://localhost:8000/api`     |
+| Frontend won't start (npm error) | node_modules corrupted         | Delete `frontend/node_modules` folder, re-run `.\run-and-sync.ps1`                          |
+| Timer shows 0:00 immediately     | Timestamp calculation issue    | Frontend uses `Date.now() + (expiresIn * 1000)` for reliable countdown                      |
+| OTP not delivered to email       | Brevo quota exceeded (300/day) | Wait until next day, or check daily quota isn't reached                                     |
+
+**Files to Monitor (Portfolio Repo):**
+
+- `web/kkmsmartvote/backend/app/Http/Controllers/VotingController.php` (requestOtp + verifyOtp methods)
+- `web/kkmsmartvote/backend/resources/views/emails/voting-otp.blade.php` (email template)
+- `web/kkmsmartvote/frontend/src/pages/VotingVerificationPage.tsx` (3-step form with timer)
+- `web/kkmsmartvote/backend/.env` (mail configuration)
+- `web/kkmsmartvote/frontend/vite.config.ts` (API proxy)
+
+**Database Schema (EmailOtp table):**
+
+```sql
+CREATE TABLE email_otps (
+    id BIGINT PRIMARY KEY,
+    email VARCHAR(255),
+    member_id BIGINT NULLABLE,
+    otp_code VARCHAR(255) -- hashed with Hash::make()
+    expires_at TIMESTAMP,
+    attempts INT DEFAULT 0,
+    is_used BOOLEAN DEFAULT false,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
+);
+```
+
 #### Undangan / kkmrat.web.id (hosting & deploy) 🔧
+
 - Purpose & live URL: public digital invitation site deployed from the `undangan/` repo — live at `https://kkmrat.web.id`.
 - Source & server paths:
   - Local repo: `undangan/` (separate Git repo, intentionally ignored by main workspace).
@@ -751,7 +1025,7 @@ location /n8n/ {
 - Recent fixes (applied):
   - Imported provided SQL dump `web/kkmrat/sql_tables/db_undangan_rat.sql` into `db_undangan_rat` and verified table counts (tr_tamu=72, tr_ucapan=70).
   - Fixed production SQL error (ONLY_FULL_GROUP_BY) in `web/kkmrat/index.php` — corrected aggregated SELECT (use `COALESCE(SUM(...))`, removed non-aggregated column) so the query is MySQL 8 compatible.
-  - Created `undangan/.env.sample` and merged runtime `.env` values to server `/opt/stack/.env` (KKMRAT_*); deployment scripts now respect `.env.kkmrat`.
+  - Created `undangan/.env.sample` and merged runtime `.env` values to server `/opt/stack/.env` (KKMRAT\_\*); deployment scripts now respect `.env.kkmrat`.
   - Removed tracked `vendor/` from the `undangan/` repo and added `vendor/` to `.gitignore` (keep vendor locally for Laragon).
   - Replaced Windows junction/symlink with a proper `undangan/` Git repository in the workspace.
   - Rebuilt `services/php` with `mysqli` enabled (fixes mysqli runtime errors).
@@ -761,6 +1035,7 @@ location /n8n/ {
   - Site status: live at `https://kkmrat.web.id` (HTTP 200). Production bug fixed and verified.
 
 **Maintenance actions added:**
+
 - Parameterized `create-undangan-db.sh` to read `KKMRAT_*` from `/opt/stack/.env` and refuse to run with placeholder credentials. ✅
 - `deploy-undangan.sh` / `deploy-undangan.ps1` now validate `.env.kkmrat` placeholders, support `--import-sql`/`-ImportSql`, and avoid logging secret values. ✅
 - `create-junctions-and-hosts.ps1`, `deploy.sh`, and `server-setup.sh` are now marked DEPRECATED (legacy). ✅
@@ -770,10 +1045,11 @@ location /n8n/ {
 - Troubleshooting (common symptoms):
   - "Call to undefined function mysqli_connect()" → rebuild PHP image with `mysqli`.
   - "Access denied for user 'kkmrat_user'" → run `./scripts/deploy-undangan.sh --create-db` or `scripts/create-undangan-db.sh`.
-  - "Table 'db_undangan_rat.*' doesn't exist" → import `web/kkmrat/sql_tables/db_undangan_rat.sql`.
+  - "Table 'db_undangan_rat.\*' doesn't exist" → import `web/kkmrat/sql_tables/db_undangan_rat.sql`.
 - Security note: rotate default passwords, keep `.env.kkmrat` out of git, and store secrets only in `/opt/stack/.env` or a secrets manager.
 
 ### Commit Conventions
+
 - Descriptive messages: `"Feature: Add admin dashboard"`, `"Fix: Contact form CORS"`, `"Config: Update n8n WebSocket auth"`
 - Atomic commits: One logical change per commit
 
@@ -829,6 +1105,7 @@ alias deploy-undangan='./scripts/deploy-undangan.sh --create-db'
 ```
 
 What the scripts do:
+
 1. Upload `undangan/` site files to the server path `/opt/stack/web/kkmrat`.
 2. Upload local `docker-compose.yml` and `services/nginx/conf.d/default.conf` (if present).
 3. Add/replace `KKMRAT_DB_USER`, `KKMRAT_DB_PASS`, `KKMRAT_DB_NAME`, `KKMRAT_AES_KEY` in `/opt/stack/.env` (reads local `.env.kkmrat` if present).
@@ -869,10 +1146,11 @@ curl -I https://kkmrat.web.id
 - Renewal: `certbot renew` will update `/etc/letsencrypt` — add a cron hook to copy renewed certs into `/opt/stack/services/nginx/ssl/` or mount `/etc/letsencrypt` into the nginx container (advanced).
 
 Security & safety:
+
 - `./scripts/.env.kkmrat` is supported for local secrets (do not commit; `.gitignore` already excludes `.env.*`).
 - Scripts are idempotent for files and will not overwrite unrelated server config without moving uploaded files into place.
 
-```
+````
 ## Quick Reference Commands
 
 ### Daily Operations
@@ -898,7 +1176,7 @@ scp portfolio-droplet:/opt/stack/services/nginx/conf.d/default.conf services/ngi
 
 # Verify sync
 fc.exe docker-compose.yml docker-compose.yml.server-backup
-```
+````
 
 ### Emergency Procedures
 
@@ -970,6 +1248,7 @@ curl -I https://nandurstudio.com/
 - No load balancing (single nginx instance)
 
 ## Future Architecture Plans
+
 - **Blog/Articles**: Dynamic content management (CRUD)
 - **Admin Panel**: Authentication & dashboard for managing messages & portfolio items
 - **Testimonials**: Dynamic section with database storage
@@ -979,6 +1258,7 @@ curl -I https://nandurstudio.com/
 - **AI Chatbot**: Ollama + LangChain RAG system with n8n orchestration for PDF-based Q&A
 
 ## Documentation References
+
 - [README.md](../README.md) - Main project documentation
 - [PROJECT-STRUCTURE.md](../docs/PROJECT-STRUCTURE.md) - Project organization
 - [SourceOfTruth.md](../docs/SourceOfTruth.md) - Authoritative project state
@@ -990,5 +1270,5 @@ curl -I https://nandurstudio.com/
 
 ---
 
-**Last Updated:** February 16, 2026  
+**Last Updated:** February 16, 2026
 **Maintainer:** Nandang Duryat (founder@nandurstudio.com)

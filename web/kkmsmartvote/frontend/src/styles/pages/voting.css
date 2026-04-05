@@ -1,0 +1,361 @@
+/**
+ * Voting Pages Styling
+ * For: VotingVerificationPage, VotingPage, ResultsPage
+ */
+
+.voting-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #333;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Header */
+.voting-header {
+  background: rgba(255, 255, 255, 0.98);
+  padding: 2rem 1rem;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border-bottom: 4px solid #667eea;
+}
+
+.voting-header h1 {
+  margin: 0;
+  font-size: 2.5rem;
+  color: #667eea;
+  font-weight: 700;
+}
+
+.voting-header h2 {
+  margin: 0.5rem 0 0 0;
+  font-size: 1.1rem;
+  color: #666;
+  font-weight: 500;
+}
+
+/* Main Content */
+.voting-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+/* Form Card */
+.form-card {
+  width: 100%;
+  max-width: 500px;
+  background: white;
+  border-radius: 16px;
+  padding: 2.5rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.4s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.form-step h3 {
+  font-size: 1.5rem;
+  margin: 0 0 1.5rem 0;
+  color: #333;
+  text-align: center;
+}
+
+/* Step Indicator */
+.step-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e0e0e0;
+  color: #666;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.step-number.active {
+  background: #667eea;
+  color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.step-label {
+  color: #666;
+  font-weight: 500;
+}
+
+/* Form Groups */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.input-field {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.input-field:disabled {
+  background: #f5f5f5;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.otp-input {
+  font-size: 1.5rem;
+  letter-spacing: 0.5rem;
+  text-align: center;
+  font-weight: 600;
+  font-family: "Courier New", monospace;
+  text-transform: uppercase;
+}
+
+/* Email Info */
+.email-info {
+  background: #f0f4ff;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid #667eea;
+}
+
+.email-info p {
+  margin: 0.5rem 0;
+  font-size: 0.95rem;
+  color: #555;
+}
+
+.email-info strong {
+  color: #333;
+}
+
+.timer-text {
+  font-weight: 600;
+  color: #667eea;
+}
+
+.timer-warning {
+  color: #ff6b6b;
+  font-weight: 700;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Buttons */
+.btn {
+  width: 100%;
+  padding: 0.875rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.75rem;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background: #f0f0f0;
+  color: #333;
+  border: 2px solid #ddd;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #e8e8e8;
+  border-color: #667eea;
+  color: #667eea;
+}
+
+.btn-lg {
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+}
+
+/* Help Text */
+.help-text {
+  background: #fffacd;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-top: 1.5rem;
+  border-left: 4px solid #ffd700;
+}
+
+.help-text p {
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.help-text ul {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.help-text li {
+  margin: 0.3rem 0;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+/* Footer */
+.voting-footer {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 1.5rem 1rem;
+  text-align: center;
+  border-top: 2px solid #e0e0e0;
+  margin-top: auto;
+}
+
+.voting-footer p {
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.help-contact {
+  font-size: 0.85rem;
+  color: #888;
+  font-style: italic;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .voting-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .form-card {
+    padding: 1.5rem;
+    max-width: 100%;
+  }
+
+  .form-step h3 {
+    font-size: 1.3rem;
+  }
+
+  .input-field {
+    padding: 0.65rem 0.875rem;
+  }
+
+  .btn {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .voting-container {
+    padding: 0;
+  }
+
+  .voting-header {
+    padding: 1.5rem 0.75rem;
+  }
+
+  .voting-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .voting-header h2 {
+    font-size: 1rem;
+  }
+
+  .voting-main {
+    padding: 1rem 0.75rem;
+  }
+
+  .form-card {
+    padding: 1.25rem;
+    border-radius: 12px;
+  }
+}
+
+/* Loading State */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.btn:disabled::after {
+  content: "⟳";
+  margin-left: 0.5rem;
+  display: inline-block;
+  animation: spin 0.8s linear infinite;
+}

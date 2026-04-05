@@ -35,10 +35,10 @@ $Excludes = @("/E", "/XD", "node_modules", "vendor", ".git", ".env", "*.lock", "
 # Full sync (dengan dependencies)
 if ($Full) {
     Write-Host "📦 Full sync (with dependencies)..." -ForegroundColor Yellow
-    robocopy $Source $Dest /E /MT:16
+    robocopy $Source $Dest /E /MT:16 /PURGE
 } else {
-    # Regular sync (exclude node_modules & vendor)
-    robocopy $Source $Dest /E /XD node_modules vendor .git /XF *.lock .env | Select-Object -Last 10
+    # Regular sync (exclude node_modules & vendor) - also delete files not in source
+    robocopy $Source $Dest /E /XD node_modules vendor .git /XF *.lock .env /PURGE | Select-Object -Last 10
 }
 
 Write-Host "✅ Sync complete!" -ForegroundColor Green
