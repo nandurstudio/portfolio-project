@@ -1,5 +1,18 @@
-# Sync koperasi-vote dari portfolio repo ke Laragon
+# ⚡ SYNC SCRIPT: koperasi-vote portfolio repo → Laragon testing
+#
+# 🔴 CRITICAL RULE:
+#    Portfolio repo (Source) → Laragon (Testing only)
+#    EDIT IN PORTFOLIO REPO FIRST, then sync to Laragon!
+#
+#    Source (EDIT HERE):    e:\Portfolio Nandur\folioflix\web\kkmsmartvote\
+#    Testing (COPY TO):     f:\laragon\www\koperasi-vote\
+#
+#    ❌ NEVER edit files directly in Laragon directory!
+#       Changes will be overwritten by sync!
+#
 # Usage: .\scripts\sync-to-laragon.ps1
+#        .\scripts\sync-to-laragon.ps1 -Full (include dependencies)
+#        .\scripts\sync-to-laragon.ps1 -Watch (auto-sync on changes)
 
 param(
     [switch]$Full = $false,
@@ -38,13 +51,13 @@ if ($Watch) {
     $Watcher.Filter = "*.*"
     $Watcher.IncludeSubdirectories = $true
     $Watcher.NotifyFilter = [System.IO.NotifyFilters]::LastWrite
-    
+
     $Action = {
         if ($Event.SourceEventArgs.FullPath -notmatch '(node_modules|vendor|.git|\.lock|\.env)') {
             Write-Host "📝 Changed: $($Event.SourceEventArgs.Name)" -ForegroundColor Gray
             $RelPath = $Event.SourceEventArgs.FullPath.Replace($Source, '')
             $DestPath = Join-Path $Dest $RelPath
-            
+
             if ((Get-Item $Event.SourceEventArgs.FullPath).PSIsContainer) {
                 New-Item -ItemType Directory -Path $DestPath -Force | Out-Null
             } else {
@@ -53,10 +66,10 @@ if ($Watch) {
             }
         }
     }
-    
+
     Register-ObjectEvent $Watcher "Changed" -Action $Action | Out-Null
     Write-Host "🛑 Press Ctrl+C to stop watching" -ForegroundColor Yellow
-    
+
     while ($true) {
         Start-Sleep -Seconds 1
     }
