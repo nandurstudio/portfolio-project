@@ -12,9 +12,10 @@ return new class extends Migration {
             $table->string('name');
             $table->string('username')->unique();
             $table->string('password');
-            $table->enum('role', ['admin', 'panitia'])->default('panitia');
+            $table->enum('role', ['super_admin', 'admin', 'panitia', 'saksi_forensik']);
             $table->rememberToken();
-            $table->timestamps();
+            $table->timestamp('created_at')->useCurrent();
+            $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
         });
     }
 

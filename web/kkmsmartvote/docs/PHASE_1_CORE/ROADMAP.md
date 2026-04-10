@@ -10,49 +10,45 @@
 
 ---
 
-## 🎯 **Feature 1: Saksi Role (2-3 days)**
+## 🎯 **Feature 1: Saksi Forensik Role (2-3 days)**
 
 ### Database Tasks (Day 1)
-- [ ] Create migration: `add_saksi_role_to_users_table`
-  ```php
-  // Old: role = 'admin' | 'panitia'
-  // New: role = 'admin' | 'panitia' | 'saksi'
-  ```
+- [ ] Verify `users.role` includes `saksi_forensik`
 - [ ] Verify deployment to production
 
 ### Backend Tasks (Day 1-2)
 - [ ] Update User model (role enum validation)
 - [ ] Update AuthController
-  - Support 'saksi' role login
+  - Support 'saksi_forensik' role login
   - Return correct role in JWT token
 - [ ] Create SaksiController
   - GET /api/members/voted-only (filtered query)
   - Only expose voted members + timestamp
 - [ ] Update authorization middleware
-  - `role:admin,panitia` → `role:admin,panitia,saksi`
+  - `role:admin,panitia` → `role:admin,panitia,saksi_forensik`
 - [ ] Update audit logging
   - Log "SAKSI_LOGIN" actions
 
 ### Frontend Tasks (Day 2)
-- [ ] Create SaksiLoginPage component
+- [ ] Create SaksiForensikLoginPage component
   - Reuse AdminLoginPage logic
   - Same form, same validation
 - [ ] Update AdminLayout sidebar
   - Show conditional menu based on role
-  - Saksi: Hide Users, Settings, Vouchers menu
-  - Saksi: Show Dashboard, Candidates, Members (voted), Votes, Results
+  - Saksi Forensik: Hide Users, Settings, Vouchers menu
+  - Saksi Forensik: Show Dashboard, Candidates, Members (voted), Votes, Results
 - [ ] Update MembersPage component
   - Add role check
-  - If saksi: Hide "Add" button, show only voted members
-  - If saksi: Hide edit/delete buttons
+  - If saksi_forensik: Hide "Add" button, show only voted members
+  - If saksi_forensik: Hide edit/delete buttons
 - [ ] Create API call for voted members only
   - Update Zustand store to handle role-based filtering
 
 ### Testing (Day 3)
-- [ ] Unit tests: Saksi authorization middleware
-- [ ] Integration tests: Saksi login flow
+- [ ] Unit tests: Saksi Forensik authorization middleware
+- [ ] Integration tests: Saksi Forensik login flow
 - [ ] E2E tests:
-  - Login as saksi
+  - Login as saksi_forensik
   - Verify cannot see unvoted members
   - Verify cannot see edit forms
   - Verify can see results & audit logs
@@ -93,7 +89,7 @@
   - Include `status` per candidate
   - Include `qualified` boolean
 - [ ] Update election settings (if storing method)
-  - Add `voting_method` field (for future reference)
+  - Keep election settings aligned with current schema fields only
 - [ ] Test calculation with edge cases
   - Exactly 50% (should NOT be winner)
   - 50%+1 exactly (should be winner)
@@ -208,7 +204,7 @@
 ```
 Week 1 (Apr 2-9)
 │
-├─ [SAKSI ROLE]━━━━━━━━━━━━━━━━ 2-3 days ✓
+├─ [SAKSI FORENSIK ROLE]━━━━━━━ 2-3 days ✓
 │  ├─ DB Migration (Day 1)
 │  ├─ Backend Auth (Day 1-2)
 │  └─ Frontend UI (Day 2)
@@ -239,13 +235,13 @@ Week 3 (Apr 16-23)
 ## 👥 **Team Assignment**
 
 ### Backend Developer (Primary)
-- Saksi: Auth & Authorization (1.5 days)
+- Saksi Forensik: Auth & Authorization (1.5 days)
 - 50%+1: Calculation logic (1.5 days)
 - Voucher: CRUD & Validation (2 days)
 - **Total:** ~5 days
 
 ### Frontend Developer (Primary)
-- Saksi: UI components & filters (1 day)
+- Saksi Forensik: UI components & filters (1 day)
 - 50%+1: Display logic & updates (1.5 days)
 - Voucher: Pages & modals (2 days)
 - **Total:** ~4.5 days
@@ -266,18 +262,18 @@ Week 3 (Apr 16-23)
 Daily 10am standup
 
 ✅ What I completed yesterday
-- Saksi database migration
+- Saksi Forensik role verification
 - AuthController update
 
 🚧 What I'm working on today
-- SaksiLoginPage component
-- Test Saksi authorization
+- SaksiForensikLoginPage component
+- Test Saksi Forensik authorization
 
 🚫 Blockers
 - None
 
 ⏰ ETA for next task
-- SaksiLoginPage done by EOD
+- SaksiForensikLoginPage done by EOD
 ```
 
 ---

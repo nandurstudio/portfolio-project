@@ -18,6 +18,12 @@ Route::post('/auth/admin/login', [AuthController::class, 'adminLogin']);
 // Voting with Email OTP (no login required)
 Route::post('/voting/request-otp', [VotingController::class, 'requestOtp']);
 Route::post('/voting/verify-otp', [VotingController::class, 'verifyOtp']);
+Route::get('/voting/member-lookup/{nik}', [VotingController::class, 'memberLookup']);
+Route::get('/voting/sites', [VotingController::class, 'sites']);
+Route::get('/voting/candidates-with-details', [VotingController::class, 'candidatesWithDetails']);
+Route::get('/voting/election-status', [VotingController::class, 'electionStatus']);
+Route::post('/voting/submit', [VotingController::class, 'submitVote']);
+Route::post('/voting/voucher/gopay', [VotingController::class, 'updateVoucherGopay']);
 
 // Public data
 Route::get('/candidates', [CandidateController::class, 'publicIndex']);
@@ -32,7 +38,7 @@ Route::middleware('jwt.auth')->group(function () {
     Route::get('/auth/me', [AuthController::class, 'me']);
 
     // Admin + Panitia
-    Route::middleware('role:admin,panitia')->group(function () {
+    Route::middleware('role:super_admin,admin,panitia')->group(function () {
         Route::get('/admin/dashboard', [AdminController::class, 'dashboard']);
 
         // Candidates
@@ -42,6 +48,7 @@ Route::middleware('jwt.auth')->group(function () {
 
         // Members
         Route::get('/admin/members', [MemberController::class, 'index']);
+        Route::get('/admin/members/by-nik/{nik}', [MemberController::class, 'findByNik']);
         Route::post('/admin/members', [MemberController::class, 'store']);
 
         // Votes
@@ -53,13 +60,15 @@ Route::middleware('jwt.auth')->group(function () {
     });
 
     // Admin only
-    Route::middleware('role:admin')->group(function () {
+    Route::middleware('role:super_admin,admin')->group(function () {
         Route::delete('/admin/candidates/{id}', [CandidateController::class, 'destroy']);
+        Route::post('/admin/candidates/{id}/upload-photo', [CandidateController::class, 'uploadPhoto']);
         Route::post('/admin/votes/{id}/invalidate', [AdminController::class, 'invalidateVote']);
         Route::post('/admin/election/finalize', [AdminController::class, 'finalize']);
         Route::put('/admin/election/settings', [ElectionSettingController::class, 'update']);
 
         // Users
+        Route::get('/admin/users/meta', [UserController::class, 'meta']);
         Route::get('/admin/users', [UserController::class, 'index']);
         Route::post('/admin/users', [UserController::class, 'store']);
         Route::put('/admin/users/{id}', [UserController::class, 'update']);

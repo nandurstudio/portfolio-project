@@ -1,8 +1,8 @@
 # 🎯 KKM Smart Vote - START HERE
 
 **Live URL:** https://kkmsmartvote.web.id
-**Status:** ✅ MVP Complete | 🚀 Phase 1 Ready
-**Last Updated:** April 5, 2026
+**Status:** MVP Stabilization Complete | Landing Page Phase Started
+**Last Updated:** April 8, 2026
 
 ---
 
@@ -17,6 +17,7 @@
 1. Check: [PHASE_1_CORE/ROADMAP.md](./PHASE_1_CORE/ROADMAP.md) - Task breakdown
 2. Check: [PHASE_1_CORE/UI_PAGES.md](./PHASE_1_CORE/UI_PAGES.md) - UI/UX reference
 3. Check: [DATABASE_API/SCHEMA.md](./DATABASE_API/SCHEMA.md) - Data structure
+4. Check: [PHASE_2_NEXT/LANDING_PAGE_ROADMAP_V2.md](./PHASE_2_NEXT/LANDING_PAGE_ROADMAP_V2.md) - Landing page execution plan
 
 ### 📊 **If You're MANAGING**
 1. Read: [PHASE_1_CORE/STATUS.md](./PHASE_1_CORE/STATUS.md) - Current status
@@ -59,22 +60,52 @@ Frontend (Vite + React)          Backend (Laravel 11)
 
 ---
 
-## 🚀 **What's Next (Phase 1 - 2-3 weeks)**
+## 📍 **Current Progress Snapshot (April 8, 2026)**
 
-### 🎁 **Feature 1: Voucher System** (Week 1-2)
-- Give rewards to voters
-- One-time use, expiration tracking
-- Redemption audit trail
+### Completed
+- OTP 2-layer flow stabilized (request OTP -> verify OTP -> member lookup).
+- Route cleanup done (legacy/duplicate page imports removed).
+- Unauthorized access guard for `/vote` improved (clear message + auto-redirect).
+- Core docs updated and centralized in `docs/`.
+- Landing page public route active on `/` with dedicated OTP entry on `/otp`.
+- Landing UI status badge + hero candidate dummy + single-link footer implemented.
+- Landing reward notice implemented with prepared setting model (`reward_enabled`, `reward_text`) and dummy fallback.
+- Landing page roadmap v2 finalized, including:
+    - state flow (`coming_soon`, `open`, `closed`),
+    - mini activity log public,
+    - SEO metadata + OG image strategy,
+    - footer watermark branding.
 
-### 👤 **Feature 2: Saksi (Witness) Role** (Week 1)
-- New role with view-only access
-- See voted members, results, audit logs
-- Cannot edit/delete anything
+### In Progress
+- Landing page implementation as first execution priority.
+- Admin-driven event settings contract finalization.
 
-### 🏆 **Feature 3: Voting Method 50%+1** (Week 1)
-- Winner = Most votes + 50%+1 of total
-- Handle TIE & NO_MAJORITY scenarios
-- Display clearly on results page
+### Next Priority (Execution Order)
+1. Landing page state-driven UI (public first).
+2. Admin settings for event state/timeline/content/SEO.
+3. Activity log public module (top 10 + collapsible + pagination).
+4. Server-side vote gate hardening per state & time window.
+
+---
+
+## 🚀 **What's Next (Execution Focus)**
+
+### Phase A: Landing Page First
+- Build state-based public landing (`coming_soon`, `open`, `closed`).
+- Integrate dynamic countdown logic from admin settings.
+- Add candidate cards + agenda block + watermark footer.
+- Add SEO meta, Open Graph, Twitter card, and event-driven og:image.
+
+### Phase B: Admin Controls for Landing
+- Election settings (status, start, duration, end, announcement).
+- Landing content settings (hero text, countdown toggle, activity log toggle).
+- SEO settings (title, description, og title/description/image, canonical).
+- Invitation settings (offline/online/hybrid + invited users).
+
+### Phase C: Public Activity + Post-Vote Event
+- Mini activity log (top 10, collapsible, simple pagination).
+- Closed state turnout percentage and countdown to announcement event.
+- Invitation highlight: offline invited users vs online invited users.
 
 ---
 
@@ -94,6 +125,7 @@ docs/
 │   └── UI_PAGES.md                ← UI/UX documentation
 │
 ├── PHASE_2_NEXT/
+│   ├── LANDING_PAGE_ROADMAP_V2.md ← Landing page execution blueprint
 │   └── FEATURES.md                ← Notifications & Real-time
 │
 └── DATABASE_API/
@@ -106,9 +138,31 @@ docs/
 ## 🎯 **Key Decisions Made**
 
 1. ✅ **Voting Method:** Qualified Majority (50%+1) - More fair
-2. ✅ **Phase 1 Focus:** Voucher + Saksi + 50%+1 method
-3. ✅ **Timeline:** Start Apr 2, finish by Apr 23
-4. ✅ **Priority:** Saksi & 50%+1 first (simpler), then Voucher
+2. ✅ **Execution Priority:** Landing page first before next feature batch
+3. ✅ **State Model:** `coming_soon` -> `open` -> `closed` controlled by admin
+4. ✅ **Open State:** Voting countdown duration default 2 days from settings
+5. ✅ **Closed State:** Turnout progress + countdown to announcement event
+6. ✅ **Public Transparency:** Mini activity log (top 10, collapsible, pagination)
+7. ✅ **SEO Requirement:** Dynamic event metadata + Open Graph image + canonical
+8. ✅ **UI Requirement (Global):** Semua UI wajib full support multiple device (mobile/tablet/desktop)
+
+---
+
+## 📱 **Global UI Rule: Multi-Device Support (Mandatory)**
+
+Semua halaman UI (public + admin) wajib lolos standar responsive berikut:
+
+1. Mobile-first layout, tidak ada horizontal scroll di viewport utama.
+2. Breakpoint minimum yang diuji: `<= 480`, `481-768`, `769-1024`, `>1024`.
+3. Komponen inti tetap usable di touch device:
+    - tombol/aksi punya area klik memadai,
+    - form input tidak terpotong,
+    - modal bisa di-scroll dengan aman.
+4. Tabel data admin wajib punya fallback mobile:
+    - stacked cards, atau
+    - horizontal scroll terkontrol dengan sticky header minimum.
+5. Semua CTA penting tetap terlihat tanpa overlap pada layar kecil.
+6. Testing wajib lintas device sebelum status task dinyatakan done.
 
 ---
 
@@ -134,6 +188,12 @@ docs/
 
 ## 🚀 **Next Action**
 
+**Recommended immediate path (all roles):**
+
+1. Read [PHASE_2_NEXT/LANDING_PAGE_ROADMAP_V2.md](./PHASE_2_NEXT/LANDING_PAGE_ROADMAP_V2.md)
+2. Execute Landing Page First plan (Phase A)
+3. Continue to Phase B (Admin Controls) and Phase C (Activity + Announcement)
+
 **Choose your role:**
 
 👨‍💼 **Manager?**
@@ -150,6 +210,6 @@ docs/
 
 ---
 
-**Status:** Ready to start development! 🚀
-**Est. Phase 1 Duration:** 2-3 weeks
-**Difficulty:** Medium (mostly CRUD + role-based access)
+**Status:** Landing page-first execution is active
+**Current Focus:** Public landing + admin-driven state/SEO settings
+**Difficulty:** Medium-high (state orchestration + SEO + server-side gate)

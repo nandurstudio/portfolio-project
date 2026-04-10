@@ -7,40 +7,28 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        // Add email to members table
-        Schema::table('members', function (Blueprint $table) {
-            $table->string('email')->nullable()->after('name');
-            $table->index('email');
-        });
-
-        // Create email_otps table for OTP storage
         Schema::create('email_otps', function (Blueprint $table) {
             $table->id();
             $table->string('email');
-            $table->unsignedBigInteger('member_id')->nullable();
-            $table->string('otp_code');  // hashed
-            $table->boolean('is_used')->default(false);
-            $table->timestamp('sent_at')->useCurrent();
-            $table->timestamp('expires_at');
-            $table->timestamp('verified_at')->nullable();
+            $table->string('member_nik', 20)->nullable();
+            $table->string('otp_hash');
+            $table->dateTime('expires_at');
             $table->integer('attempts')->default(0);
-            $table->integer('max_attempts')->default(3);
-            $table->timestamps();
+            $table->boolean('is_used')->default(false);
+            $table->string('requested_ip', 45)->nullable();
+            $table->string('user_agent', 255)->nullable();
+            $table->timestamp('created_at')->useCurrent();
+            $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
 
-            $table->foreign('member_id')->references('id')->on('members')->onDelete('set null');
             $table->index('email');
-            $table->index('member_id');
+            $table->index('member_nik');
             $table->index('expires_at');
+            $table->index('is_used');
         });
     }
 
     public function down(): void
     {
         Schema::dropIfExists('email_otps');
-
-        Schema::table('members', function (Blueprint $table) {
-            $table->dropIndex(['email']);
-            $table->dropColumn('email');
-        });
     }
 };

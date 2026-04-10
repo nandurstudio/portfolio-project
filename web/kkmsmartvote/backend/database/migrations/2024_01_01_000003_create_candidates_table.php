@@ -9,12 +9,15 @@ return new class extends Migration {
     {
         Schema::create('candidates', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('name')->unique();
             $table->string('position', 100);
             $table->text('bio')->nullable();
-            $table->string('photo_url', 500)->nullable();
+            $table->string('photo_url', 255)->nullable();
             $table->boolean('is_active')->default(true);
-            $table->timestamps();
+            $table->timestamp('created_at')->useCurrent();
+            $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
+
+            $table->index('is_active');
         });
     }
 

@@ -9,28 +9,27 @@ class EmailOtp extends Model
 {
     use HasFactory;
 
+    public const MAX_ATTEMPTS = 3;
+
     protected $fillable = [
         'email',
-        'member_id',
-        'otp_code',
+        'member_nik',
+        'otp_hash',
         'is_used',
-        'sent_at',
         'expires_at',
-        'verified_at',
         'attempts',
-        'max_attempts'
+        'requested_ip',
+        'user_agent',
     ];
 
     protected $casts = [
         'is_used' => 'boolean',
-        'sent_at' => 'datetime',
         'expires_at' => 'datetime',
-        'verified_at' => 'datetime'
     ];
 
     public function member()
     {
-        return $this->belongsTo(Member::class);
+        return $this->belongsTo(Member::class, 'member_nik', 'nik');
     }
 
     /**
@@ -55,7 +54,7 @@ class EmailOtp extends Model
      */
     public function isMaxAttemptsExceeded(): bool
     {
-        return $this->attempts >= $this->max_attempts;
+        return $this->attempts >= self::MAX_ATTEMPTS;
     }
 
     /**
@@ -65,7 +64,6 @@ class EmailOtp extends Model
     {
         $this->update([
             'is_used' => true,
-            'verified_at' => now()
         ]);
     }
 }

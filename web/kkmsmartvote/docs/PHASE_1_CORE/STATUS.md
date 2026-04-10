@@ -19,32 +19,32 @@ Phase 3 (Planned)  ░░░░░░░░░░░░░░░░░░░░ 
 
 ## 📊 **Feature Progress**
 
-### 🎯 Feature 1: Saksi Role
+### 🎯 Feature 1: Saksi Forensik Role
 **Status:** 🚫 TODO | **Est. Time:** 2-3 days | **Assigned:** Unassigned
 
 - [ ] **Database** (Day 1)
-  - [ ] Create migration: add_saksi_role_to_users
+  - [ ] Verify users.role includes saksi_forensik
   - [ ] Deploy migration locally
   - [ ] Verify in test DB
 
 - [ ] **Backend** (Day 1-2)
   - [ ] Update User model (role enum)
-  - [ ] Update AuthController (saksi login)
-  - [ ] Create SaksiController
+  - [ ] Update AuthController (saksi_forensik login)
+  - [ ] Create SaksiForensikController
   - [ ] Create /api/members/voted-only endpoint
   - [ ] Update authorization middleware
-  - [ ] Add audit logging (SAKSI_LOGIN)
+  - [ ] Add audit logging (SAKSI_FORENSIK_LOGIN)
 
 - [ ] **Frontend** (Day 2)
-  - [ ] Create SaksiLoginPage component
-  - [ ] Update AdminLayout (saksi menu)
+  - [ ] Create SaksiForensikLoginPage component
+  - [ ] Update AdminLayout (saksi_forensik menu)
   - [ ] Update MembersPage (role-based filtering)
-  - [ ] Add role checks (hide edit buttons for saksi)
+  - [ ] Add role checks (hide edit buttons for saksi_forensik)
 
 - [ ] **Testing** (Day 3)
   - [ ] Unit tests: Authorization
   - [ ] Integration tests: Login flow
-  - [ ] E2E tests: Saksi workflows
+  - [ ] E2E tests: Saksi Forensik workflows
 
 **Estimate:** 2-3 days | **Complexity:** LOW
 
@@ -117,7 +117,7 @@ Phase 3 (Planned)  ░░░░░░░░░░░░░░░░░░░░ 
 
 ```
 Week 1 (Apr 2-9)
-├─ Saksi Role        ░░░░░░░░░░░   0%  [Day 1-3]
+├─ Saksi Forensik    ░░░░░░░░░░░   0%  [Day 1-3]
 ├─ 50%+1 Voting      ░░░░░░░░░░░   0%  [Day 1-3]
 ├─ Voucher System    ░░░░░░░░░░░   0%  [Day 4+]
 └─ Integration       ░░░░░░░░░░░   0%
@@ -144,30 +144,30 @@ Week 3 (Apr 16-23)
 - [ ] Kick-off meeting with team
 - [ ] Review requirements (REQUIREMENTS.md)
 - [ ] Assign tasks to developers
-- [ ] Saksi: Create DB migration
+- [ ] Saksi Forensik: role verification
 - [ ] 50%+1: Analyze current code
 
 #### Day 2 (Apr 3)
-- [ ] Saksi: Update AuthController
-- [ ] Saksi: Create SaksiController
+- [ ] Saksi Forensik: Update AuthController
+- [ ] Saksi Forensik: Create SaksiForensikController
 - [ ] 50%+1: Create DB migration
 - [ ] 50%+1: Implement calculation logic
 - [ ] Code review: Database changes
 
 #### Day 3 (Apr 4)
-- [ ] Saksi: Develop SaksiLoginPage
-- [ ] Saksi: Update MembersPage (filters)
+- [ ] Saksi Forensik: Develop SaksiForensikLoginPage
+- [ ] Saksi Forensik: Update MembersPage (filters)
 - [ ] 50%+1: Update API endpoint
 - [ ] 50%+1: Develop Results page UI
 
 #### Day 4 (Apr 5)
-- [ ] Saksi: Testing & bug fixes
+- [ ] Saksi Forensik: Testing & bug fixes
 - [ ] 50%+1: Testing & edge cases
 - [ ] Voucher: Create DB migrations
 - [ ] Voucher: Create models
 
 #### Day 5 (Apr 6)
-- [ ] Saksi: Manual testing complete
+- [ ] Saksi Forensik: Manual testing complete
 - [ ] 50%+1: Manual testing complete
 - [ ] Voucher: Implement CRUD endpoints
 - [ ] Code review: All Week 1 work
@@ -255,7 +255,7 @@ None yet
 ### Quality Metrics
 - [ ] API response time < 500ms
 - [ ] Voucher redemption success rate
-- [ ] Saksi access control violations (should be 0)
+- [ ] Saksi Forensik access control violations (should be 0)
 - [ ] System uptime during testing
 
 ### Performance Metrics

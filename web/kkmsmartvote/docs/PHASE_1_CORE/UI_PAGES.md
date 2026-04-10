@@ -5,6 +5,32 @@
 
 ---
 
+## 📱 Responsive Baseline (Wajib Semua UI)
+
+Seluruh halaman pada dokumen ini WAJIB full support multiple device.
+
+### Device Target
+- Mobile kecil: `<= 480px`
+- Mobile besar / tablet portrait: `481-768px`
+- Tablet landscape / laptop kecil: `769-1024px`
+- Desktop: `> 1024px`
+
+### Acceptance Criteria Universal
+1. Tidak ada horizontal overflow di konten utama.
+2. Header, CTA, form, dan navigasi tetap terbaca dan bisa dioperasikan.
+3. Komponen data padat (table/list/chart) punya fallback mobile yang jelas.
+4. Modal/dialog tetap usable di layar kecil (scroll internal aman, close action jelas).
+5. Typography, spacing, dan kontras tetap nyaman dibaca.
+6. Semua halaman lolos uji manual pada viewport di atas sebelum dinyatakan selesai.
+
+### Admin Data-heavy Screens (Tambahan Wajib)
+- Members/Votes/Audit/Users page harus pakai salah satu:
+  - responsive table + horizontal scroll wrapper, atau
+  - card/list mode pada mobile.
+- Action button per row tidak boleh saling overlap pada layar sempit.
+
+---
+
 ## 📑 **Page Navigation Map**
 
 ```
@@ -12,7 +38,7 @@ Public (No Login)
 ├─ 🗳️ VoterPage (index) - Voting interface
 └─ 🔐 AdminLoginPage - Admin/Panitia login
 
-Protected (Admin/Panitia/Saksi)
+Protected (Admin/Panitia/Saksi Forensik)
 ├─ 📊 AdminDashboard - Results overview
 ├─ 👤 CandidatesPage - Candidate management
 ├─ 👥 MembersPage - Member management
@@ -93,7 +119,7 @@ Start → Verify Member → Select Candidate → Confirm → Vote Recorded → S
 
 **URL:** `/admin` or `/admin/login`
 **Access:** Public
-**Purpose:** Authenticate admin/panitia/saksi (NEW)
+**Purpose:** Authenticate admin/panitia/saksi_forensik
 
 ### Layout
 ```
@@ -106,9 +132,9 @@ Start → Verify Member → Select Candidate → Confirm → Vote Recorded → S
 │ └─ Button: Login         │
 ├──────────────────────────┤
 │ Demo Accounts (info box) │
-│ ├─ admin / password      │
-│ ├─ panitia1 / password   │
-│ └─ saksi_observer / pwd  │
+│ ├─ nandang / admin123    │
+│ ├─ beny.santoso / panitia123 │
+│ └─ ibnu.setiawan / saksi123 │
 ├──────────────────────────┤
 │ Error Message (if fail)  │
 │ └─ "Invalid credentials" │
@@ -121,20 +147,20 @@ Start → Verify Member → Select Candidate → Confirm → Vote Recorded → S
 - Error display on fail
 - Demo account info visible
 - Link back to voter page
-- (Saksi role can login same way - NEW)
+- (Saksi Forensik can login same way)
 
 ### POST Request
 ```json
 POST /api/auth/login
 {
   "username": "admin",
-  "password": "password"
+  "password": "admin123"
 }
 
 Response:
 {
   "token": "eyJ0eXAiOiJKV1QiLCJhbGc...",
-  "role": "admin"  // or "panitia" or "saksi" (NEW)
+  "role": "admin"  // or "panitia" or "saksi_forensik"
 }
 ```
 
@@ -143,7 +169,7 @@ Response:
 ## 📊 **3. ADMIN DASHBOARD**
 
 **URL:** `/admin` or `/admin/dashboard`
-**Access:** Protected (admin/panitia/saksi)
+**Access:** Protected (admin/panitia/saksi_forensik)
 **Purpose:** Overview of election results & statistics
 
 ### Layout
@@ -220,7 +246,7 @@ Response:
 - (Admin/Panitia) Add new candidate
 - (Admin/Panitia) Edit candidate details
 - (Admin/Panitia) Delete candidate
-- (Saksi) View only, no edit buttons (NEW)
+- (Saksi Forensik) View only, no edit buttons
 - Real-time vote count
 
 ### Modal (Add/Edit)
@@ -238,7 +264,7 @@ Form: Add/Edit Candidate
 ## 👥 **5. MEMBERS PAGE**
 
 **URL:** `/admin/members`
-**Access:** Protected (admin/panitia see all, saksi see voted only - NEW)
+**Access:** Protected (admin/panitia see all, saksi_forensik see voted only)
 **Purpose:** Manage member registration & voting status
 
 ### Layout (Admin/Panitia)
@@ -260,7 +286,7 @@ Form: Add/Edit Candidate
 └──────────────────────────────────────────┘
 ```
 
-### Layout (Saksi - NEW)
+### Layout (Saksi Forensik)
 ```
 ┌──────────────────────────────────────────┐
 │ Title: Members (Voted Only)              │
@@ -274,7 +300,7 @@ Form: Add/Edit Candidate
 │ │123456│John │Site A│04/04 10:30   │   │
 │ │654321│Jane │Site B│04/04 11:15   │   │
 │ └──────┴─────┴──────┴──────────────┘   │
-│ (No edit buttons for Saksi!)            │
+│ (No edit buttons for Saksi Forensik!)   │
 └──────────────────────────────────────────┘
 ```
 
@@ -282,7 +308,7 @@ Form: Add/Edit Candidate
 - List members with status
 - Search by NIK or name
 - Add member (admin only)
-- Edit member (admin/panitia, hidden for saksi - NEW)
+- Edit member (admin/panitia, hidden for saksi_forensik)
 - Status badges: ✅ Voted / ❌ Not Voted
 - Per-site breakdown (optional)
 
@@ -300,7 +326,7 @@ Form: Add/Edit Member
 ## 🗳️ **6. VOTES PAGE (Recap)**
 
 **URL:** `/admin/votes`
-**Access:** Protected (admin/panitia/saksi)
+**Access:** Protected (admin/panitia/saksi_forensik)
 **Purpose:** View all recorded votes with validation status
 
 ### Layout
@@ -342,7 +368,7 @@ Form: Add/Edit Member
 ## 🏆 **7. RESULTS PAGE**
 
 **URL:** `/admin/results`
-**Access:** Protected (admin/panitia/saksi)
+**Access:** Protected (admin/panitia/saksi_forensik)
 **Purpose:** Final election results & declaration
 
 ### Layout
@@ -414,7 +440,7 @@ Form: Add/Edit Member
 ## 📋 **8. AUDIT LOGS PAGE**
 
 **URL:** `/admin/audit`
-**Access:** Protected (admin/panitia, and Saksi - NEW)
+**Access:** Protected (admin/panitia, and saksi_forensik)
 **Purpose:** Track all system activities
 
 ### Layout
@@ -447,7 +473,7 @@ Form: Add/Edit Member
 - Detail JSON expandable
 - Filter by date range, action type, actor
 - Immutable (cannot delete/edit)
-- Saksi can see audit logs (transparency - NEW)
+- Saksi Forensik can see audit logs (transparency)
 
 ### Logged Actions
 - LOGIN / LOGOUT
@@ -467,7 +493,7 @@ Form: Add/Edit Member
 
 **URL:** `/admin/users`
 **Access:** Protected (admin only)
-**Purpose:** Manage admin/panitia/saksi accounts (NEW role)
+**Purpose:** Manage admin/panitia/saksi_forensik accounts
 
 ### Layout
 ```
@@ -481,10 +507,9 @@ Form: Add/Edit Member
 │ │Nama      │Username  │Role        │ │
 │ │          │          │(NEW)       │ │
 │ ├──────────┼──────────┼────────────┤ │
-│ │Admin     │admin     │🔴 Admin    │ │
-│ │Panitia 1 │panitia1  │🔵 Panitia  │ │
-│ │Saksi     │saksi_obs │🟢 Saksi    │ │
-│ │          │          │   (NEW)    │ │
+│ │Nandang   │nandang   │🔴 Admin    │ │
+│ │Beny      │beny.sant│🔵 Panitia  │ │
+│ │Ibnu      │ibnu.seti│🟢 Saksi Forensik │ │
 │ ├──────────┴──────────┴────────────┴──
 │ │ Delete button (except current user)│
 │ └──────────────────────────────────┘ │
@@ -493,7 +518,7 @@ Form: Add/Edit Member
 
 ### Features
 - List all admin accounts
-- Role badges: Admin (red), Panitia (blue), Saksi (green - NEW)
+- Role badges: Admin (red), Panitia (blue), Saksi Forensik (green)
 - Add new user (admin only)
 - Delete user (admin only, not self)
 - Password reset (optional)
@@ -504,7 +529,7 @@ Form: Add User
 ├─ Nama Lengkap (text, required)
 ├─ Username (text, required, unique)
 ├─ Password (text, required)
-├─ Role (dropdown: admin, panitia, saksi)  ← NEW
+├─ Role (dropdown: admin, panitia, saksi_forensik)
 └─ Buttons: Create / Cancel
 ```
 
@@ -591,9 +616,9 @@ Form: Add User
 
 ---
 
-## 🔐 **Permission Matrix (Updated with Saksi Role)**
+## 🔐 **Permission Matrix (Updated with Saksi Forensik Role)**
 
-| Feature | Admin | Panitia | Saksi (NEW) | Voter |
+| Feature | Admin | Panitia | Saksi Forensik | Voter |
 |---------|-------|---------|-------------|-------|
 | Voting | ✅ | ✅ | ❌ | ✅ |
 | Login (Admin) | ✅ | ✅ | ✅ (NEW) | - |
@@ -645,7 +670,7 @@ Key breakpoints:
 
 ## 🎨 **Color Scheme**
 
-- **Green (#4CAF50)** - Success, Valid, Winner, Saksi role
+- **Green (#4CAF50)** - Success, Valid, Winner, Saksi Forensik role
 - **Red (#F44336)** - Error, Invalid, Danger
 - **Blue (#2196F3)** - Info, Panitia role, Primary actions
 - **Orange (#FF9800)** - Warning, TIE, Pending

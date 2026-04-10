@@ -33,6 +33,34 @@ Write-Host "║   🗳️  KKM Smart Vote - Sync & Dev Server       ║" -Foregr
 Write-Host "╚════════════════════════════════════════════════╝" -ForegroundColor Cyan
 Write-Host ""
 
+function Stop-ProcessOnPort {
+    param(
+        [Parameter(Mandatory = $true)]
+        [int]$Port,
+        [Parameter(Mandatory = $true)]
+        [string]$Label
+    )
+
+    $pids = @()
+
+    try {
+        $pids = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction Stop |
+            Select-Object -ExpandProperty OwningProcess -Unique
+    } catch {
+        $pids = @()
+    }
+
+    foreach ($pid in $pids) {
+        if ($pid -le 4) { continue }
+        try {
+            Stop-Process -Id $pid -Force -ErrorAction Stop
+            Write-Host "🛑 Stopped existing $Label process on port $Port (PID: $pid)" -ForegroundColor Yellow
+        } catch {
+            Write-Host "⚠️  Failed to stop PID $pid on port $Port" -ForegroundColor Yellow
+        }
+    }
+}
+
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # 📤 STEP 1: SYNC Portfolio → Laragon
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -46,7 +74,18 @@ if (-not $NoSync) {
     Write-Host ""
 
     try {
-        robocopy "$portfolioDir" "$laraconPath" /E /PURGE /XD vendor node_modules .git storage bootstrap/cache /NFL /NDL /NC /NS /NP 2>&1 | Out-Null
+        $excludeDirs = @(
+            "vendor",
+            "node_modules",
+            ".git",
+            "storage",
+            "bootstrap/cache",
+            "backend/public/uploads"
+        )
+
+        # Do not use /PURGE here because runtime-generated uploads (candidate photos)
+        # live only on Laragon and would be deleted on every sync.
+        robocopy "$portfolioDir" "$laraconPath" /E /XD $excludeDirs /NFL /NDL /NC /NS /NP 2>&1 | Out-Null
         Write-Host "✅ Sync complete!" -ForegroundColor Green
     } catch {
         Write-Host "⚠️  Sync completed with warnings" -ForegroundColor Yellow
@@ -56,6 +95,40 @@ if (-not $NoSync) {
     Write-Host "⏭️  Skipping sync (-NoSync)" -ForegroundColor DarkGray
     Write-Host ""
 }
+
+# Ensure runtime upload folders always exist on Laragon.
+$runtimeUploadDirs = @(
+    "backend/public/uploads",
+    "backend/public/uploads/candidates"
+)
+
+foreach ($relativeDir in $runtimeUploadDirs) {
+    $absoluteDir = Join-Path $laraconPath $relativeDir
+    if (-not (Test-Path $absoluteDir)) {
+        New-Item -ItemType Directory -Path $absoluteDir -Force | Out-Null
+        Write-Host "📁 Created runtime directory: $relativeDir" -ForegroundColor DarkGray
+    }
+}
+
+Write-Host ""
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 🧹 PRE-FLIGHT: Cleanup Previous Run
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Write-Host "🧹 PRE-FLIGHT: Cleaning old jobs & ports" -ForegroundColor Yellow
+Write-Host "────────────────────────────────────────" -ForegroundColor DarkGray
+
+Get-Job -Name "FrontendServer", "BackendServer" -ErrorAction SilentlyContinue |
+    Stop-Job -ErrorAction SilentlyContinue
+Get-Job -Name "FrontendServer", "BackendServer" -ErrorAction SilentlyContinue |
+    Remove-Job -Force -ErrorAction SilentlyContinue
+
+Stop-ProcessOnPort -Port 5173 -Label "frontend"
+Stop-ProcessOnPort -Port 8000 -Label "backend"
+
+Write-Host "✅ Pre-flight cleanup complete" -ForegroundColor Green
+Write-Host ""
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # 📦 STEP 2: Install Dependencies
@@ -133,7 +206,7 @@ Write-Host "Backend: http://localhost:8000" -ForegroundColor Cyan
 Write-Host "API:     http://localhost:8000/api" -ForegroundColor Cyan
 Write-Host ""
 
-$backendJob = Start-Job -ScriptBlock {
+$backendJob = Start-Job -Name "BackendServer" -ScriptBlock {
     param($exe, $path)
     Set-Location $path
     & $exe artisan serve --port=8000
@@ -146,26 +219,50 @@ Write-Host ""
 Start-Sleep -Seconds 3
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# 🎨 STEP 5: Start Frontend Dev Server
+# 🎨 STEP 5: Start Frontend Dev Server (same PowerShell session)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Write-Host "🎨 STEP 5: Starting Frontend dev server" -ForegroundColor Yellow
 Write-Host "────────────────────────────────────────" -ForegroundColor DarkGray
 Write-Host "Frontend: http://localhost:5173" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "Press Ctrl+C to stop all servers" -ForegroundColor DarkGray
+
+$frontendJob = Start-Job -Name "FrontendServer" -ScriptBlock {
+    param($path)
+    Set-Location $path
+    npm run dev
+} -ArgumentList $laraconFrontend
+
+Write-Host ""
+Write-Host "✅ Frontend started (Job: $($frontendJob.Id))" -ForegroundColor Green
+Write-Host ""
+Write-Host "╔════════════════════════════════════════════════════════════════╗" -ForegroundColor Green
+Write-Host "║  🎉 BOTH SERVERS RUNNING!                                     ║" -ForegroundColor Green
+Write-Host "╚════════════════════════════════════════════════════════════════╝" -ForegroundColor Green
+Write-Host ""
+Write-Host "📍 Access Points:" -ForegroundColor Cyan
+Write-Host "   Frontend: http://localhost:5173" -ForegroundColor Cyan
+Write-Host "   Backend:  http://localhost:8000" -ForegroundColor Cyan
+Write-Host "   API:      http://localhost:8000/api" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "📋 Test Voting Flow:" -ForegroundColor Yellow
+Write-Host "   1. Open http://localhost:5173 in browser" -ForegroundColor Yellow
+Write-Host "   2. Enter email: test@example.com" -ForegroundColor Yellow
+Write-Host "   3. Enter OTP: 000000" -ForegroundColor Yellow
+Write-Host "   4. Enter NIK: 1001000001" -ForegroundColor Yellow
+Write-Host "   5. Select candidate → Vote!" -ForegroundColor Yellow
+Write-Host ""
+Write-Host "⏸️  To stop both servers, close this window or press Ctrl+C" -ForegroundColor DarkGray
 Write-Host ""
 
-Push-Location $laraconFrontend
-
+# Keep script running
+Write-Host "Waiting for servers to run..." -ForegroundColor DarkGray
 try {
-    npm run dev
+    Get-Job -Name "BackendServer" -ErrorAction SilentlyContinue | Wait-Job -ErrorAction SilentlyContinue
 } finally {
-    # Cleanup on exit
-    Write-Host ""
-    Write-Host "🛑 Shutting down servers..." -ForegroundColor Yellow
-    Stop-Job -Job $backendJob -ErrorAction SilentlyContinue
-    Remove-Job -Job $backendJob -ErrorAction SilentlyContinue
-    Write-Host "✅ Done!" -ForegroundColor Green
-    Pop-Location
+    Get-Job -Name "FrontendServer", "BackendServer" -ErrorAction SilentlyContinue | Stop-Job -ErrorAction SilentlyContinue
+    Get-Job -Name "FrontendServer", "BackendServer" -ErrorAction SilentlyContinue | Remove-Job -Force -ErrorAction SilentlyContinue
 }
+
+Write-Host ""
+Write-Host "🛑 Dev servers stopped" -ForegroundColor Yellow

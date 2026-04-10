@@ -13,6 +13,32 @@ Phase 1 implements 3 core features to improve voting system:
 
 ---
 
+## 📱 **Non-Functional Requirement: Multi-Device Support (Global, Mandatory)**
+
+Semua UI pada sistem ini wajib responsive dan usable di berbagai perangkat, mencakup halaman public maupun admin.
+
+### Scope
+- Public pages (landing, OTP, member lookup, vote, vote success).
+- Admin pages (dashboard, candidates, members, votes, results, audit, users, settings, voucher).
+
+### Minimum Device Coverage
+- Mobile kecil: `<= 480px`
+- Mobile besar / tablet portrait: `481-768px`
+- Tablet landscape / laptop kecil: `769-1024px`
+- Desktop: `> 1024px`
+
+### Acceptance Criteria (Wajib Lulus)
+1. Tidak ada horizontal overflow pada konten utama.
+2. Navigasi, CTA, dan form tetap dapat dioperasikan pada touch device.
+3. Modal/dialog aman untuk layar kecil (scroll internal + close action jelas).
+4. Halaman data-heavy admin (table/list) punya fallback mobile:
+    - responsive table dengan wrapper scroll yang aman, atau
+    - card/list mode khusus mobile.
+5. Font, spacing, dan kontras tetap terbaca nyaman di semua breakpoint target.
+6. Fitur dinyatakan selesai hanya jika lulus uji manual lintas breakpoint.
+
+---
+
 ## 🎯 **Feature 1: Saksi (Witness) Role**
 
 ### Purpose

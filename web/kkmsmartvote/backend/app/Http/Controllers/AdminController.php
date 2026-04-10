@@ -30,7 +30,7 @@ class AdminController extends Controller
             'total_members'    => $totalMembers,
             'total_valid'      => $totalValid,
             'total_invalid'    => $totalInvalid,
-            'participation_pct'=> $participation,
+            'participation_pct' => $participation,
             'candidate_stats'  => $candidateStats,
             'election'         => $setting,
         ]);
@@ -38,24 +38,43 @@ class AdminController extends Controller
 
     public function votes(Request $request): JsonResponse
     {
-        $query = Vote::query();
+        $query = Vote::query()->with('site:id,name,code');
 
         if ($request->filled('is_valid')) {
             $query->where('is_valid', filter_var($request->is_valid, FILTER_VALIDATE_BOOLEAN));
         }
-        if ($request->filled('site')) {
+        if ($request->filled('site_id')) {
+            $query->where('site_id', (int) $request->site_id);
+        } elseif ($request->filled('site')) {
             $query->where('site', $request->site);
         }
 
-        // Admin sees candidate_id; panitia does not
-        $isAdmin = auth('api')->user()->role === 'admin';
-        $columns = $isAdmin
-            ? ['id', 'member_nik', 'member_name', 'site', 'candidate_id', 'is_valid', 'ip_address', 'created_at', 'invalidated_at', 'invalidation_reason']
-            : ['id', 'member_nik', 'member_name', 'site', 'is_valid', 'created_at'];
+        $isAdmin = in_array(auth('api')->user()->role, ['super_admin', 'admin'], true);
+        $rows = $query
+            ->orderByDesc('created_at')
+            ->paginate(50)
+            ->through(function (Vote $vote) use ($isAdmin) {
+                $payload = [
+                    'id' => $vote->id,
+                    'member_nik' => $vote->member_nik,
+                    'member_name' => $vote->member_name,
+                    'site_id' => $vote->site_id,
+                    'site' => $vote->site?->name ?? $vote->site,
+                    'is_valid' => $vote->is_valid,
+                    'created_at' => $vote->created_at,
+                ];
 
-        $votes = $query->select($columns)->orderByDesc('created_at')->paginate(50);
+                if ($isAdmin) {
+                    $payload['candidate_id'] = $vote->candidate_id;
+                    $payload['ip_address'] = $vote->ip_address;
+                    $payload['invalidated_at'] = $vote->invalidated_at;
+                    $payload['invalidation_reason'] = $vote->invalidation_reason;
+                }
 
-        return response()->json($votes);
+                return $payload;
+            });
+
+        return response()->json($rows);
     }
 
     public function results(): JsonResponse
@@ -79,7 +98,7 @@ class AdminController extends Controller
         });
 
         $winners = $results->filter(fn($r) => $r['is_winner']);
-        $status  = match(true) {
+        $status  = match (true) {
             $winners->count() === 1 => 'WINNER',
             $winners->count() > 1  => 'TIE',
             default                => 'NO_MAJORITY',

@@ -1,56 +1,73 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { useAuthStore } from './hooks/useAuth'
+import LandingPage from './pages/LandingPage'
 import VotingVerificationPage from './pages/VotingVerificationPage'
-import VoterPage from './pages/VoterPage'
-import OtpVotingPage from './pages/OtpVotingPage'
-import AdminLoginPage from './pages/AdminLoginPage'
-import AdminLayout from './pages/admin/AdminLayout'
-import Dashboard from './pages/admin/Dashboard'
-import Candidates from './pages/admin/Candidates'
-import Members from './pages/admin/Members'
-import Votes from './pages/admin/Votes'
-import Results from './pages/admin/Results'
-import AuditLogs from './pages/admin/AuditLogs'
-import Users from './pages/admin/Users'
-import Settings from './pages/admin/Settings'
-
-function RequireAuth({ children }: { children: React.ReactNode }) {
-  const { token } = useAuthStore()
-  if (!token) return <Navigate to="/admin/login" replace />
-  return <>{children}</>
-}
-
-function RequireAdmin({ children }: { children: React.ReactNode }) {
-  const { user } = useAuthStore()
-  if (user?.role !== 'admin') return <Navigate to="/admin" replace />
-  return <>{children}</>
-}
+import MemberLookupPage from './pages/MemberLookupPage'
+import VotePage from './pages/VotePage'
+import VoteSuccessPage from './pages/VoteSuccessPage'
+import AdminLandingSetupPage from './pages/AdminLandingSetupPage'
+import AdminLayout from './components/admin/AdminLayout'
+import RoleGuard from './components/admin/RoleGuard'
+import AdminDashboardPage from './pages/admin/AdminDashboardPage'
+import MasterUsersPage from './pages/admin/MasterUsersPage'
+import MasterDepartmentsPage from './pages/admin/MasterDepartmentsPage'
+import MasterCandidatesPage from './pages/admin/MasterCandidatesPage'
+import VotesMonitorPage from './pages/admin/VotesMonitorPage'
 
 export default function App() {
   return (
     <Routes>
-      {/* Public voter OTP route */}
-      <Route path="/otp" element={<OtpVotingPage />} />
+      {/* Public landing */}
+      <Route path="/" element={<LandingPage />} />
 
-      {/* Public voter route - Email OTP verification */}
-      <Route path="/" element={<VotingVerificationPage />} />
+      {/* Public voter routes - 2-layer OTP voting */}
+      <Route path="/otp" element={<VotingVerificationPage />} />
+      <Route path="/member-lookup" element={<MemberLookupPage />} />
+      <Route path="/vote" element={<VotePage />} />
+      <Route path="/vote-success" element={<VoteSuccessPage />} />
 
-      {/* Fallback voter page (kept for backward compatibility) */}
-      <Route path="/vote" element={<VoterPage />} />
-
-      {/* Admin login */}
-      <Route path="/admin/login" element={<AdminLoginPage />} />
-
-      {/* Protected admin routes */}
-      <Route path="/admin" element={<RequireAuth><AdminLayout /></RequireAuth>}>
-        <Route index element={<Dashboard />} />
-        <Route path="candidates" element={<Candidates />} />
-        <Route path="members" element={<Members />} />
-        <Route path="votes" element={<Votes />} />
-        <Route path="results" element={<Results />} />
-        <Route path="audit" element={<AuditLogs />} />
-        <Route path="users" element={<RequireAdmin><Users /></RequireAdmin>} />
-        <Route path="settings" element={<RequireAdmin><Settings /></RequireAdmin>} />
+      {/* Admin routes with role-based menu */}
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route index element={<AdminDashboardPage />} />
+        <Route
+          path="setup-landing"
+          element={
+            <RoleGuard allowedRoles={['super_admin', 'admin']}>
+              <AdminLandingSetupPage />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path="master-users"
+          element={
+            <RoleGuard allowedRoles={['super_admin', 'admin']}>
+              <MasterUsersPage />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path="master-departments"
+          element={
+            <RoleGuard allowedRoles={['super_admin', 'admin']}>
+              <MasterDepartmentsPage />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path="master-candidates"
+          element={
+            <RoleGuard allowedRoles={['super_admin', 'admin']}>
+              <MasterCandidatesPage />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path="votes"
+          element={
+            <RoleGuard allowedRoles={['super_admin', 'admin', 'panitia']}>
+              <VotesMonitorPage />
+            </RoleGuard>
+          }
+        />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

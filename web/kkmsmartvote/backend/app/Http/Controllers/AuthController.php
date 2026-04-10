@@ -24,10 +24,23 @@ class AuthController extends Controller
         ];
 
         if (!$token = auth('api')->attempt($credentials)) {
+            AuditLog::record('Guest', 'Login Gagal', [
+                'username' => (string) $request->username,
+                'reason' => 'INVALID_CREDENTIALS',
+            ], $request->ip());
             return response()->json(['message' => 'Username atau password salah.'], 401);
         }
 
         $user = auth('api')->user();
+
+        if (isset($user->is_active) && !$user->is_active) {
+            AuditLog::record($user->name, 'Login Ditolak', [
+                'reason' => 'USER_INACTIVE',
+                'username' => $user->username,
+            ], $request->ip());
+            auth('api')->logout();
+            return response()->json(['message' => 'Akun dinonaktifkan. Hubungi administrator.'], 403);
+        }
 
         AuditLog::record($user->name, 'Login', ['role' => $user->role], $request->ip());
 
@@ -37,6 +50,7 @@ class AuthController extends Controller
             'expires_in' => config('jwt.ttl') * 60,
             'user' => [
                 'id'       => $user->id,
+                'member_nik' => $user->member_nik,
                 'name'     => $user->name,
                 'username' => $user->username,
                 'role'     => $user->role,
@@ -57,6 +71,7 @@ class AuthController extends Controller
         $user = auth('api')->user();
         return response()->json([
             'id'       => $user->id,
+            'member_nik' => $user->member_nik,
             'name'     => $user->name,
             'username' => $user->username,
             'role'     => $user->role,

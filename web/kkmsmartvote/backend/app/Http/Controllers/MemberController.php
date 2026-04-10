@@ -9,6 +9,34 @@ use Illuminate\Http\Request;
 
 class MemberController extends Controller
 {
+    public function findByNik(string $nik): JsonResponse
+    {
+        $normalizedNik = strtoupper(trim($nik));
+
+        $member = Member::query()
+            ->where('nik', $normalizedNik)
+            ->first();
+
+        if (!$member) {
+            return response()->json([
+                'success' => false,
+                'message' => 'NIK tidak ditemukan',
+                'error' => 'MEMBER_NOT_FOUND',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'nik' => $member->nik,
+                'name' => $member->name,
+                'department' => $member->department,
+                'site' => $member->site,
+                'email' => $member->email,
+            ],
+        ]);
+    }
+
     public function index(Request $request): JsonResponse
     {
         $query = Member::query();
@@ -22,7 +50,7 @@ class MemberController extends Controller
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
                 $q->where('name', 'ilike', '%' . $request->search . '%')
-                  ->orWhere('nik', 'ilike', '%' . $request->search . '%');
+                    ->orWhere('nik', 'ilike', '%' . $request->search . '%');
             });
         }
 

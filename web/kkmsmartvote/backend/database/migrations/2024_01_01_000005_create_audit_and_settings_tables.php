@@ -11,24 +11,27 @@ return new class extends Migration {
             $table->id();
             $table->string('actor');
             $table->string('action');
-            $table->jsonb('detail')->nullable();
-            $table->string('ip_address', 50)->nullable();
+            $table->json('detail');
+            $table->string('ip_address', 45);
             $table->timestamp('logged_at')->useCurrent();
+            $table->timestamp('created_at')->useCurrent();
 
             $table->index('logged_at');
             $table->index('actor');
+            $table->index('action');
         });
 
         Schema::create('election_settings', function (Blueprint $table) {
             $table->id();
             $table->string('election_name');
-            $table->string('period', 50);
+            $table->string('period', 100);
             $table->date('start_date');
             $table->date('end_date');
-            $table->time('end_time')->default('15:00:00');
+            $table->time('end_time');
             $table->boolean('is_active')->default(true);
             $table->boolean('is_finalized')->default(false);
-            $table->timestamps();
+            $table->timestamp('created_at')->useCurrent();
+            $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
         });
     }
 

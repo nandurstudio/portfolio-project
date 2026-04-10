@@ -1,7 +1,7 @@
 # 🗄️ Database Schema (Current MVP + Phase 1 Changes)
 
 **Total Tables:** 6 (MVP) + 2 (Phase 1) = 8 tables
-**Last Updated:** April 5, 2026
+**Last Updated:** April 8, 2026
 
 ---
 
@@ -14,6 +14,7 @@
 4. **votes** - Recorded votes
 5. **election_settings** - Election configuration
 6. **audit_logs** - System activity tracking
+
 
 ### Phase 1 New Tables 🔴
 7. **vouchers** - Voucher codes & management
@@ -33,7 +34,7 @@
 | name | VARCHAR(255) | NOT NULL | Full name |
 | username | VARCHAR(100) | UNIQUE, NOT NULL | Login username |
 | password | VARCHAR(255) | NOT NULL | Hashed (bcrypt) |
-| **role** | ENUM | NEW, NOT NULL | 'admin', 'panitia', 'saksi' |
+| **role** | ENUM | NEW, NOT NULL | 'super_admin', 'admin', 'panitia', 'saksi_forensik' |
 | remember_token | VARCHAR(100) | NULLABLE | Session token |
 | created_at | TIMESTAMP | DEFAULT NOW() | Creation time |
 | updated_at | TIMESTAMP | DEFAULT NOW() | Last update |
@@ -44,11 +45,38 @@ UNIQUE KEY (username)
 INDEX (role)
 ```
 
+### Role Model (Operator + Voter)
+
+- Operator login dashboard disimpan di tabel `users`.
+- Voter/user biasa tidak wajib akun `users`; voter menggunakan identitas `members` + OTP/JWT flow.
+- Admin/panitia/saksi_forensik juga bisa voting sebagai voter biasa, tetapi saat login dashboard tetap mengikuti role operator masing-masing.
+
+| Role | Scope | Write Access | Read Access | Catatan |
+|------|-------|-------------|------------|---------|
+| super_admin | Kontrol sistem penuh | Ya (semua modul) | Ya (semua modul) | Hanya sedikit akun trusted |
+| admin | Operasional inti | Ya (kandidat, member, voucher, setting inti) | Ya (audit penuh) | Tidak untuk konfigurasi super-kritis jika dipisah |
+| panitia | Operasional terbatas | Ya (modul tertentu) | Ya (dashboard operasional) | Tanpa akses invalidasi sensitif level tinggi |
+| saksi_forensik | Forensik digital (read-only) | Tidak | Ya (forensic views yang disanitasi) | Tidak boleh ubah data |
+| voter | Akses publik voting | Tidak via dashboard operator | Hanya data diri sendiri (via OTP/JWT) | Berbasis tabel `members` |
+
+### Akses Khusus Saksi Forensik
+
+- Diizinkan:
+  - Lihat timeline event: OTP requested, OTP verified, vote submitted, vote invalidated, voucher granted.
+  - Lihat agregat integritas: total eligible, total voted, total invalid, distribusi per site.
+  - Export laporan audit read-only (CSV/PDF) dengan watermark dan timestamp.
+- Tidak diizinkan:
+  - Mengubah data apapun.
+  - Melihat relasi langsung voter -> candidate untuk menjaga kerahasiaan pilihan.
+  - Melihat data payout sensitif full (misalnya nomor GoPay lengkap), kecuali masking.
+
+---
+
 **Sample Data:**
 ```
-1, "Admin User", "admin", "\$2y\$10\$...", "admin", NULL, 2026-04-02, 2026-04-02
+1, "Admin User", "admin", "\$2y\$10\$...", "super_admin", NULL, 2026-04-02, 2026-04-02
 2, "Panitia 1", "panitia1", "\$2y\$10\$...", "panitia", NULL, 2026-04-02, 2026-04-02
-3, "Saksi Observer", "saksi_observer", "\$2y\$10\$...", "saksi", NULL, 2026-04-05, 2026-04-05
+3, "Saksi Forensik", "saksi_forensik1", "\$2y\$10\$...", "saksi_forensik", NULL, 2026-04-05, 2026-04-05
 ```
 
 ---
@@ -65,6 +93,11 @@ INDEX (role)
 | nik | VARCHAR(20) | UNIQUE, NOT NULL | National ID (voter identifier) |
 | name | VARCHAR(255) | NOT NULL | Full name |
 | site | VARCHAR(100) | NOT NULL | Location/site code |
+| department | VARCHAR(150) | NULLABLE | Departemen/divisi anggota (sumber import master) |
+| email | VARCHAR(255) | NULLABLE | Email untuk OTP dan notifikasi |
+| gopay_number | VARCHAR(20) | NULLABLE | Nomor GoPay voter |
+| is_gopay_owner_self | BOOLEAN | DEFAULT true | Checkbox: "Apakah akun gopay milik anda sendiri?" |
+| gopay_owner_number | VARCHAR(20) | NULLABLE | Nomor GoPay orang lain (wajib jika is_gopay_owner_self = false) |
 | is_eligible | BOOLEAN | DEFAULT true | Can vote? |
 | **has_voted** | BOOLEAN | DEFAULT false | Already voted? |
 | created_at | TIMESTAMP | DEFAULT NOW() | Registration time |
@@ -74,14 +107,97 @@ INDEX (role)
 ```sql
 UNIQUE KEY (nik)
 INDEX (site)
+INDEX (department)
+INDEX (email)
+INDEX (gopay_owner_number)
 INDEX (has_voted)
+```
+
+**Source Import Mapping (Sample NIK / Nama / Dept):**
+
+| Source Column | Target Field | Notes |
+|---------------|--------------|-------|
+| NIK | nik | Wajib unique |
+| Nama Anggota | name | Nama lengkap voter |
+| Departemen | department | Dapat dipakai untuk segmentasi, filter, dan audit |
+| Site/Lokasi | site | Jika ada, tetap dipakai sebagai lokasi/situs |
+| Email | email | Dipakai untuk OTP dan status notifikasi |
+
+**Sample Import Data:**
+```
+190400122, WINDY KHAIRUNNISA, CORPORATE QA - QUALITY & FOOD SAFETY, Site/Dept source
+230700121, ENDANG SETYOWATI WIDYANINI, CRM - F A, Site/Dept source
+220300148, LATIFAH, CRM - F A, Site/Dept source
+220300150, YUNIAR IIS FAEROSI, CRM - F A, Site/Dept source
+```
+
+---
+
+## 🗺️ **Table: sites** (Master Site)
+
+**Purpose:** master referensi site/lokasi untuk dropdown searchable di form voter.
+
+| Column | Type | Constraints | Notes |
+|--------|------|-----------|-------|
+| id | INT | PK, AI | Site ID |
+| code | VARCHAR(100) | UNIQUE, NOT NULL | Kode site, dipakai sebagai referensi |
+| name | VARCHAR(255) | NOT NULL | Nama site/lokasi |
+| is_active | BOOLEAN | DEFAULT true | Site aktif untuk dipilih |
+| created_at | TIMESTAMP | DEFAULT NOW() | Creation |
+| updated_at | TIMESTAMP | DEFAULT NOW() | Last update |
+
+**Indexes:**
+```sql
+UNIQUE KEY (code)
+INDEX (is_active)
+INDEX (name)
+```
+
+**Relation:**
+```text
+members.site -> sites.code (lookup/master)
+```
+
+---
+
+## 🔐 **Table: email_otps** (Phase 2 Draft)
+
+**Purpose:** menyimpan request OTP login berbasis email untuk voter flow.
+
+| Column | Type | Constraints | Notes |
+|--------|------|-----------|-------|
+| id | BIGINT | PK, AI | OTP record ID |
+| email | VARCHAR(255) | NOT NULL | Email tujuan OTP |
+| member_nik | VARCHAR(20) | NULLABLE | NIK yang sedang diverifikasi |
+| otp_hash | VARCHAR(255) | NOT NULL | Hash OTP, jangan simpan plaintext |
+| expires_at | DATETIME | NOT NULL | Masa berlaku OTP |
+| attempts | INT | DEFAULT 0 | Jumlah percobaan input OTP |
+| is_used | BOOLEAN | DEFAULT false | OTP sudah dipakai atau belum |
+| requested_ip | VARCHAR(45) | NULLABLE | IP saat request OTP |
+| user_agent | VARCHAR(255) | NULLABLE | Ringkasan perangkat/browser |
+| created_at | TIMESTAMP | DEFAULT NOW() | Waktu request |
+| updated_at | TIMESTAMP | DEFAULT NOW() | Last update |
+
+**Indexes:**
+```sql
+INDEX (email)
+INDEX (member_nik)
+INDEX (expires_at)
+INDEX (is_used)
+```
+
+**Rules:**
+```text
+OTP dikirim ke email yang diinput user.
+OTP wajib divalidasi sebelum NIK dan voting.
+OTP expired harus ditolak cepat tanpa query berat.
 ```
 
 **Sample Data:**
 ```
-1, "123456789", "John Doe", "Site A", true, false, 2026-04-02, 2026-04-02
-2, "987654321", "Jane Smith", "Site B", true, false, 2026-04-02, 2026-04-02
-3, "111222333", "Bob Wilson", "Site A", true, true, 2026-04-02, 2026-04-04 (voted)
+1, "190400122", "WINDY KHAIRUNNISA", "Site A", "CORPORATE QA - QUALITY & FOOD SAFETY", "windy@example.com", true, false, 2026-04-02, 2026-04-02
+2, "230700121", "ENDANG SETYOWATI WIDYANINI", "Site B", "CRM - F A", "endang@example.com", true, false, 2026-04-02, 2026-04-02
+3, "220300148", "LATIFAH", "Site A", "CRM - F A", "latifah@example.com", true, true, 2026-04-02, 2026-04-04 (voted)
 ```
 
 ---
@@ -512,15 +628,212 @@ INDEX audit_logs (actor)
 ## ✅ **Validation Rules**
 
 ```
-users.role: IN ('admin', 'panitia', 'saksi')
+users.role: IN ('super_admin', 'admin', 'panitia', 'saksi_forensik')
 members.nik: NOT NULL, UNIQUE, LENGTH(20)
 members.site: NOT NULL, VARCHAR(100)
+members.gopay_number: NULLABLE, jika diisi format nomor Indonesia (08xx atau 62xx)
+members.is_gopay_owner_self: BOOLEAN, default true
+members.gopay_owner_number: REQUIRED jika is_gopay_owner_self = false
+members.gopay_owner_number: MUST be NULL jika is_gopay_owner_self = true
 candidates.name: NOT NULL, UNIQUE
 vouchers.code: NOT NULL, UNIQUE, LENGTH(100)
 vouchers.value: DECIMAL(10,2), >= 0
 vouchers.expires_at: Can be NULL (never expires) or DATE > TODAY
 votes.is_valid: BOOLEAN, cannot change after invalidated_at is set
 ```
+
+Tambahan aturan auth:
+```text
+Voter role berjalan via members + OTP/JWT (bukan login users dashboard)
+saksi_forensik: seluruh endpoint wajib read-only
+aksi sensitif (invalidate vote, ubah setting election, ubah role) hanya super_admin/admin
+```
+
+---
+
+## 💡 **Brainstorming Schema Lanjutan (Diskusi April 8, 2026)**
+
+### 1) Candidate addition for payout clarity
+- Tambahkan `members.gopay_display_name` (nullable) agar admin bisa verifikasi nama pemilik rekening saat transfer reward.
+
+### 2) Better normalization (opsional, jika scale membesar)
+- Pisahkan data payout ke tabel baru `member_payout_profiles`:
+  - `member_id`, `is_owner_self`, `owner_number`, `owner_name`, `verification_status`, `verified_at`.
+- Cocok untuk multi-metode pembayaran ke depan (GoPay, OVO, Dana, bank).
+
+### 3) Audit compliance for payout edits
+- Setiap perubahan nomor GoPay (utama atau pemilik lain) wajib masuk `audit_logs` dengan action:
+  - `GOPAY_PROFILE_UPDATED`
+  - `GOPAY_OWNER_CHANGED`
+
+### 4) UX/API consistency
+- API payload yang disarankan:
+  - `gopay_number`
+  - `is_gopay_owner_self`
+  - `gopay_owner_number`
+- Frontend rule:
+  - Jika checkbox dicentang: field `gopay_owner_number` hidden + auto null.
+  - Jika checkbox tidak dicentang: field `gopay_owner_number` wajib diisi.
+
+### 5) Risk control
+- Tambahkan throttle update nomor GoPay (misalnya maksimal 2x perubahan/hari per member) untuk mencegah penyalahgunaan setelah vote.
+- Kunci perubahan nomor setelah status tertentu (contoh: voucher sudah dibagikan).
+
+---
+
+## 🌐 **Landing Page Schema (Phase 2 Draft)**
+
+Catatan: section ini adalah rancangan untuk kebutuhan landing page state-driven. Belum dihitung sebagai tabel aktif MVP/Phase 1.
+
+### A) Extend `election_settings` (disarankan)
+
+| Column | Type | Constraints | Notes |
+|--------|------|-----------|-------|
+| status | ENUM | NOT NULL, DEFAULT 'coming_soon' | `coming_soon`, `open`, `closed` |
+| start_at | DATETIME | NULLABLE | Waktu mulai voting |
+| voting_duration_days | INT | NOT NULL, DEFAULT 2 | Durasi voting (hari) |
+| end_at | DATETIME | NULLABLE | Auto-calc dari `start_at + voting_duration_days` (bisa override admin) |
+| announcement_at | DATETIME | NULLABLE | Waktu acara pengumuman/acara inti |
+| agenda_title | VARCHAR(255) | NULLABLE | Judul agenda landing |
+| agenda_description | TEXT | NULLABLE | Deskripsi agenda landing |
+| agenda_location | VARCHAR(255) | NULLABLE | Lokasi agenda |
+| show_countdown | BOOLEAN | DEFAULT true | Toggle countdown |
+| show_public_activity_log | BOOLEAN | DEFAULT true | Toggle mini activity log |
+| reward_enabled | BOOLEAN | DEFAULT false | Toggle reward voter |
+| reward_text | VARCHAR(255) | NULLABLE | Contoh: Voucher GoPay senilai Rp25.000 |
+| invitation_mode | ENUM | DEFAULT 'online' | `offline`, `online`, `hybrid` |
+| seo_title | VARCHAR(255) | NULLABLE | SEO title landing |
+| seo_description | VARCHAR(320) | NULLABLE | SEO description landing |
+| og_title | VARCHAR(255) | NULLABLE | Optional override OG title |
+| og_description | VARCHAR(320) | NULLABLE | Optional override OG description |
+| og_image_url | VARCHAR(255) | NULLABLE | URL gambar OG 1200x630 |
+| canonical_url | VARCHAR(255) | NULLABLE | Canonical landing |
+
+**Indexes (tambahan):**
+```sql
+INDEX (status)
+INDEX (start_at)
+INDEX (end_at)
+INDEX (announcement_at)
+```
+
+### B) New table `public_vote_activities` (disarankan)
+
+Purpose: sumber mini activity log publik (top 10, collapsible, pagination) tanpa menampilkan data sensitif.
+
+| Column | Type | Constraints | Notes |
+|--------|------|-----------|-------|
+| id | BIGINT | PK, AI | Activity ID |
+| member_nik | VARCHAR(20) | NULLABLE | Untuk korelasi internal (opsional tampil publik) |
+| display_name | VARCHAR(255) | NOT NULL | Nama yang ditampilkan, bisa dimasking |
+| site | VARCHAR(100) | NULLABLE | Site asal voter |
+| event_type | VARCHAR(50) | NOT NULL | Default `VOTED` |
+| occurred_at | DATETIME | NOT NULL | Waktu aktivitas |
+| created_at | TIMESTAMP | DEFAULT NOW() | Waktu create |
+
+**Indexes:**
+```sql
+INDEX (occurred_at)
+INDEX (event_type, occurred_at)
+INDEX (site, occurred_at)
+```
+
+### C) New table `member_invitations` (disarankan)
+
+Purpose: dukung logic undangan OFFLINE/ONLINE/HYBRID per member saat status `closed` atau event pengumuman.
+
+| Column | Type | Constraints | Notes |
+|--------|------|-----------|-------|
+| id | BIGINT | PK, AI | Invitation ID |
+| member_nik | VARCHAR(20) | FK (members.nik), NOT NULL | Voter target |
+| invitation_type | ENUM | NOT NULL | `offline`, `online` |
+| is_invited | BOOLEAN | DEFAULT false | Penanda user diundang |
+| invited_by | INT | FK (users.id), NULLABLE | Admin/panitia yang menetapkan |
+| invited_at | DATETIME | NULLABLE | Waktu undangan aktif |
+| note | VARCHAR(255) | NULLABLE | Catatan tambahan |
+| created_at | TIMESTAMP | DEFAULT NOW() | Waktu create |
+| updated_at | TIMESTAMP | DEFAULT NOW() | Last update |
+
+**Indexes:**
+```sql
+UNIQUE KEY (member_nik, invitation_type)
+INDEX (is_invited, invitation_type)
+INDEX (invited_at)
+```
+
+### D) Validasi penting (Landing)
+
+```text
+election_settings.status: IN ('coming_soon', 'open', 'closed')
+Jika status = 'open': start_at wajib, voting_duration_days >= 1
+Jika end_at null dan start_at ada: end_at dihitung otomatis
+reward_enabled = true -> reward_text wajib
+show_public_activity_log = false -> endpoint activity log tetap aman tapi bisa return empty pada landing
+```
+
+### E) Keamanan dan Kecepatan (Aman + Cepat)
+
+```text
+Gunakan cursor pagination untuk activity log (lebih cepat dari offset untuk data besar)
+Tambahkan response cache 15-30 detik untuk endpoint landing publik
+Semua endpoint operator wajib RBAC middleware berbasis users.role
+Semua endpoint voting wajib validasi server-side state + time window + eligibility
+Simpan jejak audit untuk semua perubahan critical setting
+Masking default untuk data sensitif di endpoint saksi_forensik
+```
+
+---
+
+## 🧭 **UI/UX Flow (High-Level, Selaras Schema)**
+
+### 1) Public Voter Flow
+1. User buka landing `/` dan lihat state election (coming_soon/open/closed).
+2. User klik lanjut OTP ke `/otp`.
+3. User input email untuk request OTP.
+4. User verifikasi OTP.
+5. User input NIK; sistem tarik otomatis `name`, `department`, dan data profil terkait.
+6. User pilih site dari dropdown searchable yang bersumber dari master `sites`.
+7. User masuk halaman vote dan pilih kandidat.
+8. Submit vote.
+9. User input nomor GoPay untuk reward, atau centang checkbox jika GoPay milik sendiri/otomatis sesuai setting.
+10. Flow selesai dan user kembali ke landing dengan status sudah vote dan progress total voter terlihat.
+
+### 2) Voter Reward Flow (GoPay Self / Non-Self)
+1. Form menampilkan checkbox: "Apakah akun GoPay milik anda sendiri?".
+2. Jika centang aktif:
+  - `is_gopay_owner_self = true`
+  - `gopay_owner_number = null`
+3. Jika centang dimatikan:
+  - `is_gopay_owner_self = false`
+  - field `gopay_owner_number` wajib diisi.
+4. Backend validasi kondisional, lalu simpan ke `members`.
+
+### 3) Operator Admin/Panitia Flow
+1. Login dashboard operator (`users`) sesuai role.
+2. Lihat menu yang diizinkan role masing-masing.
+3. Kelola election settings, kandidat, voucher, invitation, dan access control jika role cukup tinggi.
+4. Monitor agregat vote dan log operasional.
+5. Jika user juga merupakan voter, dia tetap bisa mengikuti flow voting publik dengan jalur yang sama.
+6. Semua aksi perubahan tersimpan ke `audit_logs`.
+
+### 4) Saksi Forensik Flow
+1. Login role `saksi_forensik`.
+2. Akses dashboard forensic read-only:
+  - timeline event,
+  - agregat integritas,
+  - export laporan.
+3. Tidak ada tombol aksi mutasi data.
+
+### 5) Menu Access Flow
+1. Admin/super_admin menentukan role dan permission.
+2. Backend mengembalikan menu yang sudah tersaring per role.
+3. Frontend hanya menampilkan menu tersebut.
+4. Jika URL diakses langsung, backend tetap memeriksa permission.
+
+### 6) Landing State UX Flow
+1. `coming_soon`: countdown ke start, kandidat preview, CTA vote nonaktif.
+2. `open`: CTA vote aktif, countdown ke end, mini activity log tampil (jika toggle aktif).
+3. `closed`: CTA nonaktif, turnout tampil, countdown ke announcement, info undangan online/offline/hybrid.
 
 ---
 
@@ -548,5 +861,5 @@ No optimization needed unless > 100,000 voters
 
 ---
 
-**Last Updated:** April 5, 2026
+**Last Updated:** April 9, 2026
 **Next Review:** After Phase 1 completion

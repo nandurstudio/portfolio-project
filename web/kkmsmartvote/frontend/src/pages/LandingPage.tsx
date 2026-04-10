@@ -1,0 +1,509 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { candidatesApi, electionApi, votingApi } from '../services/api';
+import '../styles/pages/voting.css';
+
+type ElectionState = 'coming_soon' | 'open' | 'closed';
+
+type LandingCandidate = {
+    key: number;
+    id: number;
+    orderNo: number;
+    name: string;
+    nik: string;
+    position: string;
+    department: string;
+    site: string;
+    vision: string;
+    mission: string;
+    motto: string;
+    photo: string;
+};
+
+function stripHtml(text: string): string {
+    return text.replace(/<[^>]*>/g, '').trim();
+}
+
+function renderMissionContent(rawValue: string, listClassName: string) {
+    const raw = String(rawValue || '').replace(/\r\n/g, '\n').trim();
+    if (!raw) return <p>-</p>;
+
+    const htmlListMatches = Array.from(raw.matchAll(/<li[^>]*>(.*?)<\/li>/gis));
+    if (htmlListMatches.length > 0) {
+        const items = htmlListMatches
+            .map((match) => stripHtml(match[1] || ''))
+            .filter(Boolean);
+
+        if (items.length > 0) {
+            const useOrderedList = /<ol[\s>]/i.test(raw) && !/<ul[\s>]/i.test(raw);
+            if (useOrderedList) {
+                return <ol className={listClassName}>{items.map((item, index) => <li key={index}>{item}</li>)}</ol>;
+            }
+            return <ul className={listClassName}>{items.map((item, index) => <li key={index}>{item}</li>)}</ul>;
+        }
+    }
+
+    const lines = raw
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+    const orderedItems = lines
+        .map((line) => line.match(/^\d+[.)]\s+(.+)$/)?.[1]?.trim() || null)
+        .filter((line): line is string => Boolean(line));
+    if (lines.length > 1 && orderedItems.length === lines.length) {
+        return <ol className={listClassName}>{orderedItems.map((item, index) => <li key={index}>{item}</li>)}</ol>;
+    }
+
+    const unorderedItems = lines
+        .map((line) => line.match(/^[-*•]\s+(.+)$/)?.[1]?.trim() || null)
+        .filter((line): line is string => Boolean(line));
+    if (lines.length > 1 && unorderedItems.length === lines.length) {
+        return <ul className={listClassName}>{unorderedItems.map((item, index) => <li key={index}>{item}</li>)}</ul>;
+    }
+
+    // For plain multiline content, render each line as its own paragraph.
+    if (lines.length > 1) {
+        return (
+            <>
+                {lines.map((line, index) => (
+                    <p key={index}>{line}</p>
+                ))}
+            </>
+        );
+    }
+
+    return <p>{raw}</p>;
+}
+
+export default function LandingPage() {
+    const navigate = useNavigate();
+    const loadedOnceRef = useRef(false);
+    const [status, setStatus] = useState<ElectionState>('coming_soon');
+    const [heroTitle, setHeroTitle] = useState<string>('SUARAKAN ASPIRASIMU!');
+    const [heroDescription, setHeroDescription] = useState<string>('Mari sukseskan Pemilihan Ketua Koperasi Karya Mandiri periode 2026-2029. Jangan sampai golput, karena arah koperasi kita ditentukan oleh suara seluruh anggota. Kami menunggu partisipasi dan suara terbaik Anda semua.');
+    const [ctaText, setCtaText] = useState<string>('Lanjut Verifikasi OTP');
+    const [agendaTitle, setAgendaTitle] = useState<string>('');
+    const [agendaDescription, setAgendaDescription] = useState<string>('');
+    const [agendaLocation, setAgendaLocation] = useState<string>('');
+    const [showCountdown, setShowCountdown] = useState<boolean>(true);
+    const [startAt, setStartAt] = useState<string | null>(null);
+    const [endAt, setEndAt] = useState<string | null>(null);
+    const [announcementAt, setAnnouncementAt] = useState<string | null>(null);
+    const [rewardEnabled, setRewardEnabled] = useState<boolean>(true);
+    const [rewardText, setRewardText] = useState<string>('Voucher GoPay senilai Rp25.000');
+    const [totalMembers, setTotalMembers] = useState<number>(0);
+    const [totalVoters, setTotalVoters] = useState<number>(0);
+    const [participationPct, setParticipationPct] = useState<number>(0);
+    const [animatedPct, setAnimatedPct] = useState<number>(0);
+    const [seoTitle, setSeoTitle] = useState<string>('');
+    const [seoDescription, setSeoDescription] = useState<string>('');
+    const [ogTitle, setOgTitle] = useState<string>('');
+    const [ogDescription, setOgDescription] = useState<string>('');
+    const [ogImageUrl, setOgImageUrl] = useState<string>('');
+    const [canonicalUrl, setCanonicalUrl] = useState<string>('');
+    const [countdown, setCountdown] = useState<number>(0);
+    const [dbCandidates, setDbCandidates] = useState<LandingCandidate[]>([]);
+    const [candidateError, setCandidateError] = useState<string>('');
+    const [imageFallback, setImageFallback] = useState<Record<number, boolean>>({});
+
+    useEffect(() => {
+        if (loadedOnceRef.current) return;
+        loadedOnceRef.current = true;
+
+        const loadData = async () => {
+            try {
+                // Use election info as single source for admin-configurable landing content.
+                // Fallback to voting status endpoint if needed.
+                let electionRes;
+                try {
+                    electionRes = await electionApi.current();
+                } catch {
+                    electionRes = await votingApi.electionStatus();
+                }
+
+                const electionData = electionRes?.data?.data || electionRes?.data || {};
+                const rawStatus = String(electionData.status || electionData.election_status || 'coming_soon').toLowerCase();
+                const currentStatus =
+                    rawStatus === 'open' || rawStatus === 'vote_progress'
+                        ? 'open'
+                        : rawStatus === 'closed'
+                            ? 'closed'
+                            : rawStatus === 'draft'
+                                ? 'coming_soon'
+                                : rawStatus;
+                if (currentStatus === 'open' || currentStatus === 'closed' || currentStatus === 'coming_soon') {
+                    setStatus(currentStatus);
+                }
+
+                setHeroTitle(electionData.hero_title || 'SUARAKAN ASPIRASIMU!');
+                setHeroDescription(
+                    electionData.hero_description ||
+                    'Mari sukseskan Pemilihan Ketua Koperasi Karya Mandiri periode 2026-2029. Jangan sampai golput, karena arah koperasi kita ditentukan oleh suara seluruh anggota. Kami menunggu partisipasi dan suara terbaik Anda semua.',
+                );
+                setCtaText(electionData.cta_text || 'Lanjut Verifikasi OTP');
+
+                setAgendaTitle(electionData.agenda_title || electionData.title || '');
+                setAgendaDescription(electionData.agenda_description || '');
+                setAgendaLocation(electionData.agenda_location || '');
+
+                if (typeof electionData.show_countdown === 'boolean') {
+                    setShowCountdown(electionData.show_countdown);
+                }
+                setStartAt(electionData.start_at || electionData.started_at || null);
+                setEndAt(electionData.end_at || electionData.ended_at || null);
+                setAnnouncementAt(electionData.announcement_at || electionData.ended_at || null);
+
+                // Prepared for admin settings (checkbox + reward text input)
+                const rewardFlag =
+                    electionData.reward_enabled ??
+                    electionData.gift_enabled ??
+                    electionData.prize_enabled;
+                if (typeof rewardFlag === 'boolean') {
+                    setRewardEnabled(rewardFlag);
+                }
+
+                const rewardLabel =
+                    electionData.reward_text ||
+                    electionData.gift_text ||
+                    electionData.prize_text;
+                if (typeof rewardLabel === 'string' && rewardLabel.trim()) {
+                    setRewardText(rewardLabel.trim());
+                }
+
+                setSeoTitle(String(electionData.seo_title || '').trim());
+                setSeoDescription(String(electionData.seo_description || '').trim());
+                setOgTitle(String(electionData.og_title || '').trim());
+                setOgDescription(String(electionData.og_description || '').trim());
+                setOgImageUrl(String(electionData.og_image_url || '').trim());
+                setCanonicalUrl(String(electionData.canonical_url || '').trim());
+
+                try {
+                    const statsRes = await electionApi.stats();
+                    const statsData = statsRes?.data?.data || {};
+                    const members = Number(statsData.total_members || 0);
+                    const voters = Number(statsData.total_voters || 0);
+                    const pct = Number(statsData.participation_percentage || 0);
+
+                    setTotalMembers(Number.isFinite(members) ? members : 0);
+                    setTotalVoters(Number.isFinite(voters) ? voters : 0);
+                    setParticipationPct(Number.isFinite(pct) ? Math.max(0, Math.min(100, pct)) : 0);
+                } catch {
+                    setTotalMembers(0);
+                    setTotalVoters(0);
+                    setParticipationPct(0);
+                }
+
+                // Candidate cards on landing should come from DB (admin configurable).
+                try {
+                    const candidatesRes = await candidatesApi.index();
+                    const list = Array.isArray(candidatesRes?.data?.data) ? candidatesRes.data.data : [];
+
+                    const mapped: LandingCandidate[] = list.map((candidate: any, index: number) => {
+                        const rawId = Number(candidate.id ?? index + 1);
+                        const rawOrderNo = Number(candidate.order_display);
+                        const orderNo = Number.isFinite(rawOrderNo) && rawOrderNo > 0
+                            ? rawOrderNo
+                            : rawId;
+
+                        return {
+                            key: rawId,
+                            id: rawId,
+                            orderNo,
+                            name: String(candidate.name || '-'),
+                            nik: String(candidate.nik || '-'),
+                            position: String(candidate.position || '-'),
+                            department: String(
+                                candidate.department_name ||
+                                candidate.department?.name ||
+                                '-',
+                            ),
+                            site: String(
+                                candidate.site_name ||
+                                candidate.site?.name ||
+                                '-',
+                            ),
+                            vision: String(candidate.vision || '-'),
+                            mission: String(candidate.mission || '-'),
+                            motto: String(candidate.motto || '-'),
+                            photo: String(candidate.full_photo_url || candidate.photo_url || ''),
+                        };
+                    });
+
+                    const ordered = [...mapped].sort((a, b) => {
+                        if (a.orderNo !== b.orderNo) return a.orderNo - b.orderNo;
+                        return a.id - b.id;
+                    });
+
+                    setDbCandidates(ordered);
+                    setCandidateError('');
+                } catch {
+                    setDbCandidates([]);
+                    setCandidateError('Gagal mengambil kandidat dari database. Coba refresh atau cek API.');
+                }
+            } catch {
+                // Keep fallback UI if API is not ready yet.
+            }
+        };
+
+        loadData();
+    }, []);
+
+    useEffect(() => {
+        const defaultTitle = 'Pemilihan Ketua Koperasi Karya Mandiri';
+        const nextTitle = seoTitle || defaultTitle;
+        document.title = nextTitle;
+
+        const upsertMetaByName = (name: string, content: string) => {
+            let node = document.head.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
+            if (!node) {
+                node = document.createElement('meta');
+                node.setAttribute('name', name);
+                document.head.appendChild(node);
+            }
+            node.setAttribute('content', content);
+        };
+
+        const upsertMetaByProperty = (property: string, content: string) => {
+            let node = document.head.querySelector(`meta[property="${property}"]`) as HTMLMetaElement | null;
+            if (!node) {
+                node = document.createElement('meta');
+                node.setAttribute('property', property);
+                document.head.appendChild(node);
+            }
+            node.setAttribute('content', content);
+        };
+
+        const nextDescription = seoDescription || heroDescription || defaultTitle;
+        const nextOgTitle = ogTitle || nextTitle;
+        const nextOgDescription = ogDescription || nextDescription;
+
+        upsertMetaByName('description', nextDescription);
+        upsertMetaByProperty('og:title', nextOgTitle);
+        upsertMetaByProperty('og:description', nextOgDescription);
+
+        if (ogImageUrl) {
+            upsertMetaByProperty('og:image', ogImageUrl);
+        }
+
+        if (canonicalUrl) {
+            let canonical = document.head.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+            if (!canonical) {
+                canonical = document.createElement('link');
+                canonical.setAttribute('rel', 'canonical');
+                document.head.appendChild(canonical);
+            }
+            canonical.setAttribute('href', canonicalUrl);
+            upsertMetaByProperty('og:url', canonicalUrl);
+        }
+    }, [seoTitle, seoDescription, ogTitle, ogDescription, ogImageUrl, canonicalUrl, heroDescription]);
+
+    useEffect(() => {
+        setAnimatedPct(0);
+        const timer = window.setTimeout(() => {
+            setAnimatedPct(participationPct);
+        }, 120);
+
+        return () => window.clearTimeout(timer);
+    }, [participationPct]);
+
+    const targetDate = useMemo(() => {
+        if (status === 'open') return endAt;
+        if (status === 'closed') return announcementAt;
+        return startAt;
+    }, [status, startAt, endAt, announcementAt]);
+
+    useEffect(() => {
+        if (!targetDate) {
+            setCountdown(0);
+            return;
+        }
+
+        const update = () => {
+            const diff = Math.max(0, Math.floor((new Date(targetDate).getTime() - Date.now()) / 1000));
+            setCountdown(diff);
+        };
+
+        update();
+        const timer = setInterval(update, 1000);
+        return () => clearInterval(timer);
+    }, [targetDate]);
+
+    const countdownParts = {
+        days: Math.floor(countdown / 86400),
+        hours: Math.floor((countdown % 86400) / 3600),
+        minutes: Math.floor((countdown % 3600) / 60),
+        seconds: countdown % 60,
+    };
+
+    const statusLabel =
+        status === 'open'
+            ? 'Voting Sedang Berlangsung'
+            : status === 'closed'
+                ? 'Voting Ditutup'
+                : 'Menuju Pembukaan Voting';
+
+    const statusBadge =
+        status === 'open'
+            ? 'OPEN / VOTE PROGRESS'
+            : status === 'closed'
+                ? 'CLOSED'
+                : 'COMING SOON';
+
+    const countdownLabel =
+        status === 'open'
+            ? 'Periode voting berakhir dalam'
+            : status === 'closed'
+                ? 'Pengumuman dimulai dalam'
+                : 'Voting dimulai dalam';
+
+    const participationTone =
+        participationPct < 25
+            ? 'danger'
+            : participationPct < 50
+                ? 'warning'
+                : participationPct < 75
+                    ? 'success'
+                    : 'primary';
+
+    const canStartOtp = status === 'open';
+    const dynamicYear = startAt ? new Date(startAt).getFullYear() : new Date().getFullYear();
+    const landingCandidates: LandingCandidate[] = dbCandidates;
+
+    return (
+        <div className="voting-container landing-page">
+            <header className="voting-header landing-header">
+                <h1>KKM Smart Vote {dynamicYear}</h1>
+                <p className={`landing-status-badge status-${status}`}>{statusBadge}</p>
+                <h2>{statusLabel}</h2>
+            </header>
+
+            <main className="voting-main landing-main">
+                <section className="landing-hero form-card">
+                    <h3>{heroTitle}</h3>
+                    <p>{heroDescription}</p>
+
+                    {showCountdown ? (
+                        <div className="landing-countdown-box">
+                            <p className="landing-countdown-label">{countdownLabel}</p>
+                            <div className="landing-countdown-grid">
+                                <div className="countdown-item"><strong>{countdownParts.days}</strong><span>Hari</span></div>
+                                <div className="countdown-item"><strong>{countdownParts.hours}</strong><span>Jam</span></div>
+                                <div className="countdown-item"><strong>{countdownParts.minutes}</strong><span>Menit</span></div>
+                                <div className="countdown-item"><strong>{countdownParts.seconds}</strong><span>Detik</span></div>
+                            </div>
+                        </div>
+                    ) : null}
+
+                    <div className={`landing-participation-box tone-${participationTone}`}>
+                        <div className="landing-participation-head">
+                            <h4>Partisipasi Pemilih</h4>
+                            <span className="landing-participation-percentage heartbeat-pill">{participationPct.toFixed(2)}%</span>
+                        </div>
+
+                        <p className="landing-participation-caption">
+                            {totalVoters} pemilih dari {totalMembers} anggota eligible
+                        </p>
+
+                        <div className="landing-progress-track" role="progressbar" aria-valuenow={Math.round(participationPct)} aria-valuemin={0} aria-valuemax={100}>
+                            <div
+                                className={`landing-progress-fill tone-${participationTone}`}
+                                style={{ width: `${animatedPct}%` }}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="landing-agenda">
+                        <h4>{agendaTitle}</h4>
+                        <p>{agendaDescription}</p>
+                        {agendaLocation ? <p><strong>Lokasi:</strong> {agendaLocation}</p> : null}
+                        {startAt && <p><strong>Mulai:</strong> {new Date(startAt).toLocaleString('id-ID')}</p>}
+                    </div>
+
+                    <div className={`landing-reward-box ${rewardEnabled ? 'reward-on' : 'reward-off'}`}>
+                        <h4>🎁 Bonus Untuk Pemilih</h4>
+                        {rewardEnabled ? (
+                            <p>
+                                Anggota yang sudah vote akan mendapatkan hadiah berupa:
+                                <strong> {rewardText}</strong>
+                            </p>
+                        ) : (
+                            <p>
+                                Saat ini tidak ada hadiah tambahan. Tetap gunakan hak suara Anda untuk masa depan koperasi.
+                            </p>
+                        )}
+                    </div>
+                </section>
+
+                <section className="landing-hero-candidates">
+                    <h3>Kandidat Calon Ketua KKM 2026-2029</h3>
+                    <p className="landing-hero-candidates-subtitle">
+                        Yuk kenalan dengan kandidat Ketua Koperasi Karya Mandiri yang siap membawa koperasi kita lebih maju!
+                    </p>
+
+                    {candidateError ? <p className="admin-error">{candidateError}</p> : null}
+
+                    <div className="landing-hero-candidate-grid">
+                        {landingCandidates.map((candidate) => (
+                            <article key={candidate.key} className="landing-hero-candidate-card">
+                                {candidate.photo && !imageFallback[candidate.id] ? (
+                                    <img
+                                        src={candidate.photo}
+                                        alt={candidate.name}
+                                        className="landing-hero-candidate-photo"
+                                        onError={() => setImageFallback((prev) => ({ ...prev, [candidate.id]: true }))}
+                                    />
+                                ) : (
+                                    <div className="candidate-photo-placeholder candidate-photo-placeholder--text">Foto kandidat belum tersedia</div>
+                                )}
+
+                                <div className="landing-hero-candidate-body">
+                                    <p className="landing-candidate-number">No. {candidate.orderNo}</p>
+                                    <h4 className="landing-candidate-name">{candidate.name}</h4>
+                                    <p><strong>Posisi Pencalonan:</strong> Ketua KKM</p>
+
+                                    <div className="landing-hero-candidate-meta">
+                                        <p><strong>NIK:</strong> {candidate.nik}</p>
+                                        <p><strong>Department:</strong> {candidate.department}</p>
+                                        <p><strong>Site:</strong> {candidate.site}</p>
+                                    </div>
+
+                                    <p><strong>Visi:</strong> {candidate.vision}</p>
+                                    <div>
+                                        <p><strong>Misi:</strong></p>
+                                        {renderMissionContent(candidate.mission, 'landing-mission-list')}
+                                    </div>
+                                    <p><strong>Motto:</strong> {candidate.motto}</p>
+                                </div>
+                            </article>
+                        ))}
+                    </div>
+
+                    {landingCandidates.length === 0 && !candidateError ? (
+                        <p className="landing-hero-candidates-subtitle" style={{ marginTop: '0.85rem' }}>
+                            Belum ada kandidat aktif di database.
+                        </p>
+                    ) : null}
+
+                    {canStartOtp ? (
+                        <button
+                            className="btn btn-primary btn-lg landing-otp-button"
+                            onClick={() => navigate('/otp')}
+                        >
+                            {ctaText}
+                        </button>
+                    ) : (
+                        <p className="landing-hero-candidates-subtitle" style={{ marginTop: '0.85rem' }}>
+                            Verifikasi OTP akan dibuka saat status pemilihan OPEN / VOTE PROGRESS.
+                        </p>
+                    )}
+
+                </section>
+            </main>
+
+            <footer className="voting-footer landing-footer">
+                <p><a href="https://nandurstudio.com" target="_blank" rel="noreferrer">©2026 Nandur Studio</a></p>
+            </footer>
+        </div>
+    );
+}
