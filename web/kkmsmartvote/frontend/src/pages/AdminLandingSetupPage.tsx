@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useState } from 'react'
 import { authApi, electionApi } from '../services/api'
 import '../styles/pages/admin-landing-setup.css'
 import { setStoredAdminUser } from '../components/admin/authStorage'
+import { notify } from '../utils/notify'
 
 type ElectionPayload = {
     election_name: string
@@ -52,8 +53,6 @@ export default function AdminLandingSetupPage() {
     const [loading, setLoading] = useState(false)
     const [saving, setSaving] = useState(false)
     const [loggingIn, setLoggingIn] = useState(false)
-    const [message, setMessage] = useState('')
-    const [error, setError] = useState('')
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
 
@@ -87,7 +86,6 @@ export default function AdminLandingSetupPage() {
 
     const loadData = async () => {
         setLoading(true)
-        setError('')
 
         try {
             const res = await electionApi.current()
@@ -120,7 +118,7 @@ export default function AdminLandingSetupPage() {
                 canonical_url: data.canonical_url ?? '',
             })
         } catch (e: any) {
-            setError(e?.response?.data?.message ?? 'Gagal memuat pengaturan landing page')
+            notify.error('Load Pengaturan Gagal', e?.response?.data?.message ?? 'Gagal memuat pengaturan landing page')
         } finally {
             setLoading(false)
         }
@@ -133,19 +131,17 @@ export default function AdminLandingSetupPage() {
     const saveToken = () => {
         if (!tokenInput.trim()) {
             localStorage.removeItem('admin_token')
-            setMessage('Admin token dihapus dari browser')
+            notify.info('Token Dihapus', 'Admin token dihapus dari browser')
             return
         }
 
         localStorage.setItem('admin_token', tokenInput.trim())
-        setMessage('Admin token tersimpan di browser')
+        notify.success('Token Tersimpan', 'Admin token tersimpan di browser')
     }
 
     const loginAdmin = async (e: FormEvent) => {
         e.preventDefault()
         setLoggingIn(true)
-        setError('')
-        setMessage('')
 
         try {
             const res = await authApi.adminLogin(username, password)
@@ -162,9 +158,9 @@ export default function AdminLandingSetupPage() {
                 setStoredAdminUser(user)
             }
             setTokenInput(token)
-            setMessage('Login admin berhasil. Token siap dipakai untuk simpan pengaturan.')
+            notify.success('Login Berhasil', 'Token siap dipakai untuk simpan pengaturan.')
         } catch (err: any) {
-            setError(err?.response?.data?.message ?? err?.message ?? 'Login admin gagal')
+            notify.error('Login Admin Gagal', err?.response?.data?.message ?? err?.message ?? 'Login admin gagal')
         } finally {
             setLoggingIn(false)
         }
@@ -173,8 +169,6 @@ export default function AdminLandingSetupPage() {
     const submit = async (e: FormEvent) => {
         e.preventDefault()
         setSaving(true)
-        setError('')
-        setMessage('')
 
         // Apply token input immediately for this submit flow.
         if (tokenInput.trim()) {
@@ -187,10 +181,10 @@ export default function AdminLandingSetupPage() {
                 end_time: form.end_time.length === 5 ? `${form.end_time}:00` : form.end_time,
                 announcement_at: form.announcement_at ? new Date(form.announcement_at).toISOString() : null,
             })
-            setMessage('Pengaturan landing page berhasil disimpan')
+            notify.success('Berhasil', 'Pengaturan landing page berhasil disimpan')
             await loadData()
         } catch (err: any) {
-            setError(err?.response?.data?.message ?? 'Gagal menyimpan pengaturan')
+            notify.error('Simpan Pengaturan Gagal', err?.response?.data?.message ?? 'Gagal menyimpan pengaturan')
         } finally {
             setSaving(false)
         }
@@ -243,8 +237,6 @@ export default function AdminLandingSetupPage() {
             </section>
 
             {loading ? <p className="setup-info">Memuat data...</p> : null}
-            {error ? <p className="setup-error">{error}</p> : null}
-            {message ? <p className="setup-success">{message}</p> : null}
 
             <form onSubmit={submit} className="setup-form-wrap">
                 <section className="setup-card">

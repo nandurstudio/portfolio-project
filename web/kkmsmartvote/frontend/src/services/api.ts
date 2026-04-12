@@ -66,7 +66,15 @@ export default api;
 // ── AUTH API ───────────────────────────────────────────────────────────────
 export const authApi = {
   adminLogin: (username: string, password: string) =>
-    api.post("/auth/admin/login", { username, password }),
+    api.post(
+      "/auth/admin/login",
+      { username, password },
+      {
+        headers: {
+          "x-skip-auth-redirect": "1",
+        },
+      },
+    ),
   me: () => api.get("/auth/me"),
   logout: () => api.post("/auth/logout"),
 };

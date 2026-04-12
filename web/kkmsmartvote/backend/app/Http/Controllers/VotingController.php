@@ -164,6 +164,9 @@ class VotingController extends Controller
                 ], 500);
             }
 
+            $resolvedSite = $this->resolveMemberSite($member);
+            $resolvedSiteName = $resolvedSite['name'];
+
             AuditLog::record($member->name, 'OTP Diminta', [
                 'member_nik' => $memberNik,
                 'email' => $email,
@@ -184,7 +187,7 @@ class VotingController extends Controller
                         'name' => $member->name,
                         'email_masked' => !empty($member->email) ? $this->maskEmail((string) $member->email) : null,
                         'department' => (string) ($member->department ?? '-'),
-                        'site' => (string) ($member->site ?? '-'),
+                        'site' => $resolvedSite,
                     ],
                     'expires_in' => 900,
                     'quota' => [
@@ -406,14 +409,8 @@ class VotingController extends Controller
                 ], 403);
             }
 
-            $departmentModel = null;
-            if (!empty($member->department_id)) {
-                $departmentModel = Department::with('site')->find($member->department_id);
-            }
-
-            $siteModel = $departmentModel?->site;
-            $departmentName = $departmentModel?->name ?: ((string) ($member->department ?? '-'));
-            $siteName = $siteModel?->name ?: ((string) ($member->site ?? '-'));
+            $resolvedSite = $this->resolveMemberSite($member);
+            $departmentName = (string) ($member->department ?? '-');
 
             // OK: Return member data
             return response()->json([
@@ -428,16 +425,12 @@ class VotingController extends Controller
                     'has_voted' => $member->has_voted,
                     'can_vote' => !$member->has_voted,
                     'existing_vote' => $member->has_voted ? $this->buildExistingVoteSummary($member) : null,
-                    'department' => [
-                        'id' => $departmentModel?->id,
-                        'code' => $departmentModel?->code,
-                        'name' => $departmentName
-                    ],
-                    'site' => [
-                        'id' => $siteModel?->id,
-                        'code' => $siteModel?->code,
-                        'name' => $siteName
-                    ]
+                    'department' => $member->department ? [
+                        'id' => null,
+                        'code' => null,
+                        'name' => (string) $member->department,
+                    ] : null,
+                    'site' => $resolvedSite
                 ]
             ]);
         } catch (\Exception $e) {
@@ -448,6 +441,47 @@ class VotingController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Resolve member site with priority:
+     * 1) latest valid vote.site_id -> sites
+     * 2) members.site_id -> sites (if exists)
+     * 3) members.site text match by sites.name/code
+     * 4) raw members.site text as fallback
+     */
+    private function resolveMemberSite(Member $member): array
+    {
+        $latestVoteSiteId = Vote::query()
+            ->where('member_nik', $member->nik)
+            ->whereNotNull('site_id')
+            ->where('is_valid', true)
+            ->orderByDesc('id')
+            ->value('site_id');
+
+        // Do not access $vote->site relation here because Vote has both `site` column
+        // and `site()` relation with the same name, which can resolve as string value.
+        $siteModel = !empty($latestVoteSiteId)
+            ? Site::query()->select('id', 'code', 'name')->find($latestVoteSiteId)
+            : null;
+
+        if (!$siteModel && Schema::hasColumn('members', 'site_id') && !empty($member->site_id)) {
+            $siteModel = Site::find($member->site_id);
+        }
+
+        $rawMemberSite = trim((string) ($member->site ?? ''));
+        if (!$siteModel && $rawMemberSite !== '' && $rawMemberSite !== '-') {
+            $siteModel = Site::query()
+                ->whereRaw('LOWER(name) = ?', [Str::lower($rawMemberSite)])
+                ->orWhereRaw('LOWER(code) = ?', [Str::lower($rawMemberSite)])
+                ->first();
+        }
+
+        return [
+            'id' => $siteModel?->id,
+            'code' => $siteModel?->code,
+            'name' => $siteModel?->name ?: ($rawMemberSite !== '' ? $rawMemberSite : null),
+        ];
     }
 
     /**

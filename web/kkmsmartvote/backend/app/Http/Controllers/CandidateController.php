@@ -136,16 +136,18 @@ class CandidateController extends Controller
             }
 
             $autoName = $member->name;
-            $autoDepartment = $member->department;
-            $autoSite = $member->site;
+            $inputDepartment = trim((string) $request->department_name);
+            $inputSite = trim((string) $request->site_name);
+            $resolvedDepartment = $inputDepartment !== '' ? $inputDepartment : (string) $member->department;
+            $resolvedSite = $inputSite !== '' ? $inputSite : (string) $member->site;
 
             $candidate = Candidate::create([
                 'name' => $autoName,
                 'nik' => $nik,
                 'position' => $request->position,
                 'department_id' => $request->department_id,
-                'department_name' => $autoDepartment,
-                'site_name' => $autoSite,
+                'department_name' => $resolvedDepartment,
+                'site_name' => $resolvedSite,
                 'bio' => $request->bio,
                 'vision' => $request->vision,
                 'mission' => $request->mission,
@@ -246,16 +248,18 @@ class CandidateController extends Controller
             }
 
             $autoName = $member->name;
-            $autoDepartment = $member->department;
-            $autoSite = $member->site;
+            $inputDepartment = trim((string) $request->department_name);
+            $inputSite = trim((string) $request->site_name);
+            $resolvedDepartment = $inputDepartment !== '' ? $inputDepartment : (string) $member->department;
+            $resolvedSite = $inputSite !== '' ? $inputSite : (string) $member->site;
 
             $candidate->update([
                 'name' => $autoName,
                 'nik' => $nik,
                 'position' => $request->position ?? $candidate->position,
                 'department_id' => $request->department_id,
-                'department_name' => $autoDepartment,
-                'site_name' => $autoSite,
+                'department_name' => $resolvedDepartment,
+                'site_name' => $resolvedSite,
                 'bio' => $request->bio,
                 'vision' => $request->vision,
                 'mission' => $request->mission,

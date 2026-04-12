@@ -37,10 +37,23 @@ Route::middleware('jwt.auth')->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/me', [AuthController::class, 'me']);
 
-    // Admin + Panitia
-    Route::middleware('role:super_admin,admin,panitia')->group(function () {
+    // Dashboard access for Admin + Panitia + Saksi
+    Route::middleware('role:super_admin,admin,panitia,saksi_forensik')->group(function () {
         Route::get('/admin/dashboard', [AdminController::class, 'dashboard']);
+    });
 
+    // Monitoring Vote (Admin + Panitia + Saksi)
+    Route::middleware('role:super_admin,admin,panitia,saksi_forensik')->group(function () {
+        // Votes
+        Route::get('/admin/votes', [AdminController::class, 'votes']);
+        Route::get('/admin/results', [AdminController::class, 'results']);
+
+        // Audit
+        Route::get('/admin/audit-log', [AuditLogController::class, 'index']);
+    });
+
+    // Admin area (operational data management)
+    Route::middleware('role:super_admin,admin')->group(function () {
         // Candidates
         Route::get('/admin/candidates', [CandidateController::class, 'index']);
         Route::post('/admin/candidates', [CandidateController::class, 'store']);
@@ -50,22 +63,24 @@ Route::middleware('jwt.auth')->group(function () {
         Route::get('/admin/members', [MemberController::class, 'index']);
         Route::get('/admin/members/by-nik/{nik}', [MemberController::class, 'findByNik']);
         Route::post('/admin/members', [MemberController::class, 'store']);
-
-        // Votes
-        Route::get('/admin/votes', [AdminController::class, 'votes']);
-        Route::get('/admin/results', [AdminController::class, 'results']);
-
-        // Audit
-        Route::get('/admin/audit-log', [AuditLogController::class, 'index']);
     });
 
-    // Admin only
+    // Setup Landing (Admin + Panitia)
+    Route::middleware('role:super_admin,admin,panitia')->group(function () {
+        Route::put('/admin/election/settings', [ElectionSettingController::class, 'update']);
+    });
+
+    // Admin only (sensitive actions)
     Route::middleware('role:super_admin,admin')->group(function () {
+        // Master Members (full editable)
+        Route::get('/admin/master-members', [MemberController::class, 'masterIndex']);
+        Route::post('/admin/master-members', [MemberController::class, 'masterStore']);
+        Route::put('/admin/master-members/{id}', [MemberController::class, 'masterUpdate']);
+
         Route::delete('/admin/candidates/{id}', [CandidateController::class, 'destroy']);
         Route::post('/admin/candidates/{id}/upload-photo', [CandidateController::class, 'uploadPhoto']);
         Route::post('/admin/votes/{id}/invalidate', [AdminController::class, 'invalidateVote']);
         Route::post('/admin/election/finalize', [AdminController::class, 'finalize']);
-        Route::put('/admin/election/settings', [ElectionSettingController::class, 'update']);
 
         // Users
         Route::get('/admin/users/meta', [UserController::class, 'meta']);

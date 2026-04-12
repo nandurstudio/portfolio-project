@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\Candidate;
 use App\Models\ElectionSetting;
 use App\Models\Member;
+use App\Models\Site;
 use App\Models\Vote;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,6 +21,31 @@ class AdminController extends Controller
         $totalInvalid  = Vote::where('is_valid', false)->count();
         $participation = $totalMembers > 0 ? round($totalValid / $totalMembers * 100, 1) : 0;
 
+        $siteVoteChart = Site::query()
+            ->leftJoin('votes', function ($join) {
+                $join->on('votes.site_id', '=', 'sites.id')
+                    ->where('votes.is_valid', true);
+            })
+            ->groupBy('sites.id', 'sites.code', 'sites.name')
+            ->orderByRaw('LOWER(sites.name) ASC')
+            ->selectRaw('sites.id as site_id, sites.code as site_code, sites.name as site_name, COUNT(votes.id) as total_votes')
+            ->get()
+            ->map(function ($row) {
+                $totalVotes = (int) ($row->total_votes ?? 0);
+                return [
+                    'site_id' => (int) $row->site_id,
+                    'site_code' => (string) $row->site_code,
+                    'site_name' => (string) $row->site_name,
+                    'total_votes' => $totalVotes,
+                    'has_votes' => $totalVotes > 0,
+                ];
+            })
+            ->values();
+
+        $totalSites = $siteVoteChart->count();
+        $sitesWithVotes = $siteVoteChart->filter(fn($row) => $row['has_votes'])->count();
+        $sitesWithoutVotes = $totalSites - $sitesWithVotes;
+
         $candidateStats = Candidate::withCount(['votes as valid_votes' => fn($q) => $q->where('is_valid', true)])
             ->orderByDesc('valid_votes')
             ->get(['id', 'name', 'position', 'is_active']);
@@ -31,6 +57,12 @@ class AdminController extends Controller
             'total_valid'      => $totalValid,
             'total_invalid'    => $totalInvalid,
             'participation_pct' => $participation,
+            'site_vote_overview' => [
+                'total_sites' => $totalSites,
+                'sites_with_votes' => $sitesWithVotes,
+                'sites_without_votes' => $sitesWithoutVotes,
+            ],
+            'site_vote_chart' => $siteVoteChart,
             'candidate_stats'  => $candidateStats,
             'election'         => $setting,
         ]);

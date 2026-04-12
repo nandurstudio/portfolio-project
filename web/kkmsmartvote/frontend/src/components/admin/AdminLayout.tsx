@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { authApi } from '../../services/api'
 import { adminMenuItems, hasRoleAccess, type AdminRole } from '../../config/adminMenu'
 import { clearAdminSession, getStoredAdminUser, setStoredAdminUser } from './authStorage'
+import { notify } from '../../utils/notify'
 import '../../styles/admin/admin-shell.css'
 
 export default function AdminLayout() {
@@ -11,8 +12,6 @@ export default function AdminLayout() {
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
     const [loggingIn, setLoggingIn] = useState(false)
-    const [error, setError] = useState('')
-    const [success, setSuccess] = useState('')
     const [reloadKey, setReloadKey] = useState(0)
 
     const user = useMemo(() => getStoredAdminUser(), [reloadKey])
@@ -26,8 +25,6 @@ export default function AdminLayout() {
     const loginAdmin = async (e: FormEvent) => {
         e.preventDefault()
         setLoggingIn(true)
-        setError('')
-        setSuccess('')
 
         try {
             const res = await authApi.adminLogin(username, password)
@@ -41,11 +38,11 @@ export default function AdminLayout() {
             localStorage.setItem('admin_token', token)
             localStorage.setItem('token', token)
             setStoredAdminUser(nextUser)
-            setSuccess('Login berhasil. Menu akan tampil sesuai role Anda.')
+            notify.success('Login Berhasil', 'Menu akan tampil sesuai role Anda.')
             setReloadKey((v) => v + 1)
             setPassword('')
         } catch (err: any) {
-            setError(err?.response?.data?.message || err?.message || 'Login admin gagal')
+            notify.error('Login Admin Gagal', err?.response?.data?.message || err?.message || 'Login admin gagal')
         } finally {
             setLoggingIn(false)
         }
@@ -59,8 +56,7 @@ export default function AdminLayout() {
         }
         clearAdminSession()
         setReloadKey((v) => v + 1)
-        setSuccess('Session admin sudah dihapus.')
-        setError('')
+        notify.success('Logout Berhasil', 'Session admin sudah dihapus.')
     }
 
     const isOnAdminRoot = location.pathname === '/admin'
@@ -71,9 +67,6 @@ export default function AdminLayout() {
                 <section className="admin-auth-card">
                     <h1>Admin Panel KKM Smart Vote</h1>
                     <p>Masuk untuk membuka menu dinamis sesuai role Anda.</p>
-
-                    {error ? <p className="admin-error">{error}</p> : null}
-                    {success ? <p className="admin-success">{success}</p> : null}
 
                     <form onSubmit={loginAdmin} className="admin-auth-form">
                         <label>

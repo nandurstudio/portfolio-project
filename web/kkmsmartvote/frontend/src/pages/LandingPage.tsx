@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { candidatesApi, electionApi, votingApi } from '../services/api';
+import { notify } from '../utils/notify';
 import '../styles/pages/voting.css';
 
 type ElectionState = 'coming_soon' | 'open' | 'closed';
@@ -104,7 +105,6 @@ export default function LandingPage() {
     const [canonicalUrl, setCanonicalUrl] = useState<string>('');
     const [countdown, setCountdown] = useState<number>(0);
     const [dbCandidates, setDbCandidates] = useState<LandingCandidate[]>([]);
-    const [candidateError, setCandidateError] = useState<string>('');
     const [imageFallback, setImageFallback] = useState<Record<number, boolean>>({});
 
     useEffect(() => {
@@ -236,10 +236,9 @@ export default function LandingPage() {
                     });
 
                     setDbCandidates(ordered);
-                    setCandidateError('');
                 } catch {
                     setDbCandidates([]);
-                    setCandidateError('Gagal mengambil kandidat dari database. Coba refresh atau cek API.');
+                    notify.error('Load Kandidat Gagal', 'Gagal mengambil kandidat dari database. Coba refresh atau cek API.');
                 }
             } catch {
                 // Keep fallback UI if API is not ready yet.
@@ -373,7 +372,7 @@ export default function LandingPage() {
     return (
         <div className="voting-container landing-page">
             <header className="voting-header landing-header">
-                <h1>KKM Smart Vote {dynamicYear}</h1>
+                <h1>🗳️ KKM Smart Vote {dynamicYear}</h1>
                 <p className={`landing-status-badge status-${status}`}>{statusBadge}</p>
                 <h2>{statusLabel}</h2>
             </header>
@@ -441,8 +440,6 @@ export default function LandingPage() {
                         Yuk kenalan dengan kandidat Ketua Koperasi Karya Mandiri yang siap membawa koperasi kita lebih maju!
                     </p>
 
-                    {candidateError ? <p className="admin-error">{candidateError}</p> : null}
-
                     <div className="landing-hero-candidate-grid">
                         {landingCandidates.map((candidate) => (
                             <article key={candidate.key} className="landing-hero-candidate-card">
@@ -479,19 +476,21 @@ export default function LandingPage() {
                         ))}
                     </div>
 
-                    {landingCandidates.length === 0 && !candidateError ? (
+                    {landingCandidates.length === 0 ? (
                         <p className="landing-hero-candidates-subtitle" style={{ marginTop: '0.85rem' }}>
                             Belum ada kandidat aktif di database.
                         </p>
                     ) : null}
 
                     {canStartOtp ? (
-                        <button
-                            className="btn btn-primary btn-lg landing-otp-button"
-                            onClick={() => navigate('/otp')}
-                        >
-                            {ctaText}
-                        </button>
+                        <div className="landing-cta-group" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
+                            <button
+                                className="btn btn-primary btn-lg landing-otp-button"
+                                onClick={() => navigate('/otp')}
+                            >
+                                {ctaText}
+                            </button>
+                        </div>
                     ) : (
                         <p className="landing-hero-candidates-subtitle" style={{ marginTop: '0.85rem' }}>
                             Verifikasi OTP akan dibuka saat status pemilihan OPEN / VOTE PROGRESS.
@@ -502,7 +501,26 @@ export default function LandingPage() {
             </main>
 
             <footer className="voting-footer landing-footer">
-                <p><a href="https://nandurstudio.com" target="_blank" rel="noreferrer">©2026 Nandur Studio</a></p>
+                <p>
+                    <a href="https://nandurstudio.com" target="_blank" rel="noreferrer">©2026 Nandur Studio</a>
+                    {' '}|{' '}
+                    <button
+                        type="button"
+                        onClick={() => navigate('/admin')}
+                        style={{
+                            background: 'none',
+                            border: 'none',
+                            padding: 0,
+                            margin: 0,
+                            color: 'inherit',
+                            textDecoration: 'underline',
+                            cursor: 'pointer',
+                            fontSize: '0.9rem',
+                        }}
+                    >
+                        Akses Admin
+                    </button>
+                </p>
             </footer>
         </div>
     );

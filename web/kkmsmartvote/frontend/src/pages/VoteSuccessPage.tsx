@@ -47,7 +47,6 @@ export default function VoteSuccessPage() {
     const [gopayNumber, setGopayNumber] = useState('');
     const [gopayOwnerSelf, setGopayOwnerSelf] = useState(true);
     const [gopayOwnerName, setGopayOwnerName] = useState('');
-    const [gopayError, setGopayError] = useState('');
 
     const vote = location.state?.vote || voterSession.getLastVote<any>();
     const member = location.state?.member || voterSession.getMember<any>();
@@ -163,7 +162,6 @@ export default function VoteSuccessPage() {
             notify.warning('Voucher Terkunci', 'Voucher sudah redeemed, data GoPay tidak bisa diubah lagi.');
             return;
         }
-        setGopayError('');
         setShowGopayModal(true);
     };
 
@@ -177,17 +175,16 @@ export default function VoteSuccessPage() {
 
         const sanitizedNumber = gopayNumber.replace(/\D/g, '');
         if (sanitizedNumber.length < 10) {
-            setGopayError('Nomor GoPay/HP harus diisi dengan benar.');
+            notify.warning('Nomor GoPay Tidak Valid', 'Nomor GoPay/HP harus diisi dengan benar.');
             return;
         }
 
         if (!gopayOwnerSelf && !gopayOwnerName.trim()) {
-            setGopayError('Nama pemilik GoPay wajib diisi jika bukan nama sendiri.');
+            notify.warning('Nama Pemilik Wajib', 'Nama pemilik GoPay wajib diisi jika bukan nama sendiri.');
             return;
         }
 
         setSavingGopay(true);
-        setGopayError('');
 
         const payload = {
             code: voucherCode,
@@ -219,7 +216,7 @@ export default function VoteSuccessPage() {
         } catch (error: any) {
             const errorData = error?.response?.data;
             console.error('❌ Gopay save error:', errorData || error);
-            setGopayError(errorData?.message || 'Gagal menyimpan data GoPay.');
+            notify.error('Simpan GoPay Gagal', errorData?.message || 'Gagal menyimpan data GoPay.');
         } finally {
             setSavingGopay(false);
         }
@@ -419,8 +416,6 @@ export default function VoteSuccessPage() {
                                     />
                                 </label>
                             ) : null}
-
-                            {gopayError ? <p className="admin-error">{gopayError}</p> : null}
 
                             <p className="gopay-help">
                                 ✨ Jika memakai GoPay keluarga, hilangkan centang lalu isi nama pemiliknya.

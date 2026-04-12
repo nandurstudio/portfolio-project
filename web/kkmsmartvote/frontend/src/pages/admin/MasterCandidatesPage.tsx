@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { candidatesApi, membersApi, votingApi } from '../../services/api'
+import { notify } from '../../utils/notify'
 
 type CandidateRow = {
     id: number
@@ -56,8 +57,6 @@ export default function MasterCandidatesPage() {
     const [loading, setLoading] = useState(false)
     const [saving, setSaving] = useState(false)
     const [uploadingPhoto, setUploadingPhoto] = useState(false)
-    const [error, setError] = useState('')
-    const [success, setSuccess] = useState('')
     const [rows, setRows] = useState<CandidateRow[]>([])
     const [editId, setEditId] = useState<number | null>(null)
     const [form, setForm] = useState<CandidateForm>(emptyForm)
@@ -108,11 +107,10 @@ export default function MasterCandidatesPage() {
 
         const load = async () => {
             setLoading(true)
-            setError('')
             try {
                 await Promise.all([loadCandidates(), loadSites()])
             } catch (err: any) {
-                setError(err?.response?.data?.message || 'Gagal memuat data kandidat')
+                notify.error('Load Kandidat Gagal', err?.response?.data?.message || 'Gagal memuat data kandidat')
             } finally {
                 setLoading(false)
             }
@@ -139,8 +137,6 @@ export default function MasterCandidatesPage() {
 
     const openCreateModal = () => {
         resetForm()
-        setError('')
-        setSuccess('')
         setShowModal(true)
     }
 
@@ -150,8 +146,6 @@ export default function MasterCandidatesPage() {
 
     const startEdit = (row: CandidateRow) => {
         setEditId(row.id)
-        setError('')
-        setSuccess('')
         setForm({
             name: row.name || '',
             nik: row.nik || '',
@@ -178,12 +172,10 @@ export default function MasterCandidatesPage() {
     const handleLookupNik = async () => {
         const nik = form.nik.trim()
         if (!nik) {
-            setError('NIK wajib diisi untuk mengambil data anggota.')
+            notify.warning('NIK Wajib Diisi', 'NIK wajib diisi untuk mengambil data anggota.')
             return
         }
 
-        setError('')
-        setSuccess('')
         setFetchingNik(true)
 
         try {
@@ -206,9 +198,9 @@ export default function MasterCandidatesPage() {
                 site_name: String(memberSite || '-'),
             }))
 
-            setSuccess('Data anggota berhasil ditarik berdasarkan NIK.')
+            notify.success('Data Anggota Ditemukan', 'Data anggota berhasil ditarik berdasarkan NIK.')
         } catch (err: any) {
-            setError(err?.response?.data?.message || 'NIK tidak ditemukan di data anggota')
+            notify.error('Lookup NIK Gagal', err?.response?.data?.message || 'NIK tidak ditemukan di data anggota')
         } finally {
             setFetchingNik(false)
         }
@@ -216,8 +208,6 @@ export default function MasterCandidatesPage() {
 
     const saveCandidate = async (e: React.FormEvent) => {
         e.preventDefault()
-        setError('')
-        setSuccess('')
 
         const payload = {
             name: form.name.trim() || null,
@@ -237,7 +227,7 @@ export default function MasterCandidatesPage() {
         }
 
         if (!payload.nik) {
-            setError('NIK kandidat wajib diisi.')
+            notify.warning('Data Belum Lengkap', 'NIK kandidat wajib diisi.')
             return
         }
 
@@ -245,12 +235,13 @@ export default function MasterCandidatesPage() {
         try {
             if (editId) {
                 await candidatesApi.update(editId, payload)
-                setSuccess('Kandidat berhasil diupdate.')
+                notify.success('Berhasil', 'Kandidat berhasil diupdate.')
             } else {
                 await candidatesApi.store(payload)
-                setSuccess('Kandidat baru berhasil ditambahkan.')
+                notify.success('Berhasil', 'Kandidat baru berhasil ditambahkan.')
             }
 
+            setShowModal(false)
             await loadCandidates()
             resetForm()
         } catch (err: any) {
@@ -260,9 +251,9 @@ export default function MasterCandidatesPage() {
                 const firstMessage = Array.isArray(validationErrors[firstKey])
                     ? validationErrors[firstKey][0]
                     : null
-                setError(firstMessage || err?.response?.data?.message || 'Validasi kandidat gagal')
+                notify.error('Validasi Gagal', firstMessage || err?.response?.data?.message || 'Validasi kandidat gagal')
             } else {
-                setError(err?.response?.data?.message || 'Gagal menyimpan kandidat')
+                notify.error('Simpan Kandidat Gagal', err?.response?.data?.message || 'Gagal menyimpan kandidat')
             }
         } finally {
             setSaving(false)
@@ -271,23 +262,21 @@ export default function MasterCandidatesPage() {
 
     const handleUploadPhoto = async () => {
         if (!editId) {
-            setError('Simpan kandidat dulu, lalu upload foto saat mode edit.')
+            notify.warning('Simpan Kandidat Dulu', 'Simpan kandidat dulu, lalu upload foto saat mode edit.')
             return
         }
         if (!photoFile) {
-            setError('Pilih file foto terlebih dahulu.')
+            notify.warning('Foto Belum Dipilih', 'Pilih file foto terlebih dahulu.')
             return
         }
 
-        setError('')
-        setSuccess('')
         setUploadingPhoto(true)
         setUploadProgress(0)
 
         const uploadGuard = setTimeout(() => {
             setUploadingPhoto(false)
             setUploadProgress(0)
-            setError('Upload timeout. Silakan coba lagi dengan file lebih kecil atau cek koneksi backend.')
+            notify.error('Upload Timeout', 'Silakan coba lagi dengan file lebih kecil atau cek koneksi backend.')
         }, 50000)
 
         try {
@@ -303,12 +292,12 @@ export default function MasterCandidatesPage() {
             setPhotoPreview(nextPhotoUrl || photoPreview)
             setUploadProgress(100)
             clearSelectedPhotoFile()
-            setSuccess('Foto kandidat berhasil diupload.')
+            notify.success('Upload Berhasil', 'Foto kandidat berhasil diupload.')
             await loadCandidates()
             // Briefly show 100%, then reset progress state.
             setTimeout(() => setUploadProgress(0), 500)
         } catch (err: any) {
-            setError(err?.response?.data?.message || 'Gagal upload foto kandidat')
+            notify.error('Upload Foto Gagal', err?.response?.data?.message || 'Gagal upload foto kandidat')
             setUploadProgress(0)
         } finally {
             clearTimeout(uploadGuard)
@@ -317,23 +306,25 @@ export default function MasterCandidatesPage() {
     }
 
     const handleDeactivate = async (row: CandidateRow) => {
-        setError('')
-        setSuccess('')
-
-        const ok = window.confirm(`Nonaktifkan kandidat ${row.name}?`)
-        if (!ok) return
+        const result = await notify.confirm(
+            'Nonaktifkan Kandidat?',
+            `Kandidat ${row.name} akan dinonaktifkan dari daftar aktif.`,
+            'Ya, nonaktifkan',
+            'Batal',
+        )
+        if (!result.isConfirmed) return
 
         setSaving(true)
         try {
             await candidatesApi.destroy(row.id)
-            setSuccess('Kandidat berhasil dinonaktifkan.')
+            notify.success('Berhasil', 'Kandidat berhasil dinonaktifkan.')
             await loadCandidates()
 
             if (editId === row.id) {
                 resetForm()
             }
         } catch (err: any) {
-            setError(err?.response?.data?.message || 'Gagal menonaktifkan kandidat')
+            notify.error('Nonaktifkan Kandidat Gagal', err?.response?.data?.message || 'Gagal menonaktifkan kandidat')
         } finally {
             setSaving(false)
         }
@@ -361,8 +352,6 @@ export default function MasterCandidatesPage() {
             </p>
 
             {loading ? <p>Memuat kandidat...</p> : null}
-            {error ? <p className="admin-error">{error}</p> : null}
-            {success ? <p className="admin-success">{success}</p> : null}
 
             <div className="admin-chip-list" style={{ marginBottom: 12 }}>
                 <button type="button" className="btn btn-primary" onClick={openCreateModal}>
@@ -461,7 +450,7 @@ export default function MasterCandidatesPage() {
             </div>
 
             {showModal ? (
-                <div className="admin-modal-backdrop" onClick={() => setShowModal(false)}>
+                <div className="admin-modal-backdrop">
                     <div className="admin-modal-card admin-modal-card--wide" onClick={(e) => e.stopPropagation()}>
                         <div className="admin-modal-header">
                             <h3>{title}</h3>
@@ -506,10 +495,11 @@ export default function MasterCandidatesPage() {
                             </label>
 
                             <label>
-                                Department (otomatis)
+                                Department (otomatis, bisa diedit)
                                 <input
                                     value={form.department_name}
-                                    readOnly
+                                    onChange={(e) => handleChange('department_name', e.target.value)}
+                                    placeholder="Contoh: Warehouse"
                                 />
                             </label>
 

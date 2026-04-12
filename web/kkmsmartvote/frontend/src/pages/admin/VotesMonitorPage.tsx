@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { adminApi } from '../../services/api'
+import { notify } from '../../utils/notify'
 
 type AuditItem = {
     id: number
@@ -49,7 +50,6 @@ function shortHash(value?: string | null): string {
 export default function VotesMonitorPage() {
     const [logs, setLogs] = useState<AuditItem[]>([])
     const [loading, setLoading] = useState(false)
-    const [error, setError] = useState('')
 
     const [action, setAction] = useState('')
     const [actor, setActor] = useState('')
@@ -68,7 +68,6 @@ export default function VotesMonitorPage() {
 
     const fetchAudit = async () => {
         setLoading(true)
-        setError('')
         try {
             const res = await adminApi.auditLogs({
                 action: action || undefined,
@@ -95,7 +94,7 @@ export default function VotesMonitorPage() {
             setLogs([])
             setSummary([])
             setForensic({})
-            setError('Gagal memuat audit log. Pastikan API admin aktif.')
+            notify.error('Load Audit Log Gagal', 'Pastikan API admin aktif.')
         } finally {
             setLoading(false)
         }
@@ -220,7 +219,6 @@ export default function VotesMonitorPage() {
 
             <section className="admin-simple-card">
                 <h2>Timeline Audit Log</h2>
-                {error ? <p className="admin-error">{error}</p> : null}
                 {loading ? <p>Memuat audit log...</p> : null}
 
                 <div className="admin-table-wrap">

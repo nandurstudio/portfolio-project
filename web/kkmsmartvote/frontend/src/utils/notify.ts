@@ -47,4 +47,21 @@ export const notify = {
       title,
       text,
     }),
+
+  confirm: (
+    title: string,
+    text?: string,
+    confirmButtonText = "Ya, lanjutkan",
+    cancelButtonText = "Batal",
+  ) =>
+    Swal.fire({
+      ...baseOptions,
+      icon: "question",
+      title,
+      text,
+      showCancelButton: true,
+      confirmButtonText,
+      cancelButtonText,
+      reverseButtons: true,
+    }),
 };

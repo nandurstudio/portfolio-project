@@ -1,4 +1,4 @@
-export type AdminRole = "super_admin" | "admin" | "panitia";
+export type AdminRole = "super_admin" | "admin" | "panitia" | "saksi_forensik";
 
 export type AdminMenuItem = {
   key: string;
@@ -14,20 +14,27 @@ export const adminMenuItems: AdminMenuItem[] = [
     label: "Dashboard",
     path: "/admin",
     description: "Ringkasan sistem dan akses cepat",
-    roles: ["super_admin", "admin", "panitia"],
+    roles: ["super_admin", "admin", "panitia", "saksi_forensik"],
   },
   {
     key: "setup-landing",
     label: "Setup Landing",
     path: "/admin/setup-landing",
     description: "Konten landing, agenda, countdown, SEO",
-    roles: ["super_admin", "admin"],
+    roles: ["super_admin", "admin", "panitia"],
   },
   {
     key: "master-users",
     label: "Master User",
     path: "/admin/master-users",
     description: "Kelola akun admin, panitia, dan hak akses",
+    roles: ["super_admin"],
+  },
+  {
+    key: "master-members",
+    label: "Master Member",
+    path: "/admin/master-members",
+    description: "Kelola data member lengkap + status voting/OTP/redeem",
     roles: ["super_admin", "admin"],
   },
   {
@@ -49,7 +56,7 @@ export const adminMenuItems: AdminMenuItem[] = [
     label: "Monitoring Vote",
     path: "/admin/votes",
     description: "Pantau progress voting secara realtime",
-    roles: ["super_admin", "admin", "panitia"],
+    roles: ["super_admin", "admin", "panitia", "saksi_forensik"],
   },
 ];
 

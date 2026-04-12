@@ -202,8 +202,8 @@ export default function MasterUsersPage() {
                 notify.success('User Baru Dibuat', `Password default: ${defaultPassword}`)
             }
 
-            await Promise.all([loadMeta(), loadUsers()])
             setShowModal(false)
+            await Promise.all([loadMeta(), loadUsers()])
             resetForm()
         } catch (err: any) {
             const validationErrors = err?.response?.data?.errors
@@ -334,7 +334,7 @@ export default function MasterUsersPage() {
             </div>
 
             {showModal ? (
-                <div className="admin-modal-backdrop" onClick={() => setShowModal(false)}>
+                <div className="admin-modal-backdrop">
                     <div className="admin-modal-card" onClick={(e) => e.stopPropagation()}>
                         <div className="admin-modal-header">
                             <h3>{editId ? `Edit User #${editId}` : 'Tambah User'}</h3>

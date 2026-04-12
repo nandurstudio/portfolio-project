@@ -22,7 +22,8 @@ type LookupMember = {
     can_vote?: boolean;
     existing_vote?: ExistingVotePayload | null;
     department: { id?: number | null; code?: string | null; name: string } | string;
-    site: { id?: number | null; code?: string | null; name: string } | string;
+    site: { id?: number | null; code?: string | null; name: string } | string | null;
+    site_id?: number | null;
 };
 
 type OtpDraft = {
@@ -53,6 +54,47 @@ type ExistingVotePayload = {
         candidate_name?: string;
     };
 };
+
+function normalizeText(value: unknown): string {
+    return String(value ?? '').trim();
+}
+
+function getMemberSiteName(member: LookupMember | null): string {
+    if (!member) return '-';
+
+    const siteObj = typeof member.site === 'object' && member.site !== null ? member.site : null;
+    const fromSiteObjectName = normalizeText(siteObj?.name);
+    const fromSiteString = typeof member.site === 'string' ? normalizeText(member.site) : '';
+
+    return (
+        fromSiteObjectName ||
+        fromSiteString ||
+        '-'
+    );
+}
+
+function findMatchingSiteId(member: LookupMember | null, sites: SiteOption[]): number | null {
+    if (!member || sites.length === 0) return null;
+
+    const siteObj = typeof member.site === 'object' && member.site !== null ? member.site : null;
+    const byId = Number(siteObj?.id ?? member.site_id ?? 0);
+    if (Number.isFinite(byId) && byId > 0) {
+        const exactById = sites.find((site) => site.id === byId);
+        if (exactById) return exactById.id;
+    }
+
+    const candidateNames = [
+        normalizeText(siteObj?.name),
+        typeof member.site === 'string' ? normalizeText(member.site) : '',
+    ].filter(Boolean);
+
+    for (const name of candidateNames) {
+        const byName = sites.find((site) => site.name.toLowerCase() === name.toLowerCase());
+        if (byName) return byName.id;
+    }
+
+    return null;
+}
 
 export default function VotingVerificationPage() {
     const navigate = useNavigate();
@@ -93,11 +135,8 @@ export default function VotingVerificationPage() {
             setMaskedEmail(String(currentMember.email_masked || maskedEmail));
             voterSession.setMember(currentMember);
 
-            const matchedSite = sites.find((site) => {
-                const siteName = typeof currentMember.site === 'string' ? currentMember.site : currentMember.site?.name;
-                return site.name.toLowerCase() === String(siteName || '').toLowerCase();
-            });
-            setSelectedSiteId(matchedSite?.id ?? sites[0]?.id ?? null);
+            const matchedSiteId = findMatchingSiteId(currentMember, sites);
+            setSelectedSiteId(matchedSiteId ?? null);
             setStep('details');
         }
 
@@ -119,8 +158,7 @@ export default function VotingVerificationPage() {
     }, [member]);
 
     const siteLabel = useMemo(() => {
-        if (!member) return '-';
-        return typeof member.site === 'string' ? member.site : member.site?.name || '-';
+        return getMemberSiteName(member);
     }, [member]);
 
     const isEmailLocked = Boolean(member?.email);
@@ -247,11 +285,8 @@ export default function VotingVerificationPage() {
                 setMaskedEmail(memberData.email_masked || '');
                 setEmail(memberData.email || '');
 
-                const matchedSite = sites.find((site) => {
-                    const siteName = typeof memberData.site === 'string' ? memberData.site : memberData.site?.name;
-                    return site.name.toLowerCase() === String(siteName || '').toLowerCase();
-                });
-                setSelectedSiteId(matchedSite?.id ?? sites[0]?.id ?? null);
+                const matchedSiteId = findMatchingSiteId(memberData, sites);
+                setSelectedSiteId(matchedSiteId ?? null);
                 setStep('details');
                 voterSession.setMember(memberData);
                 if (memberData.existing_vote) {
@@ -461,8 +496,10 @@ export default function VotingVerificationPage() {
     return (
         <div className="voting-container">
             <header className="voting-header">
-                <h1>🗳️ KKM VOTING 2026</h1>
-                <h2>NIK, Site, lalu OTP</h2>
+                <h1>🗳️ KKM Smart Vote 2026</h1>
+                <p className="hint" style={{ marginTop: 6 }}>
+                    Verifikasi NIK, pastikan site pemilih, lalu masukkan OTP untuk melanjutkan proses voting.
+                </p>
             </header>
 
             <main className="voting-main">
@@ -624,7 +661,28 @@ export default function VotingVerificationPage() {
 
             <footer className="voting-footer">
                 <p>❓ Kesulitan? Hubungi panitia KKM</p>
-                <p className="help-contact">Email: panitia@kkm.or.id | Telepon: 08xx-xxxx-xxxx</p>
+                <p className="help-contact">
+                    Email: <a href="mailto:nandang.dhe@gmail.com">nandang.dhe@gmail.com</a> |
+                    {' '}Telepon: <a href="https://wa.me/nandurstudio" target="_blank" rel="noreferrer">0819-0683-3070</a>
+                </p>
+                <p className="help-contact">
+                    <button
+                        type="button"
+                        onClick={() => navigate('/')}
+                        style={{
+                            background: 'none',
+                            border: 'none',
+                            padding: 0,
+                            margin: 0,
+                            color: 'inherit',
+                            textDecoration: 'underline',
+                            cursor: 'pointer',
+                            fontSize: '0.9rem',
+                        }}
+                    >
+                        Kembali ke Landing Page
+                    </button>
+                </p>
             </footer>
         </div>
     );

@@ -9,6 +9,7 @@ import AdminLayout from './components/admin/AdminLayout'
 import RoleGuard from './components/admin/RoleGuard'
 import AdminDashboardPage from './pages/admin/AdminDashboardPage'
 import MasterUsersPage from './pages/admin/MasterUsersPage'
+import MasterMembersPage from './pages/admin/MasterMembersPage'
 import MasterDepartmentsPage from './pages/admin/MasterDepartmentsPage'
 import MasterCandidatesPage from './pages/admin/MasterCandidatesPage'
 import VotesMonitorPage from './pages/admin/VotesMonitorPage'
@@ -31,7 +32,7 @@ export default function App() {
         <Route
           path="setup-landing"
           element={
-            <RoleGuard allowedRoles={['super_admin', 'admin']}>
+            <RoleGuard allowedRoles={['super_admin', 'admin', 'panitia']}>
               <AdminLandingSetupPage />
             </RoleGuard>
           }
@@ -39,8 +40,16 @@ export default function App() {
         <Route
           path="master-users"
           element={
-            <RoleGuard allowedRoles={['super_admin', 'admin']}>
+            <RoleGuard allowedRoles={['super_admin']}>
               <MasterUsersPage />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path="master-members"
+          element={
+            <RoleGuard allowedRoles={['super_admin', 'admin']}>
+              <MasterMembersPage />
             </RoleGuard>
           }
         />
@@ -63,7 +72,7 @@ export default function App() {
         <Route
           path="votes"
           element={
-            <RoleGuard allowedRoles={['super_admin', 'admin', 'panitia']}>
+            <RoleGuard allowedRoles={['super_admin', 'admin', 'panitia', 'saksi_forensik']}>
               <VotesMonitorPage />
             </RoleGuard>
           }
