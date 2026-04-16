@@ -9,19 +9,19 @@ return new class extends Migration {
     {
         Schema::table('vouchers', function (Blueprint $table) {
             if (!Schema::hasColumn('vouchers', 'gopay_number')) {
-                $table->string('gopay_number', 20)->nullable()->after('candidate_name');
+                $table->string('gopay_number', 20)->nullable();
             }
 
             if (!Schema::hasColumn('vouchers', 'gopay_owner_name')) {
-                $table->string('gopay_owner_name', 255)->nullable()->after('gopay_number');
+                $table->string('gopay_owner_name', 255)->nullable();
             }
 
             if (!Schema::hasColumn('vouchers', 'gopay_is_owner_self')) {
-                $table->boolean('gopay_is_owner_self')->default(true)->after('gopay_owner_name');
+                $table->boolean('gopay_is_owner_self')->default(true);
             }
 
             if (!Schema::hasColumn('vouchers', 'gopay_submitted_at')) {
-                $table->timestamp('gopay_submitted_at')->nullable()->after('gopay_is_owner_self');
+                $table->timestamp('gopay_submitted_at')->nullable();
             }
         });
     }

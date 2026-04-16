@@ -13,31 +13,31 @@ return new class extends Migration {
 
         Schema::table('candidates', function (Blueprint $table) {
             if (!Schema::hasColumn('candidates', 'nik')) {
-                $table->string('nik', 20)->nullable()->after('name');
+                $table->string('nik', 20)->nullable();
             }
             if (!Schema::hasColumn('candidates', 'department_name')) {
-                $table->string('department_name', 150)->nullable()->after('department_id');
+                $table->string('department_name', 150)->nullable();
             }
             if (!Schema::hasColumn('candidates', 'site_name')) {
-                $table->string('site_name', 120)->nullable()->after('department_name');
+                $table->string('site_name', 120)->nullable();
             }
             if (!Schema::hasColumn('candidates', 'vision')) {
-                $table->text('vision')->nullable()->after('bio');
+                $table->text('vision')->nullable();
             }
             if (!Schema::hasColumn('candidates', 'mission')) {
-                $table->text('mission')->nullable()->after('vision');
+                $table->text('mission')->nullable();
             }
             if (!Schema::hasColumn('candidates', 'vision_mission')) {
-                $table->text('vision_mission')->nullable()->after('mission');
+                $table->text('vision_mission')->nullable();
             }
             if (!Schema::hasColumn('candidates', 'motto')) {
-                $table->string('motto', 255)->nullable()->after('vision_mission');
+                $table->string('motto', 255)->nullable();
             }
             if (!Schema::hasColumn('candidates', 'full_photo_url')) {
-                $table->string('full_photo_url', 255)->nullable()->after('photo_url');
+                $table->string('full_photo_url', 255)->nullable();
             }
             if (!Schema::hasColumn('candidates', 'order_display')) {
-                $table->unsignedInteger('order_display')->default(0)->after('full_photo_url');
+                $table->unsignedInteger('order_display')->default(0);
             }
         });
     }
