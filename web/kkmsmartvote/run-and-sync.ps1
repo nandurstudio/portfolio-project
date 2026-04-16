@@ -50,13 +50,13 @@ function Stop-ProcessOnPort {
         $pids = @()
     }
 
-    foreach ($pid in $pids) {
-        if ($pid -le 4) { continue }
+    foreach ($processId in $pids) {
+        if ($processId -le 4) { continue }
         try {
-            Stop-Process -Id $pid -Force -ErrorAction Stop
-            Write-Host "🛑 Stopped existing $Label process on port $Port (PID: $pid)" -ForegroundColor Yellow
+            Stop-Process -Id $processId -Force -ErrorAction Stop
+            Write-Host "🛑 Stopped existing $Label process on port $Port (PID: $processId)" -ForegroundColor Yellow
         } catch {
-            Write-Host "⚠️  Failed to stop PID $pid on port $Port" -ForegroundColor Yellow
+            Write-Host "⚠️  Failed to stop PID $processId on port $Port" -ForegroundColor Yellow
         }
     }
 }

@@ -84,34 +84,6 @@ return new class extends Migration {
 
     public function down(): void
     {
-        if (!Schema::hasTable('election_settings')) {
-            return;
-        }
-
-        Schema::table('election_settings', function (Blueprint $table) {
-            foreach ([
-                'announcement_at',
-                'hero_title',
-                'hero_description',
-                'cta_text',
-                'agenda_title',
-                'agenda_description',
-                'agenda_location',
-                'show_countdown',
-                'show_activity_log',
-                'reward_enabled',
-                'reward_text',
-                'seo_title',
-                'seo_description',
-                'og_title',
-                'og_description',
-                'og_image_url',
-                'canonical_url',
-            ] as $column) {
-                if (Schema::hasColumn('election_settings', $column)) {
-                    $table->dropColumn($column);
-                }
-            }
-        });
+        // No-op on rollback to avoid accidental deletion of production content columns.
     }
 };

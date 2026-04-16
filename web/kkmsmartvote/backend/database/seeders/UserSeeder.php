@@ -5,9 +5,26 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class UserSeeder extends Seeder
 {
+    private function buildUsername(string $name): string
+    {
+        $parts = preg_split('/\s+/', trim($name)) ?: [];
+        $parts = array_values(array_filter($parts, static fn($part) => $part !== ''));
+
+        if (count($parts) === 0) {
+            return '';
+        }
+
+        if (count($parts) === 1) {
+            return Str::lower(Str::ascii($parts[0]));
+        }
+
+        return Str::lower(Str::ascii($parts[0] . '.' . $parts[count($parts) - 1]));
+    }
+
     public function run(): void
     {
         $memberNikByName = DB::table('members')
@@ -17,7 +34,7 @@ class UserSeeder extends Seeder
         $users = [
             [
                 'name' => 'Nandang Duryat',
-                'username' => 'nandang',
+                'username' => 'nandang.duryat',
                 'password' => Hash::make('admin123'),
                 'role' => 'super_admin',
                 'member_nik' => $memberNikByName['Nandang Duryat'] ?? null,
@@ -47,7 +64,7 @@ class UserSeeder extends Seeder
 
         foreach ($users as $user) {
             DB::table('users')->updateOrInsert(
-                ['username' => $user['username']],
+                ['username' => $this->buildUsername($user['name'])],
                 [
                     'name' => $user['name'],
                     'member_nik' => $user['member_nik'],

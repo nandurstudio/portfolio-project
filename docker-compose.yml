@@ -38,16 +38,24 @@ services:
       - ./web/undangan:/var/www/html/undangan
       - ./web/kkmsmartvote:/var/www/html/kkmsmartvote
     environment:
+      # Main Laravel App (MySQL)
       - DB_CONNECTION=mysql
       - DB_HOST=db
       - DB_PORT=3306
       - DB_DATABASE=${DB_DATABASE:-portfolio}
       - DB_USERNAME=${DB_USERNAME:-root}
       - DB_PASSWORD=${DB_PASSWORD:-}
-      # Environment for kkmrat web app (used by web/kkmrat/php/connection.php)
+      # KKMRat web app (used by web/kkmrat/php/connection.php)
       - KKMRAT_DB_USER=${KKMRAT_DB_USER}
       - KKMRAT_DB_PASS=${KKMRAT_DB_PASS}
       - KKMRAT_DB_NAME=${KKMRAT_DB_NAME}
+      # KKMSmartVote (PostgreSQL) - env vars are loaded by Laravel .env but passed for reference
+      - KOPERASI_DB_CONNECTION=pgsql
+      - KOPERASI_DB_HOST=portfolio_postgres
+      - KOPERASI_DB_PORT=5432
+      - KOPERASI_DB_DATABASE=koperasi_vote
+      - KOPERASI_DB_USERNAME=koperasi
+      - KOPERASI_DB_PASSWORD=${KOPERASI_DB_PASSWORD:-change_this_koperasi_db_password}
     depends_on:
       db:
         condition: service_healthy
@@ -78,7 +86,17 @@ services:
     restart: unless-stopped
     mem_limit: 512m
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$MYSQL_ROOT_PASSWORD"]
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-p$MYSQL_ROOT_PASSWORD",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5

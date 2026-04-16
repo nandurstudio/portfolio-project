@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
@@ -25,6 +26,22 @@ return new class extends Migration {
             $table->index('expires_at');
             $table->index('is_used');
         });
+
+        $foreignKeyExists = DB::table('information_schema.referential_constraints')
+            ->where('constraint_schema', DB::raw('DATABASE()'))
+            ->where('table_name', 'email_otps')
+            ->where('constraint_name', 'fk_email_otps_member_nik')
+            ->exists();
+
+        if (!$foreignKeyExists) {
+            DB::statement('
+                ALTER TABLE email_otps
+                ADD CONSTRAINT fk_email_otps_member_nik
+                FOREIGN KEY (member_nik) REFERENCES members(nik)
+                ON UPDATE CASCADE
+                ON DELETE SET NULL
+            ');
+        }
     }
 
     public function down(): void
