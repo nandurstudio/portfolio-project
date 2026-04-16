@@ -49,13 +49,13 @@ services:
       - KKMRAT_DB_USER=${KKMRAT_DB_USER}
       - KKMRAT_DB_PASS=${KKMRAT_DB_PASS}
       - KKMRAT_DB_NAME=${KKMRAT_DB_NAME}
-      # KKMSmartVote (PostgreSQL) - env vars are loaded by Laravel .env but passed for reference
-      - KOPERASI_DB_CONNECTION=pgsql
-      - KOPERASI_DB_HOST=portfolio_postgres
-      - KOPERASI_DB_PORT=5432
+      # KKMSmartVote database (MySQL koperasi_vote)
+      - KOPERASI_DB_CONNECTION=mysql
+      - KOPERASI_DB_HOST=db
+      - KOPERASI_DB_PORT=3306
       - KOPERASI_DB_DATABASE=koperasi_vote
-      - KOPERASI_DB_USERNAME=koperasi
-      - KOPERASI_DB_PASSWORD=${KOPERASI_DB_PASSWORD:-change_this_koperasi_db_password}
+      - KOPERASI_DB_USERNAME=${DB_USERNAME:-portfolio_user}
+      - KOPERASI_DB_PASSWORD=${DB_PASSWORD:-}
     depends_on:
       db:
         condition: service_healthy

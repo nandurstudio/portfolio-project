@@ -16,6 +16,7 @@ First time here? Start with [00_START_HERE.md](./00_START_HERE.md) ← Click her
 
 ### 📌 **Quick Reference**
 - **[00_START_HERE.md](./00_START_HERE.md)** - Start here! (5 min read)
+- **[PRODUCTION_UPDATE_2026-04-16.md](./PRODUCTION_UPDATE_2026-04-16.md)** - Server deployment fixes + SEO/OG metadata (Apr 16, 2026)
 - **[MEETINGS.md](./MEETINGS.md)** - Decisions & notes from Apr 2 meeting
 - **[NEXT_STEPS.md](./NEXT_STEPS.md)** - What to implement next ← My suggestions
 - **[INDEX.md](./INDEX.md)** - This file (navigation guide)
