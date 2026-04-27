@@ -125,7 +125,10 @@ export default function AdminLayout() {
                         <p>Panel adaptif dengan role based navigation.</p>
                     </div>
                     <div className="admin-topbar-right">
-                        <Link to="/" className="admin-home-link">Home</Link>
+                        <Link to="/" className="admin-home-link" title="Go to Home">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" /></svg>
+                            Home
+                        </Link>
                     </div>
                 </header>
 

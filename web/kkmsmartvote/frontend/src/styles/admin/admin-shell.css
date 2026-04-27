@@ -97,6 +97,29 @@
   margin-bottom: 12px;
 }
 
+.admin-topbar-right {
+  margin-left: auto;
+}
+
+.admin-home-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: linear-gradient(180deg, #1d709f, #1470b0);
+  color: #fff;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 700;
+  box-shadow: 0 6px 18px rgba(17, 49, 73, 0.12);
+}
+
+.admin-home-link svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
 .admin-topbar h1 {
   margin: 0;
   font-size: 1.4rem;
