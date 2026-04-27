@@ -1,5 +1,6 @@
 import axios from "axios";
 import { notify } from "../utils/notify";
+import { clearAdminSession } from "../components/admin/authStorage";
 
 const baseURL = import.meta.env.VITE_API_URL ?? "/api";
 console.log("🔌 API baseURL:", baseURL);
@@ -52,7 +53,12 @@ api.interceptors.response.use(
         err?.config?.headers?.["x-skip-auth-redirect"],
       );
 
-      if (!isAdminRequest && !skipAuthRedirect) {
+      if (isAdminRequest) {
+        // Admin request unauthorized — clear admin session and redirect to admin login
+        clearAdminSession();
+        notify.error('Session Berakhir', 'Sesi admin Anda telah berakhir. Silakan login kembali.');
+        window.location.href = '/admin';
+      } else if (!skipAuthRedirect) {
         localStorage.removeItem("voting_token");
         window.location.href = "/";
       }

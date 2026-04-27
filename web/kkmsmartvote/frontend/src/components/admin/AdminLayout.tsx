@@ -120,9 +120,12 @@ export default function AdminLayout() {
             <main className="admin-content">
                 <header className="admin-topbar">
                     <button className="admin-menu-btn" onClick={() => setMenuOpen((v) => !v)} type="button">Menu</button>
-                    <div>
+                    <div className="admin-topbar-left">
                         <h1>{isOnAdminRoot ? 'Dashboard' : 'Admin Workspace'}</h1>
                         <p>Panel adaptif dengan role based navigation.</p>
+                    </div>
+                    <div className="admin-topbar-right">
+                        <Link to="/" className="admin-home-link">Home</Link>
                     </div>
                 </header>
 
