@@ -103,8 +103,9 @@ class VotingController extends Controller
                 ], 409);
             }
 
+            $dailyQuota = max(1, (int) config('app.mail_otp_daily_quota', 300));
             $sentToday = EmailOtp::whereDate('created_at', today())->count();
-            if ($sentToday >= 300) {
+            if ($sentToday >= $dailyQuota) {
                 AuditLog::record($member->name, 'OTP Request Ditolak', [
                     'reason' => 'QUOTA_EXCEEDED',
                     'member_nik' => $memberNik,
@@ -174,6 +175,10 @@ class VotingController extends Controller
                 'expires_at' => optional($otpRecord->expires_at)->toDateTimeString(),
             ], $request->ip());
 
+            $sentAfterRequest = $sentToday + 1;
+            $availableQuota = max(0, $dailyQuota - $sentAfterRequest);
+            $quotaPercentage = min(100, intval(($sentAfterRequest / $dailyQuota) * 100));
+
             return response()->json([
                 'success' => true,
                 'message' => 'OTP dikirim ke email',
@@ -191,10 +196,10 @@ class VotingController extends Controller
                     ],
                     'expires_in' => 900,
                     'quota' => [
-                        'sent_today' => $sentToday + 1,
-                        'limit' => 300,
-                        'available' => 300 - ($sentToday + 1),
-                        'percentage' => intval((($sentToday + 1) / 300) * 100)
+                        'sent_today' => $sentAfterRequest,
+                        'limit' => $dailyQuota,
+                        'available' => $availableQuota,
+                        'percentage' => $quotaPercentage,
                     ],
                     'voter_status' => [
                         'has_voted_before' => $hasVotedBefore,
@@ -811,7 +816,9 @@ class VotingController extends Controller
                 ], 404);
             }
 
-            if ($voucher->status === 'REDEEMED') {
+            $voucherStatus = strtolower((string) ($voucher->status ?? ''));
+
+            if ($voucherStatus === 'redeemed') {
                 AuditLog::record($voucher->member_name ?? 'Guest', 'Klaim Voucher Ditolak', [
                     'reason' => 'VOUCHER_LOCKED',
                     'member_nik' => (string) $request->member_nik,
@@ -840,14 +847,25 @@ class VotingController extends Controller
                 ], 422);
             }
 
-            $voucher->update([
+            $updatePayload = [
                 'gopay_number' => trim((string) $request->gopay_number),
                 'gopay_owner_name' => $isOwnerSelf ? $voucher->member_name : $ownerName,
                 'gopay_is_owner_self' => $isOwnerSelf,
                 'gopay_submitted_at' => now(),
-                'status' => 'CLAIMED',
-                'claimed_at' => $voucher->claimed_at ?? now(),
-            ]);
+            ];
+
+            // Keep schema-compatible status values. Legacy schema only supports lowercase enum values.
+            if (Schema::hasColumn('vouchers', 'status') && $voucherStatus === 'generated') {
+                $updatePayload['status'] = 'active';
+            }
+
+            if (Schema::hasColumn('vouchers', 'claimed_at')) {
+                $updatePayload['claimed_at'] = $voucher->claimed_at ?? now();
+            }
+
+            $voucher->update($updatePayload);
+
+            $isRedeemed = strtolower((string) ($voucher->status ?? '')) === 'redeemed';
 
             AuditLog::record($voucher->member_name ?? 'Guest', 'Klaim Voucher Berhasil', [
                 'member_nik' => $voucher->member_nik,
@@ -868,7 +886,7 @@ class VotingController extends Controller
                     'gopay_owner_name' => $voucher->gopay_owner_name,
                     'gopay_is_owner_self' => $voucher->gopay_is_owner_self,
                     'gopay_submitted_at' => $voucher->gopay_submitted_at,
-                    'can_edit' => $voucher->status !== 'REDEEMED',
+                    'can_edit' => !$isRedeemed,
                 ],
             ]);
         } catch (\Exception $e) {

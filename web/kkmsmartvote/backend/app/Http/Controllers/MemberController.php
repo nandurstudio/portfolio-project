@@ -4,8 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
 use App\Models\Member;
+use App\Models\Voucher;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class MemberController extends Controller
 {
@@ -91,6 +95,7 @@ class MemberController extends Controller
             ->selectRaw('(SELECT MAX(o3.created_at) FROM email_otps o3 WHERE (o3.member_nik = members.nik OR (members.email IS NOT NULL AND members.email <> "" AND o3.email = members.email))) as last_otp_requested_at')
             ->selectRaw('(SELECT MAX(o4.updated_at) FROM email_otps o4 WHERE (o4.member_nik = members.nik OR (members.email IS NOT NULL AND members.email <> "" AND o4.email = members.email)) AND o4.is_used = 1) as last_otp_verified_at')
             ->selectRaw('(SELECT MAX(COALESCE(v2.redeemed_at, vv3.redeemed_at)) FROM voter_vouchers vv3 JOIN vouchers v2 ON v2.id = vv3.voucher_id WHERE vv3.voter_nik = members.nik) as last_redeemed_at')
+            ->selectRaw('(SELECT v.code FROM voter_vouchers vv4 JOIN vouchers v ON v.id = vv4.voucher_id WHERE vv4.voter_nik = members.nik ORDER BY vv4.id DESC LIMIT 1) as voucher_code')
             ->selectRaw('(SELECT COUNT(*) FROM votes vv WHERE vv.member_nik = members.nik AND vv.is_valid = 1) as total_valid_votes')
             ->selectRaw('(SELECT s.name FROM votes vsite LEFT JOIN sites s ON s.id = vsite.site_id WHERE vsite.member_nik = members.nik AND vsite.site_id IS NOT NULL ORDER BY vsite.id DESC LIMIT 1) as voted_site_name')
             ->selectRaw('(SELECT vgp.gopay_number FROM voter_vouchers vvx JOIN vouchers vgp ON vgp.id = vvx.voucher_id WHERE vvx.voter_nik = members.nik ORDER BY vvx.id DESC LIMIT 1) as voucher_gopay_number')
@@ -149,6 +154,7 @@ class MemberController extends Controller
                     'department_master_name' => $row->department_master_name,
                     'email' => $row->email,
                     'gopay_number' => $row->voucher_gopay_number,
+                    'voucher_code' => $row->voucher_code,
                     'is_gopay_owner_self' => isset($row->voucher_gopay_is_owner_self) ? (bool) $row->voucher_gopay_is_owner_self : true,
                     'gopay_owner_number' => $row->voucher_gopay_owner_name,
                     'is_eligible' => (bool) $row->is_eligible,
@@ -177,6 +183,100 @@ class MemberController extends Controller
         ];
 
         return response()->json($payload);
+    }
+
+    public function masterExportComparison(Request $request): StreamedResponse
+    {
+        $query = Member::query()
+            ->leftJoin('departments', 'departments.id', '=', 'members.department_id')
+            ->select([
+                'members.nik',
+                'members.name',
+                'members.email',
+                'members.site',
+                'members.department',
+                'departments.name as department_master_name',
+                'members.is_eligible',
+                'members.has_voted',
+            ])
+            ->selectRaw('(SELECT COUNT(*) FROM votes vv WHERE vv.member_nik = members.nik AND vv.is_valid = 1) as total_valid_votes')
+            ->selectRaw('(SELECT MAX(vv2.created_at) FROM votes vv2 WHERE vv2.member_nik = members.nik AND vv2.is_valid = 1) as last_valid_vote_at');
+
+        if ($request->filled('search')) {
+            $keyword = trim((string) $request->search);
+            $query->where(function ($q) use ($keyword) {
+                $q->where('members.nik', 'like', '%' . $keyword . '%')
+                    ->orWhere('members.name', 'like', '%' . $keyword . '%')
+                    ->orWhere('members.email', 'like', '%' . $keyword . '%')
+                    ->orWhere('members.department', 'like', '%' . $keyword . '%')
+                    ->orWhere('members.site', 'like', '%' . $keyword . '%');
+            });
+        }
+
+        if ($request->filled('is_eligible')) {
+            $query->where('members.is_eligible', filter_var($request->is_eligible, FILTER_VALIDATE_BOOLEAN));
+        }
+
+        if ($request->filled('has_voted')) {
+            $query->where('members.has_voted', filter_var($request->has_voted, FILTER_VALIDATE_BOOLEAN));
+        }
+
+        $query->orderBy('members.name');
+
+        $fileName = 'master-members-komparasi-vote-' . now()->format('Ymd-His') . '.csv';
+
+        return response()->streamDownload(function () use ($query) {
+            $out = fopen('php://output', 'w');
+            if ($out === false) {
+                return;
+            }
+
+            // UTF-8 BOM so Excel opens UTF-8 text correctly.
+            fwrite($out, "\xEF\xBB\xBF");
+
+            fputcsv($out, [
+                'NIK',
+                'Nama',
+                'Email',
+                'Site',
+                'Department',
+                'Eligible',
+                'Flag Has Voted (members.has_voted)',
+                'Total Valid Vote (table votes)',
+                'Komparasi Status Vote',
+                'Konsistensi Flag vs Vote',
+                'Last Valid Vote At',
+            ]);
+
+            $query->chunk(500, function ($rows) use ($out) {
+                foreach ($rows as $row) {
+                    $totalValidVotes = (int) ($row->total_valid_votes ?? 0);
+                    $realHasVoted = $totalValidVotes > 0;
+                    $flagHasVoted = (bool) $row->has_voted;
+                    $comparisonStatus = $realHasVoted ? 'SUDAH_VOTE' : 'BELUM_VOTE';
+                    $consistency = ($flagHasVoted === $realHasVoted) ? 'MATCH' : 'MISMATCH';
+
+                    fputcsv($out, [
+                        (string) $row->nik,
+                        (string) $row->name,
+                        (string) ($row->email ?? ''),
+                        (string) ($row->site ?? ''),
+                        (string) ($row->department_master_name ?: $row->department ?: ''),
+                        $row->is_eligible ? 'YA' : 'TIDAK',
+                        $flagHasVoted ? 'YA' : 'TIDAK',
+                        $totalValidVotes,
+                        $comparisonStatus,
+                        $consistency,
+                        (string) ($row->last_valid_vote_at ?? ''),
+                    ]);
+                }
+            });
+
+            fclose($out);
+        }, $fileName, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+        ]);
     }
 
     public function store(Request $request): JsonResponse
@@ -255,6 +355,7 @@ class MemberController extends Controller
             'gopay_owner_number' => 'nullable|string|max:20',
             'is_eligible' => 'nullable|boolean',
             'has_voted' => 'nullable|boolean',
+            'has_redeemed' => 'nullable|boolean',
         ]);
 
         if (array_key_exists('nik', $payload)) {
@@ -273,6 +374,10 @@ class MemberController extends Controller
             $payload['has_voted'] = (bool) $payload['has_voted'];
         }
 
+        $redeemedRequested = array_key_exists('has_redeemed', $payload);
+        $redeemedTarget = $redeemedRequested ? (bool) $payload['has_redeemed'] : null;
+        unset($payload['has_redeemed']);
+
         $before = [
             'nik' => $member->nik,
             'name' => $member->name,
@@ -284,7 +389,62 @@ class MemberController extends Controller
             'site' => $member->site,
         ];
 
-        $member->update($payload);
+        $voucherBefore = null;
+        $voucherAfter = null;
+
+        DB::transaction(function () use ($member, $payload, $redeemedRequested, $redeemedTarget, &$voucherBefore, &$voucherAfter) {
+            $member->update($payload);
+
+            if (!$redeemedRequested) {
+                return;
+            }
+
+            $voucher = Voucher::query()
+                ->where('member_nik', $member->nik)
+                ->orderByDesc('id')
+                ->first();
+
+            if (!$voucher) {
+                throw new HttpResponseException(response()->json([
+                    'success' => false,
+                    'message' => 'Voucher member tidak ditemukan',
+                    'error' => 'VOUCHER_NOT_FOUND',
+                ], 404));
+            }
+
+            $voucherBefore = [
+                'code' => $voucher->code,
+                'status' => $voucher->status,
+                'redeemed_at' => $voucher->redeemed_at,
+                'redeemed_by' => $voucher->redeemed_by,
+            ];
+
+            if ($redeemedTarget) {
+                if (strtoupper((string) $voucher->status) !== 'REDEEMED') {
+                    $voucher->update([
+                        'status' => 'REDEEMED',
+                        'redeemed_at' => now(),
+                        'redeemed_by' => auth('api')->id(),
+                    ]);
+                }
+            } else {
+                if (strtoupper((string) $voucher->status) === 'REDEEMED') {
+                    $voucher->update([
+                        'status' => 'CLAIMED',
+                        'redeemed_at' => null,
+                        'redeemed_by' => null,
+                    ]);
+                }
+            }
+
+            $voucher->refresh();
+            $voucherAfter = [
+                'code' => $voucher->code,
+                'status' => $voucher->status,
+                'redeemed_at' => $voucher->redeemed_at,
+                'redeemed_by' => $voucher->redeemed_by,
+            ];
+        });
 
         AuditLog::record(auth('api')->user()->name, 'Master Member Diupdate', [
             'member_id' => $member->id,
@@ -299,12 +459,15 @@ class MemberController extends Controller
                 'department_id' => $member->department_id,
                 'site' => $member->site,
             ],
+            'voucher_before' => $voucherBefore,
+            'voucher_after' => $voucherAfter,
         ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Member berhasil diupdate',
             'data' => $member,
+            'voucher' => $voucherAfter,
         ]);
     }
 }

@@ -365,8 +365,7 @@ export default function LandingPage() {
                     ? 'success'
                     : 'primary';
 
-    // TODO: Enable OTP button when ready
-    const canStartOtp = false; // status === 'open';
+    const canStartOtp = status === 'open';
     const dynamicYear = startAt ? new Date(startAt).getFullYear() : new Date().getFullYear();
     const landingCandidates: LandingCandidate[] = dbCandidates;
 

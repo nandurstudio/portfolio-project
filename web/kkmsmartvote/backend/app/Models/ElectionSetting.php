@@ -27,6 +27,8 @@ class ElectionSetting extends Model
         'show_countdown',
         'show_activity_log',
         'reward_enabled',
+        'winners_revealed',
+        'winners_animation_duration_ms',
         'reward_text',
         'seo_title',
         'seo_description',
@@ -45,6 +47,8 @@ class ElectionSetting extends Model
         'show_countdown' => 'boolean',
         'show_activity_log' => 'boolean',
         'reward_enabled' => 'boolean',
+        'winners_revealed' => 'boolean',
+        'winners_animation_duration_ms' => 'integer',
         'created_at' => 'datetime',
         'updated_at' => 'datetime'
     ];

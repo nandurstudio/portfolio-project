@@ -15,6 +15,18 @@ const baseOptions = {
   },
 };
 
+const toastOptions = {
+  toast: true,
+  position: "top-end" as const,
+  showConfirmButton: false,
+  timer: 1400,
+  timerProgressBar: true,
+  background: "#ffffff",
+  customClass: {
+    popup: "kkm-swal-toast",
+  },
+};
+
 export const notify = {
   success: (title: string, text?: string) =>
     Swal.fire({
@@ -44,6 +56,18 @@ export const notify = {
     Swal.fire({
       ...baseOptions,
       icon: "info",
+      title,
+      text,
+    }),
+
+  toast: (
+    title: string,
+    text?: string,
+    icon: "success" | "error" | "warning" | "info" = "success",
+  ) =>
+    Swal.fire({
+      ...toastOptions,
+      icon,
       title,
       text,
     }),

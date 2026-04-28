@@ -13,6 +13,7 @@ import MasterMembersPage from './pages/admin/MasterMembersPage'
 import MasterDepartmentsPage from './pages/admin/MasterDepartmentsPage'
 import MasterCandidatesPage from './pages/admin/MasterCandidatesPage'
 import VotesMonitorPage from './pages/admin/VotesMonitorPage'
+import WinnersPage from './pages/admin/WinnersPage'
 
 export default function App() {
   return (
@@ -74,6 +75,14 @@ export default function App() {
           element={
             <RoleGuard allowedRoles={['super_admin', 'admin', 'panitia', 'saksi_forensik']}>
               <VotesMonitorPage />
+            </RoleGuard>
+          }
+        />
+        <Route
+          path="winners"
+          element={
+            <RoleGuard allowedRoles={['super_admin', 'admin']}>
+              <WinnersPage />
             </RoleGuard>
           }
         />

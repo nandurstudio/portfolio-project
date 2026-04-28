@@ -47,6 +47,7 @@ Route::middleware('jwt.auth')->group(function () {
         // Votes
         Route::get('/admin/votes', [AdminController::class, 'votes']);
         Route::get('/admin/results', [AdminController::class, 'results']);
+        Route::get('/admin/winners', [AdminController::class, 'winners']);
 
         // Audit
         Route::get('/admin/audit-log', [AuditLogController::class, 'index']);
@@ -74,6 +75,7 @@ Route::middleware('jwt.auth')->group(function () {
     Route::middleware('role:super_admin,admin')->group(function () {
         // Master Members (full editable)
         Route::get('/admin/master-members', [MemberController::class, 'masterIndex']);
+        Route::get('/admin/master-members/export', [MemberController::class, 'masterExportComparison']);
         Route::post('/admin/master-members', [MemberController::class, 'masterStore']);
         Route::put('/admin/master-members/{id}', [MemberController::class, 'masterUpdate']);
 

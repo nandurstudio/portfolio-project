@@ -58,6 +58,13 @@ export const adminMenuItems: AdminMenuItem[] = [
     description: "Pantau progress voting secara realtime",
     roles: ["super_admin", "admin", "panitia", "saksi_forensik"],
   },
+  {
+    key: "winners",
+    label: "Winners",
+    path: "/admin/winners",
+    description: "Reveal juara, animasi suara, reset setting",
+    roles: ["super_admin", "admin"],
+  },
 ];
 
 export const hasRoleAccess = (

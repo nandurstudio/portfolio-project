@@ -56,8 +56,11 @@ api.interceptors.response.use(
       if (isAdminRequest) {
         // Admin request unauthorized — clear admin session and redirect to admin login
         clearAdminSession();
-        notify.error('Session Berakhir', 'Sesi admin Anda telah berakhir. Silakan login kembali.');
-        window.location.href = '/admin';
+        notify.error(
+          "Session Berakhir",
+          "Sesi admin Anda telah berakhir. Silakan login kembali.",
+        );
+        window.location.href = "/admin";
       } else if (!skipAuthRedirect) {
         localStorage.removeItem("voting_token");
         window.location.href = "/";

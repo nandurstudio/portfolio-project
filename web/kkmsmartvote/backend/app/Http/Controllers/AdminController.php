@@ -14,6 +14,44 @@ use Illuminate\Support\Facades\DB;
 
 class AdminController extends Controller
 {
+    private function buildResultsPayload(): array
+    {
+        $totalValid = Vote::where('is_valid', true)->count();
+
+        $candidates = Candidate::withCount(['votes as vote_count' => fn($q) => $q->where('is_valid', true)])
+            ->orderByDesc('vote_count')
+            ->orderBy('order_display', 'asc')
+            ->get();
+
+        $results = $candidates->values()->map(function ($c, $index) use ($totalValid) {
+            $pct = $totalValid > 0 ? round($c->vote_count / $totalValid * 100, 2) : 0;
+            return [
+                'id'         => $c->id,
+                'name'       => $c->name,
+                'position'   => $c->position ?: 'Kandidat Ketua',
+                'candidate_number' => (int) ($c->order_display ?: ($index + 1)),
+                'photo_url'  => $c->getPhotoUrl(),
+                'vote_count' => (int) $c->vote_count,
+                'percentage' => $pct,
+                'is_winner'  => $pct >= 50,
+            ];
+        });
+
+        $winners = $results->filter(fn($r) => $r['is_winner']);
+        $status  = match (true) {
+            $winners->count() === 1 => 'WINNER',
+            $winners->count() > 1  => 'TIE',
+            default                => 'NO_MAJORITY',
+        };
+
+        return [
+            'total_valid' => $totalValid,
+            'results'     => $results->values(),
+            'status'      => $status,
+            'winner'      => $status === 'WINNER' ? $winners->first() : null,
+        ];
+    }
+
     public function dashboard(): JsonResponse
     {
         $totalMembers  = Member::where('is_eligible', true)->count();
@@ -111,36 +149,19 @@ class AdminController extends Controller
 
     public function results(): JsonResponse
     {
-        $totalValid = Vote::where('is_valid', true)->count();
+        return response()->json([
+            ...$this->buildResultsPayload(),
+        ]);
+    }
 
-        $candidates = Candidate::withCount(['votes as vote_count' => fn($q) => $q->where('is_valid', true)])
-            ->orderByDesc('vote_count')
-            ->get();
-
-        $results = $candidates->map(function ($c) use ($totalValid) {
-            $pct = $totalValid > 0 ? round($c->vote_count / $totalValid * 100, 2) : 0;
-            return [
-                'id'         => $c->id,
-                'name'       => $c->name,
-                'position'   => $c->position,
-                'vote_count' => $c->vote_count,
-                'percentage' => $pct,
-                'is_winner'  => $pct >= 50,
-            ];
-        });
-
-        $winners = $results->filter(fn($r) => $r['is_winner']);
-        $status  = match (true) {
-            $winners->count() === 1 => 'WINNER',
-            $winners->count() > 1  => 'TIE',
-            default                => 'NO_MAJORITY',
-        };
+    public function winners(): JsonResponse
+    {
+        $setting = ElectionSetting::current();
 
         return response()->json([
-            'total_valid' => $totalValid,
-            'results'     => $results->values(),
-            'status'      => $status,
-            'winner'      => $status === 'WINNER' ? $winners->first() : null,
+            ...$this->buildResultsPayload(),
+            'election' => $setting,
+            'winners_revealed' => (bool) ($setting?->winners_revealed ?? false),
         ]);
     }
 

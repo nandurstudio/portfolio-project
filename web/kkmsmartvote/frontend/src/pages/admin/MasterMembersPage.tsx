@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 import api from '../../services/api'
+import { getStoredAdminUser } from '../../components/admin/authStorage'
 import { notify } from '../../utils/notify'
 
 type MemberStatus = {
@@ -25,6 +26,7 @@ type MemberRow = {
     department_master_name?: string | null
     email?: string | null
     gopay_number?: string | null
+    voucher_code?: string | null
     is_gopay_owner_self?: boolean
     gopay_owner_number?: string | null
     is_eligible: boolean
@@ -108,8 +110,11 @@ function statusEmoji(v: boolean) {
 }
 
 export default function MasterMembersPage() {
+    const currentUser = useMemo(() => getStoredAdminUser(), [])
+    const canSeeVoucherCode = currentUser?.role === 'super_admin'
     const [loading, setLoading] = useState(false)
     const [saving, setSaving] = useState(false)
+    const [exporting, setExporting] = useState(false)
     const [rows, setRows] = useState<MemberRow[]>([])
     const [filters, setFilters] = useState<FilterState>(defaultFilters)
     const [page, setPage] = useState(1)
@@ -251,6 +256,56 @@ export default function MasterMembersPage() {
         }
     }
 
+    const quickToggleRedeemed = async (row: MemberRow, nextValue: boolean) => {
+        setSaving(true)
+        try {
+            await api.put(`/admin/master-members/${row.id}`, { has_redeemed: nextValue })
+            notify.success('Status Redeem Diperbarui', nextValue ? 'Member ditandai redeemed.' : 'Status redeemed dibatalkan.')
+            await loadMembers(page)
+        } catch (err: any) {
+            notify.error('Update Redeem Gagal', err?.response?.data?.message || 'Tidak bisa update status redeemed')
+        } finally {
+            setSaving(false)
+        }
+    }
+
+    const handleExportComparison = async () => {
+        setExporting(true)
+        try {
+            const params: Record<string, string> = {}
+
+            const search = filters.search.trim()
+            if (search) params.search = search
+            if (filters.has_voted) params.has_voted = filters.has_voted === '1' ? 'true' : 'false'
+            if (filters.is_eligible) params.is_eligible = filters.is_eligible === '1' ? 'true' : 'false'
+
+            const res = await api.get('/admin/master-members/export', {
+                params,
+                responseType: 'blob',
+            })
+
+            const contentDisposition = String(res.headers?.['content-disposition'] || '')
+            const fileNameMatch = contentDisposition.match(/filename="?([^\"]+)"?/i)
+            const fileName = fileNameMatch?.[1] || `master-members-komparasi-vote-${new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-')}.csv`
+
+            const blob = new Blob([res.data], { type: 'text/csv;charset=utf-8;' })
+            const downloadUrl = window.URL.createObjectURL(blob)
+            const link = document.createElement('a')
+            link.href = downloadUrl
+            link.setAttribute('download', fileName)
+            document.body.appendChild(link)
+            link.click()
+            link.remove()
+            window.URL.revokeObjectURL(downloadUrl)
+
+            notify.success('Export Berhasil', 'File komparasi voting berhasil diunduh.')
+        } catch (err: any) {
+            notify.error('Export Gagal', err?.response?.data?.message || 'Tidak bisa export data komparasi voting')
+        } finally {
+            setExporting(false)
+        }
+    }
+
     const summary = useMemo(() => {
         const voted = rows.filter((r) => r.has_voted).length
         const withGopay = rows.filter((r) => (r.gopay_number || '').trim() !== '' || r.status?.has_gopay_submitted).length
@@ -360,6 +415,9 @@ export default function MasterMembersPage() {
                 >
                     Reset Filter
                 </button>
+                <button type="button" className="secondary" onClick={handleExportComparison} disabled={exporting || loading}>
+                    {exporting ? 'Menyiapkan Export...' : 'Export Komparasi Excel (.csv)'}
+                </button>
                 <button type="button" className="secondary" onClick={openAddModal}>+ Tambah Member</button>
             </div>
 
@@ -398,6 +456,22 @@ export default function MasterMembersPage() {
                                     <div>No: {row.gopay_number || '-'}</div>
                                     <div>Self Owner: {boolText(row.is_gopay_owner_self !== false)}</div>
                                     <div>Owner No: {row.gopay_owner_number || '-'}</div>
+                                    {canSeeVoucherCode ? (
+                                        <div>
+                                            Voucher:{' '}
+                                            {row.voucher_code ? (
+                                                /^https?:\/\//i.test(row.voucher_code) ? (
+                                                    <a href={row.voucher_code} target="_blank" rel="noreferrer">
+                                                        Buka Link
+                                                    </a>
+                                                ) : (
+                                                    <span>{row.voucher_code}</span>
+                                                )
+                                            ) : (
+                                                '-'
+                                            )}
+                                        </div>
+                                    ) : null}
                                 </td>
                                 <td data-label="Status">
                                     <div>Eligible: <strong>{statusEmoji(row.is_eligible)}</strong></div>
@@ -436,6 +510,14 @@ export default function MasterMembersPage() {
                                             onClick={() => quickToggle(row, 'is_eligible', !row.is_eligible)}
                                         >
                                             {row.is_eligible ? 'Set Non-Eligible' : 'Set Eligible'}
+                                        </button>
+                                        <button
+                                            className="btn btn-secondary"
+                                            type="button"
+                                            disabled={saving}
+                                            onClick={() => quickToggleRedeemed(row, !row.status?.has_redeemed)}
+                                        >
+                                            {row.status?.has_redeemed ? 'Unset Redeemed' : 'Set Redeemed'}
                                         </button>
                                     </div>
                                 </td>

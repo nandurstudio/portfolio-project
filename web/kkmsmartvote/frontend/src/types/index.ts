@@ -58,6 +58,8 @@ export interface ElectionSetting {
   is_active: boolean;
   is_finalized: boolean;
   voting_open?: boolean;
+  winners_revealed?: boolean;
+  winners_animation_duration_ms?: number;
 }
 
 export interface DashboardData {
@@ -85,6 +87,8 @@ export interface ResultItem {
   id: number;
   name: string;
   position: string;
+  candidate_number?: number;
+  photo_url?: string | null;
   vote_count: number;
   percentage: number;
   is_winner: boolean;
@@ -95,6 +99,11 @@ export interface ResultsData {
   results: ResultItem[];
   status: "WINNER" | "TIE" | "NO_MAJORITY";
   winner: ResultItem | null;
+}
+
+export interface WinnersData extends ResultsData {
+  election: ElectionSetting | null;
+  winners_revealed: boolean;
 }
 
 export interface Paginated<T> {
