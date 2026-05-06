@@ -100,7 +100,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    command: --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     logging:
       driver: "json-file"
       options:
@@ -122,7 +123,7 @@ services:
     restart: unless-stopped
     mem_limit: 256m
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${N8N_DB_USER:-n8n}"]
+      test: [ "CMD-SHELL", "pg_isready -U ${N8N_DB_USER:-n8n}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -152,7 +153,7 @@ services:
     restart: unless-stopped
     mem_limit: 256m
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5000/health"]
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:5000/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -199,7 +200,65 @@ services:
     restart: unless-stopped
     mem_limit: 512m
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5678/healthz"]
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:5678/healthz" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Node-RED Workflow Automation
+  nodered:
+    image: nodered/node-red:latest
+    container_name: portfolio_nodered
+    environment:
+      - TZ=Asia/Jakarta
+      - NODE_ENV=production
+      - NODE_RED_ENABLE_PROJECTS=false
+      - NODERED_CREDENTIAL_SECRET=${NODERED_CREDENTIAL_SECRET}
+      - NODERED_ADMIN_USER=${NODERED_ADMIN_USER:-admin}
+      - NODERED_ADMIN_PASSWORD_HASH=${NODERED_ADMIN_PASSWORD_HASH}
+    volumes:
+      - nodered_data:/data
+      - ./services/nodered/settings.js:/data/settings.js:ro
+    networks:
+      - backend
+    restart: unless-stopped
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:1880/nodered/', (res) => process.exit(res.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Node-RED User Workspace (isolated flow set)
+  nodered_user:
+    image: nodered/node-red:latest
+    container_name: portfolio_nodered_user
+    environment:
+      - TZ=Asia/Jakarta
+      - NODE_ENV=production
+      - NODE_RED_ENABLE_PROJECTS=false
+      - NODERED_USER_CREDENTIAL_SECRET=${NODERED_USER_CREDENTIAL_SECRET}
+      - NODERED_USER_ADMIN_USER=${NODERED_USER_BASIC_AUTH_USER:-user}
+      - NODERED_USER_PASSWORD_HASH=${NODERED_USER_PASSWORD_HASH}
+    volumes:
+      - nodered_user_data:/data
+      - ./services/nodered/settings-user.js:/data/settings.js:ro
+    networks:
+      - backend
+    restart: unless-stopped
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:1880/nodered-user/', (res) => process.exit(res.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))\""]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -223,6 +282,12 @@ volumes:
   n8n_data:
     driver: local
     name: portfolio_n8n_data
+  nodered_data:
+    driver: local
+    name: portfolio_nodered_data
+  nodered_user_data:
+    driver: local
+    name: portfolio_nodered_user_data
   php_vendor:
     driver: local
     name: portfolio_php_vendor

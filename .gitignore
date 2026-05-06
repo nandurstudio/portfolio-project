@@ -3,6 +3,7 @@
 .env.*
 !.env.docker.example
 !.env.sample
+NODERED-CREDENTIALS.txt
 
 # Windows
 Thumbs.db
