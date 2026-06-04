@@ -160,8 +160,8 @@ class VotingController extends Controller
                 Log::error("Failed to send OTP to {$email}: " . $e->getMessage());
                 return response()->json([
                     'success' => false,
-                    'message' => 'Gagal mengirim OTP. Cek email address dan coba lagi.',
-                    'error' => 'EMAIL_SEND_FAILED'
+                    'message' => 'Maaf, limit pengiriman OTP sistem kami hari ini sudah penuh. Silakan coba kembali besok pagi.',
+                    'error' => 'EMAIL_QUOTA_EXCEEDED'
                 ], 500);
             }
 
