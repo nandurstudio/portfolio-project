@@ -84,7 +84,7 @@ export const authApi = {
         },
       },
     ),
-  me: () => api.get("/auth/me"),
+  me: () => api.get(`/auth/me?_t=${new Date().getTime()}`),
   logout: () => api.post("/auth/logout"),
 };
 
