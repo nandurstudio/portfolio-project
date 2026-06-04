@@ -140,7 +140,7 @@ export default function WinnersPage() {
                 rank: index + 1,
                 animated_votes: animateValue(item.vote_count, progress),
                 animated_percentage: Number((percentage * progress).toFixed(2)),
-                is_leader: index === 0,
+                is_leader: index === 0 && totalValid > 0,
             }
         })
     }, [data, progress])
@@ -158,14 +158,15 @@ export default function WinnersPage() {
     const isAnimationDone = progress >= 0.999
 
     useEffect(() => {
-        // show congrats overlay when animation completes
-        if (showRevealState && isAnimationDone && leader) {
+        // show congrats overlay when animation completes and there is actually a winner
+        const hasVotes = Number(data?.total_valid || 0) > 0
+        if (showRevealState && isAnimationDone && leader && hasVotes) {
             setCongratsVisible(true)
             if (window.parent !== window) {
                 window.parent.postMessage({ type: 'WINNERS_REVEAL_DONE' }, '*');
             }
         }
-    }, [isAnimationDone, showRevealState, leader])
+    }, [isAnimationDone, showRevealState, leader, data?.total_valid])
 
     const toggleReveal = async (nextState: boolean) => {
         setSaving(true)
@@ -338,11 +339,11 @@ export default function WinnersPage() {
                                 <div className="winner-counter-row">
                                     <div>
                                         <span className="winner-counter-label">Votes</span>
-                                        <strong>{revealEnabled ? item.animated_votes.toLocaleString('id-ID') : item.is_leader ? 'Terpilih' : '•••'}</strong>
+                                        <strong>{revealEnabled ? item.animated_votes.toLocaleString('id-ID') : (item.is_leader && data?.total_valid) ? 'Terpilih' : '•••'}</strong>
                                     </div>
                                     <div>
                                         <span className="winner-counter-label">Percentage</span>
-                                        <strong>{revealEnabled ? formatPercent(item.animated_percentage) : item.is_leader ? 'Tertinggi' : '•••'}</strong>
+                                        <strong>{revealEnabled ? formatPercent(item.animated_percentage) : (item.is_leader && data?.total_valid) ? 'Tertinggi' : '•••'}</strong>
                                     </div>
                                 </div>
 
