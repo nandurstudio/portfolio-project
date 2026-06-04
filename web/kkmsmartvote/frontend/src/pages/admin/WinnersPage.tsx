@@ -50,7 +50,8 @@ export default function WinnersPage() {
     }, [])
 
     const revealEnabled = Boolean(data?.winners_revealed) && !simulateMode
-    const showRevealState = (data?.winners_revealed ?? publicRevealSeen) && !simulateMode
+    const [simulatedRevealDone, setSimulatedRevealDone] = useState(false)
+    const showRevealState = ((data?.winners_revealed ?? publicRevealSeen) || simulatedRevealDone) && !simulateMode
 
     useEffect(() => {
         if (typeof data?.winners_revealed === 'boolean') {
@@ -63,7 +64,7 @@ export default function WinnersPage() {
     }, [data?.winners_revealed, publicRevealSeen])
 
     useEffect(() => {
-        if (simulateMode && data && data.winners_revealed) {
+        if (simulateMode && data) {
             setCountdownValue(10)
             setCountdownVisible(true)
             
@@ -72,6 +73,7 @@ export default function WinnersPage() {
                     window.removeEventListener('keydown', onKey)
                     setCountdownValue(0)
                     setCountdownVisible(false)
+                    setSimulatedRevealDone(true)
                     setSimulateMode(false)
                 }
             }
@@ -83,6 +85,7 @@ export default function WinnersPage() {
                         clearInterval(id)
                         window.removeEventListener('keydown', onKey)
                         setCountdownVisible(false)
+                        setSimulatedRevealDone(true)
                         setSimulateMode(false)
                         return 0
                     }

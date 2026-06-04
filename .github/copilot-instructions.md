@@ -927,7 +927,7 @@ location /n8n/ {
 MAIL_HOST=smtp-relay.brevo.com
 MAIL_PORT=587
 MAIL_USERNAME=a729fa001@smtp-brevo.com (Brevo-generated SMTP login, NOT account email)
-MAIL_PASSWORD=REMOVED_FOR_SECURITY (SMTP-specific key)
+MAIL_PASSWORD=REMOVED_FOR_SECURITY
 MAIL_FROM_ADDRESS=nandang.dhe@gmail.com (account email, must be verified as sender in Brevo)
 MAIL_ENCRYPTION=tls
 ```

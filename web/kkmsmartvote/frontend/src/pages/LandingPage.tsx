@@ -491,7 +491,7 @@ export default function LandingPage() {
                                                 title="Masuk ke verifikasi OTP"
                                                 style={{ padding: '12px 30px', borderRadius: '50px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)', fontSize: '1.1rem', margin: 0, flex: '1 1 auto', whiteSpace: 'nowrap' }}
                                             >
-                                                Lanjut Verifikasi OTP
+                                                {ctaText}
                                             </button>
                                         </div>
                                         <iframe src="/admin/winners?simulateReveal=1" style={{ width: '100%', height: '100%', border: 'none', background: 'var(--bg)' }} title="Winner Reveal" />
