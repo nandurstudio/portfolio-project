@@ -49,8 +49,8 @@ export default function WinnersPage() {
         loadWinners()
     }, [])
 
-    const revealEnabled = Boolean(data?.winners_revealed) && !simulateMode
     const [simulatedRevealDone, setSimulatedRevealDone] = useState(false)
+    const revealEnabled = (Boolean(data?.winners_revealed) || simulatedRevealDone) && !simulateMode
     const showRevealState = ((data?.winners_revealed ?? publicRevealSeen) || simulatedRevealDone) && !simulateMode
 
     useEffect(() => {
