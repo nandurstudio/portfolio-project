@@ -161,18 +161,6 @@ class AdminController extends Controller
         $isAuthenticated = auth('api')->check();
         
         $payload = $this->buildResultsPayload();
-        
-        if (!$isAuthenticated && !$isRevealed) {
-            $payload['total_valid'] = 0;
-            $payload['results'] = collect($payload['results'])->map(function($r) {
-                $r['vote_count'] = 0;
-                $r['percentage'] = 0;
-                $r['is_winner'] = false;
-                return $r;
-            });
-            $payload['status'] = 'NO_MAJORITY';
-            $payload['winner'] = null;
-        }
 
         return response()->json([
             ...$payload,
