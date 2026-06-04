@@ -475,10 +475,10 @@ export default function LandingPage() {
                                 
                                 {isRevealOpen && (
                                     <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 99999, background: 'var(--bg, #000)' }}>
-                                        <div style={{ position: 'absolute', bottom: 30, left: '50%', transform: 'translateX(-50%)', zIndex: 100000, display: 'flex', gap: '1rem', width: 'max-content', maxWidth: '90vw', flexWrap: 'nowrap', justifyContent: 'center', opacity: isRevealDone ? 1 : 0, pointerEvents: isRevealDone ? 'auto' : 'none', transition: 'opacity 1s ease' }}>
+                                        <div style={{ position: 'absolute', bottom: 30, left: '50%', transform: 'translateX(-50%)', zIndex: 100000, display: 'flex', gap: '1rem', width: '90vw', maxWidth: '500px', flexWrap: 'wrap', justifyContent: 'center', opacity: isRevealDone ? 1 : 0, pointerEvents: isRevealDone ? 'auto' : 'none', transition: 'opacity 1s ease' }}>
                                             <button 
                                                 onClick={() => setIsRevealOpen(false)}
-                                                style={{ background: '#dc2626', color: '#ffffff', border: 'none', padding: '12px 30px', borderRadius: '50px', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 4px 12px rgba(0,0,0,0.5)', fontSize: '1.1rem', flex: '1 1 auto', whiteSpace: 'nowrap' }}
+                                                style={{ background: '#dc2626', color: '#ffffff', border: 'none', padding: '12px 20px', borderRadius: '50px', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 4px 12px rgba(0,0,0,0.5)', fontSize: '1rem', flex: '1 1 200px', whiteSpace: 'nowrap' }}
                                             >
                                                 Tutup Hasil (X)
                                             </button>
@@ -487,9 +487,9 @@ export default function LandingPage() {
                                                     setIsRevealOpen(false);
                                                     navigate('/otp');
                                                 }}
-                                                className="btn btn-primary btn-lg landing-otp-button"
+                                                className="btn btn-primary landing-otp-button"
                                                 title="Masuk ke verifikasi OTP"
-                                                style={{ padding: '12px 30px', borderRadius: '50px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)', fontSize: '1.1rem', margin: 0, flex: '1 1 auto', whiteSpace: 'nowrap' }}
+                                                style={{ padding: '12px 20px', borderRadius: '50px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)', fontSize: '1rem', margin: 0, flex: '1 1 200px', whiteSpace: 'nowrap', textAlign: 'center' }}
                                             >
                                                 {ctaText}
                                             </button>
