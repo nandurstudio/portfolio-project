@@ -110,6 +110,7 @@ export default function VotePage() {
     const [submitting, setSubmitting] = useState<boolean>(false);
     const [lockedVote, setLockedVote] = useState<LastVote | null>(null);
     const [redirectCountdown, setRedirectCountdown] = useState<number>(8);
+    const [isCandidatesOpen, setIsCandidatesOpen] = useState<boolean>(false);
 
     /**
      * Load candidates on mount
@@ -421,10 +422,22 @@ export default function VotePage() {
 
                 <div className="vote-layout">
                     <section className="vote-candidates-panel">
-                        <h3 className="vote-section-title">Pilih Kandidat</h3>
-                        <p className="vote-section-subtitle">Klik salah satu kartu kandidat untuk melanjutkan konfirmasi.</p>
+                        <button
+                            className="landing-candidates-toggle"
+                            onClick={() => setIsCandidatesOpen(prev => !prev)}
+                            aria-expanded={isCandidatesOpen}
+                            style={{ marginBottom: '10px' }}
+                        >
+                            <span>👥 Tampilkan Daftar Kandidat</span>
+                            <span className={`toggle-chevron ${isCandidatesOpen ? 'open' : ''}`}>▼</span>
+                        </button>
 
-                        <div className="candidates-grid">
+                        <div className={`landing-candidates-body ${isCandidatesOpen ? 'is-open' : ''}`}>
+                            <div className="landing-candidates-inner">
+                                <h3 className="vote-section-title">Pilih Kandidat</h3>
+                                <p className="vote-section-subtitle">Klik salah satu kartu kandidat untuk melanjutkan konfirmasi.</p>
+
+                                <div className="candidates-grid">
                             {candidates.map((candidate) => {
                                 const hasImage = Boolean(candidate.displayPhoto || candidate.full_photo_url || candidate.photo_url) && !imageFallback[candidate.id];
                                 return (
@@ -493,6 +506,8 @@ export default function VotePage() {
                                 <p>Belum ada kandidat aktif dari database.</p>
                             </div>
                         ) : null}
+                            </div>
+                        </div>
                     </section>
 
                 </div>

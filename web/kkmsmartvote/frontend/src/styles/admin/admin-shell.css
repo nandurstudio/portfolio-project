@@ -482,6 +482,7 @@
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 12px;
   margin-top: 14px;
+  padding-bottom: 140px; /* ruang untuk floating button di mobile */
 }
 
 .winner-card {

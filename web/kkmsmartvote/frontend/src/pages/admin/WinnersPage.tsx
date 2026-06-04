@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import api from '../../services/api'
 import { notify } from '../../utils/notify'
 import type { WinnersData, ResultItem } from '../../types'
@@ -18,12 +19,14 @@ const animateValue = (target: number, progress: number) => Math.round(target * p
 const PUBLIC_REVEAL_CACHE_KEY = 'kkm_public_winners_revealed'
 
 export default function WinnersPage() {
+    const navigate = useNavigate()
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [animationDurationMs, setAnimationDurationMs] = useState(1800)
     const [countdownVisible, setCountdownVisible] = useState(false)
     const [countdownValue, setCountdownValue] = useState(10)
     const [congratsVisible, setCongratsVisible] = useState(false)
+    const [hasClosedCongrats, setHasClosedCongrats] = useState(false)
     const [data, setData] = useState<WinnersData | null>(null)
     const [progress, setProgress] = useState(0)
     const [publicRevealSeen, setPublicRevealSeen] = useState<boolean>(() => localStorage.getItem(PUBLIC_REVEAL_CACHE_KEY) === 'true')
@@ -65,7 +68,7 @@ export default function WinnersPage() {
 
     useEffect(() => {
         if (simulateMode && data) {
-            setCountdownValue(10)
+            setCountdownValue(5)
             setCountdownVisible(true)
             
             const onKey = (e: KeyboardEvent) => {
@@ -188,7 +191,7 @@ export default function WinnersPage() {
     }
 
     const startCountdownAndReveal = () => {
-        setCountdownValue(10)
+        setCountdownValue(5)
         setCountdownVisible(true)
         const onKey = (e: KeyboardEvent) => {
             if (e.key === '0') {
@@ -234,7 +237,7 @@ export default function WinnersPage() {
                     <span className="winners-eyebrow">Winners</span>
                     <h2>Reveal Hasil Pemilihan</h2>
                     <p>
-                        Kontrol ini membuka atau menutup tampilan hasil kandidat ketua, lengkap dengan animasi hitung suara sesuai durasi yang disetel.
+                        🎉 Selamat kepada seluruh anggota KKM yang telah berpartisipasi! Berikut adalah hasil akhir perolehan suara Pemilihan Ketua Koperasi Karya Mandiri.
                     </p>
                 </div>
 
@@ -310,7 +313,7 @@ export default function WinnersPage() {
                                 {leader.photo_url ? <img src={leader.photo_url} alt={leader.name} /> : null}
                                 <h2>Selamat — {leader.name}</h2>
                                 <p>Kandidat Ketua Terpilih dengan {leader.animated_votes.toLocaleString('id-ID')} suara dari {totalVotesText} suara masuk ({formatPercent(leader.animated_percentage)})</p>
-                                <button className="winners-congrats-close" onClick={() => setCongratsVisible(false)}>Tutup</button>
+                                <button className="winners-congrats-close" onClick={() => { setCongratsVisible(false); setHasClosedCongrats(true); }}>Tutup</button>
                             </div>
                         </div>
                     )}
@@ -321,7 +324,7 @@ export default function WinnersPage() {
                         {rankedResults.map((item) => (
                             <article key={item.id} className={`winner-card ${item.is_leader ? 'winner-card--leader' : ''}`}>
                                 <div className="winner-card-top">
-                                    <span className="winner-rank">#{item.candidate_number ?? item.rank}</span>
+                                    <span className="winner-rank">Peringkat #{item.rank}</span>
                                     {item.is_leader && <span className="winner-crown">Kandidat Ketua Terpilih</span>}
                                 </div>
 
@@ -359,6 +362,16 @@ export default function WinnersPage() {
                         ))}
                     </div>
 
+                    {hasClosedCongrats && (
+                        <div style={{ position: 'absolute', bottom: '30px', left: '50%', transform: 'translateX(-50%)', zIndex: 100000, display: 'flex', gap: '1rem', width: '90vw', maxWidth: '500px', flexWrap: 'wrap', justifyContent: 'center', opacity: 1, pointerEvents: 'auto', transition: 'opacity 1s' }}>
+                            <button onClick={() => navigate('/')} style={{ background: 'rgb(220, 38, 38)', color: 'rgb(255, 255, 255)', borderWidth: 'medium', borderStyle: 'none', borderColor: 'currentcolor', borderImage: 'initial', padding: '12px 20px', borderRadius: '50px', cursor: 'pointer', fontWeight: 'bold', boxShadow: 'rgba(0, 0, 0, 0.5) 0px 4px 12px', fontSize: '1rem', flex: '1 1 200px', whiteSpace: 'nowrap' }}>
+                                Kembali ke Beranda
+                            </button>
+                            <button onClick={() => navigate('/otp')} className="btn btn-primary landing-otp-button" title="Masuk ke verifikasi OTP" style={{ padding: '12px 20px', borderRadius: '50px', boxShadow: 'rgba(0, 0, 0, 0.5) 0px 4px 12px', fontSize: '1rem', margin: '0px', flex: '1 1 200px', whiteSpace: 'nowrap', textAlign: 'center' }}>
+                                🎉 Klaim Hadiahmu Sekarang! 🎁✨
+                            </button>
+                        </div>
+                    )}
                 </>
             )}
         </section>

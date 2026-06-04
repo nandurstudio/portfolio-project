@@ -61,32 +61,42 @@ export default function VoteSuccessPage() {
     const memberEmail = member?.email || voterSession.getEmail() || '-';
     const voucherStatus = normalizeVoucherStatus(currentVote?.voucher?.status || vote?.voucher?.status);
     const isVoucherLocked = voucherStatus === 'redeemed';
+    const [copied, setCopied] = useState(false);
+
     const voucherCode = currentVote?.voucher?.code || vote?.voucher?.code || '';
+    const isRedeemed = currentVote?.voucher?.status === 'redeemed' || vote?.voucher?.status === 'redeemed';
 
     useEffect(() => {
         if (!vote || !member) return;
 
-        setCurrentVote(vote as VoteData);
+        setCurrentVote(prev => {
+            // Hanya inisialisasi form & state satu kali saja saat load
+            if (prev) return prev;
 
-        const source = (vote?.voucher || {}) as VoucherState;
-        const hasSavedGopay = Boolean(source.gopay_number);
+            const source = (vote?.voucher || {}) as VoucherState;
+            const hasSavedGopay = Boolean(source.gopay_number);
 
-        console.log('📋 VoteSuccessPage Data:', {
-            vote_id: vote.member_nik,
-            voucher: source,
-            voucherCode: source.code,
-            memberNik: member.nik,
+            console.log('📋 VoteSuccessPage Data:', {
+                vote_id: vote.member_nik,
+                voucher: source,
+                voucherCode: source.code,
+                memberNik: member.nik,
+            });
+
+            setGopayNumber(String(source.gopay_number || member?.gopay_number || ''));
+            const ownerSelf = typeof source.gopay_is_owner_self === 'boolean' ? source.gopay_is_owner_self : true;
+            setGopayOwnerSelf(ownerSelf);
+            setGopayOwnerName(String(source.gopay_owner_name || (ownerSelf ? member?.name || '' : '')));
+
+            const isLocked = source.status === 'redeemed' || source.status === 'used';
+            if (!hasSavedGopay && !isLocked) {
+                setShowGopayModal(true);
+            }
+
+            return vote as VoteData;
         });
-
-        setGopayNumber(String(source.gopay_number || member?.gopay_number || ''));
-        const ownerSelf = typeof source.gopay_is_owner_self === 'boolean' ? source.gopay_is_owner_self : true;
-        setGopayOwnerSelf(ownerSelf);
-        setGopayOwnerName(String(source.gopay_owner_name || (ownerSelf ? member?.name || '' : '')));
-
-        if (!hasSavedGopay && !isVoucherLocked) {
-            setShowGopayModal(true);
-        }
-    }, [vote, member, isVoucherLocked]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [vote, member]);
 
     useEffect(() => {
         const loadReward = async () => {
@@ -135,8 +145,32 @@ export default function VoteSuccessPage() {
      * Copy voucher code to clipboard
      */
     const copyToClipboard = () => {
-        navigator.clipboard.writeText(voucherCode);
-        notify.success('Berhasil', 'Kode voucher disalin!');
+        try {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(voucherCode);
+            } else {
+                // Fallback for older browsers or non-HTTPS
+                const textArea = document.createElement("textarea");
+                textArea.value = voucherCode;
+                textArea.style.position = "fixed";
+                textArea.style.left = "-999999px";
+                textArea.style.top = "-999999px";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                } catch (err) {
+                    console.error('Fallback copy failed', err);
+                }
+                textArea.remove();
+            }
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+            notify.success('Berhasil', 'Kode voucher disalin!');
+        } catch (err) {
+            console.error('Copy failed:', err);
+        }
     };
 
     const handleRedeemClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -263,9 +297,17 @@ export default function VoteSuccessPage() {
 
     const voucherData = (currentVote || vote) as VoteData;
     const isCodeUrl = voucherCode.startsWith('http');
-    const actualRedeemUrl = voucherData.voucher?.url_redeem || voucherData.voucher?.claim_url || (isCodeUrl ? voucherCode : null);
+    const actualRedeemUrl = 
+        currentVote?.voucher?.url_redeem || 
+        vote?.voucher?.url_redeem || 
+        currentVote?.voucher?.claim_url || 
+        vote?.voucher?.claim_url || 
+        (isCodeUrl ? voucherCode : null);
+
+    const isVoucherHidden = !actualRedeemUrl && !voucherCode;
 
     return (
+        <>
         <div className="voting-container success-page">
             <header className="voting-header success-header">
                 <h1>✅ PEMILIHAN BERHASIL</h1>
@@ -294,29 +336,36 @@ export default function VoteSuccessPage() {
                             <div className="voucher-header-row">
                                 <h3>🎟️ VOUCHER PEMILIHAN</h3>
                                 <span className={`voucher-status-badge status-${voucherStatus}`}>
-                                    {voucherStatus === 'redeemed' ? 'REDEEMED' : 'AVAILABLE'}
+                                    {voucherStatus === 'redeemed' ? 'CLAIMED' : 'AVAILABLE'}
                                 </span>
                             </div>
                         </div>
 
                         <div className="voucher-content">
                             <p className="voucher-label">Kode Voucher / Link Redeem:</p>
-                            <p className="voucher-code" style={{ wordBreak: 'break-all' }}>
-                                {actualRedeemUrl ? (
-                                    <a 
-                                        href={actualRedeemUrl} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer" 
-                                        onClick={handleRedeemClick}
-                                        style={{ color: '#0ea5e9', textDecoration: 'underline' }}
-                                        title="Klik untuk membuka URL klaim"
-                                    >
-                                        {isCodeUrl ? 'Buka Link Klaim' : voucherCode}
-                                    </a>
-                                ) : (
-                                    voucherCode
-                                )}
-                            </p>
+                            {isVoucherHidden ? (
+                                <div className="voucher-hidden-alert" style={{ background: '#fff3cd', color: '#856404', padding: '12px', borderRadius: '8px', marginBottom: '16px', fontSize: '0.9rem', border: '1px solid #ffeeba', textAlign: 'center' }}>
+                                    🔒 <strong>Data Disembunyikan</strong><br/>
+                                    Demi keamanan, data voucher disembunyikan. Silakan <strong>Logout Session</strong> dan masuk ulang dengan OTP untuk melihat voucher Anda.
+                                </div>
+                            ) : (
+                                <p className="voucher-code" style={{ wordBreak: 'break-all' }}>
+                                    {actualRedeemUrl ? (
+                                        <a 
+                                            href={actualRedeemUrl} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer" 
+                                            onClick={handleRedeemClick}
+                                            style={{ color: '#0ea5e9', textDecoration: 'underline' }}
+                                            title="Klik untuk membuka URL klaim"
+                                        >
+                                            {isCodeUrl ? 'Buka Link Klaim' : voucherCode}
+                                        </a>
+                                    ) : (
+                                        voucherCode
+                                    )}
+                                </p>
+                            )}
 
                             <div className="voucher-details">
                                 <div className="detail-row">
@@ -343,32 +392,19 @@ export default function VoteSuccessPage() {
                                 </div>
                             </div>
 
-                            {actualRedeemUrl ? (
-                                <p className="voucher-note">
-                                    📝 Silakan klik tombol/link Klaim Voucher untuk mendapatkan reward Anda
-                                </p>
-                            ) : (
-                                <p className="voucher-note">
-                                    📝 Simpan kode ini untuk verifikasi dengan panitia pemilihan
-                                </p>
-                            )}
-                            
-                            {!isVoucherLocked ? (
-                                <p className="voucher-note voucher-note--highlight">
-                                    {actualRedeemUrl 
-                                        ? "✏️ Data GoPay masih bisa diubah sampai Anda mengklaim voucher melalui link di atas."
-                                        : "✏️ Data GoPay masih bisa diubah sampai voucher diubah menjadi redeemed oleh admin."}
-                                </p>
-                            ) : (
-                                <p className="voucher-note voucher-note--locked">
-                                    🔒 Voucher sudah redeemed, data GoPay dikunci.
-                                </p>
-                            )}
+
                         </div>
                     </div>
 
                     <div className="voucher-actions">
-                        {actualRedeemUrl ? (
+                        {isVoucherHidden ? (
+                            <button
+                                onClick={handleLogoutSession}
+                                className="btn btn-primary success-action-primary"
+                            >
+                                🔐 Login Ulang dengan OTP
+                            </button>
+                        ) : actualRedeemUrl ? (
                             <a
                                 href={actualRedeemUrl}
                                 target="_blank"
@@ -382,44 +418,23 @@ export default function VoteSuccessPage() {
                         ) : (
                             <button
                                 onClick={copyToClipboard}
-                                className="btn btn-primary success-action-primary"
+                                className={`btn btn-primary success-action-primary ${copied ? 'copied' : ''}`}
                             >
-                                📋 Salin Kode Voucher
+                                {copied ? '✅ Berhasil Disalin!' : '📋 Salin Kode Voucher'}
                             </button>
                         )}
 
-                        <div className="voucher-actions-row">
-                            <button
-                                onClick={downloadVoucher}
-                                className="btn btn-secondary"
-                            >
-                                📥 Unduh Voucher
-                            </button>
 
-                            <button
-                                onClick={handleOpenGopayModal}
-                                className="btn btn-secondary"
-                            >
-                                {isVoucherLocked ? '🔒 GoPay Terkunci' : '📱 Ubah GoPay'}
-                            </button>
-
-                            <button
-                                onClick={() => window.print()}
-                                className="btn btn-outline"
-                            >
-                                🖨️ Cetak
-                            </button>
-                        </div>
                     </div>
 
                     <div className="notes-box">
                         <h4>ℹ️ Informasi Penting:</h4>
                         <ul>
                             <li>✅ Suara Anda sudah tercatat dengan aman</li>
-                            <li>📋 Simpan voucher untuk verifikasi dengan panitia</li>
+                            <li>📋 Pastikan memasukan nomor GoPay yang tepat.</li>
                             <li>❌ Suara Anda tidak dapat diubah setelah ini</li>
                             <li>🔒 Privasi pilihan Anda terjamin</li>
-                            <li>💳 Status voucher saat ini: {voucherStatus === 'redeemed' ? 'redeemed' : 'available'}</li>
+                            <li>💳 Status voucher saat ini: {voucherStatus === 'redeemed' ? 'CLAIMED' : 'AVAILABLE'}</li>
                         </ul>
                     </div>
 
@@ -509,5 +524,32 @@ export default function VoteSuccessPage() {
                 </div>
             ) : null}
         </div>
+
+        <footer className="voting-footer">
+            <p>❓ Kesulitan? Hubungi panitia KKM</p>
+            <p className="help-contact">
+                Email: <a href="mailto:nandang.dhe@gmail.com">nandang.dhe@gmail.com</a>{' '}|{' '}
+                Telepon: <a href="https://wa.me/nandurstudio" target="_blank" rel="noreferrer">0819-0683-3070</a>
+            </p>
+            <p className="help-contact">
+                <button
+                    type="button"
+                    onClick={() => navigate('/')}
+                    style={{
+                        background: 'none',
+                        border: 'none',
+                        padding: 0,
+                        margin: 0,
+                        color: 'inherit',
+                        textDecoration: 'underline',
+                        cursor: 'pointer',
+                        fontSize: '0.9rem',
+                    }}
+                >
+                    Kembali ke Landing Page
+                </button>
+            </p>
+        </footer>
+        </>
     );
 }

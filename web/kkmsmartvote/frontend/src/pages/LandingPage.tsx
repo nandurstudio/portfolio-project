@@ -109,6 +109,7 @@ export default function LandingPage() {
     const [imageFallback, setImageFallback] = useState<Record<number, boolean>>({});
     const [isRevealOpen, setIsRevealOpen] = useState<boolean>(false);
     const [isRevealDone, setIsRevealDone] = useState<boolean>(false);
+    const [isCandidatesOpen, setIsCandidatesOpen] = useState<boolean>(false);
 
     useEffect(() => {
         const handleMessage = (event: MessageEvent) => {
@@ -400,7 +401,7 @@ export default function LandingPage() {
         <div className="voting-container landing-page">
             <header className="voting-header landing-header">
                 <h1>🗳️ KKM Smart Vote {dynamicYear}</h1>
-                    <div className={`landing-status-badge status-${status}`}>{statusBadge}</div>
+                    <div className={`landing-status-badge status-${status === 'closed' ? 'claim' : status}`}>{statusBadge}</div>
                 <h2>{statusLabel}</h2>
             </header>
 
@@ -483,7 +484,7 @@ export default function LandingPage() {
                                                 onClick={() => setIsRevealOpen(false)}
                                                 style={{ background: '#dc2626', color: '#ffffff', border: 'none', padding: '12px 20px', borderRadius: '50px', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 4px 12px rgba(0,0,0,0.5)', fontSize: '1rem', flex: '1 1 200px', whiteSpace: 'nowrap' }}
                                             >
-                                                Tutup Hasil (X)
+                                                Kembali ke Beranda
                                             </button>
                                             <button 
                                                 onClick={() => {
@@ -522,64 +523,15 @@ export default function LandingPage() {
                             </p>
                         )}
                     </div>
-                </section>
 
-                <section className="landing-hero-candidates">
-                    <h3>Kandidat Calon Ketua KKM 2026-2029</h3>
-                    <p className="landing-hero-candidates-subtitle">
-                        Yuk kenalan dengan kandidat Ketua Koperasi Karya Mandiri yang siap membawa koperasi kita lebih maju!
-                    </p>
-
-                    <div className="landing-hero-candidate-grid">
-                        {landingCandidates.map((candidate) => (
-                            <article key={candidate.key} className="landing-hero-candidate-card">
-                                {candidate.photo && !imageFallback[candidate.id] ? (
-                                    <img
-                                        src={candidate.photo}
-                                        alt={candidate.name}
-                                        className="landing-hero-candidate-photo"
-                                        onError={() => setImageFallback((prev) => ({ ...prev, [candidate.id]: true }))}
-                                    />
-                                ) : (
-                                    <div className="candidate-photo-placeholder candidate-photo-placeholder--text">Foto kandidat belum tersedia</div>
-                                )}
-
-                                <div className="landing-hero-candidate-body">
-                                    <p className="landing-candidate-number">No. {candidate.orderNo}</p>
-                                    <h4 className="landing-candidate-name">{candidate.name}</h4>
-                                    <p><strong>Posisi Pencalonan:</strong> Ketua KKM</p>
-
-                                    <div className="landing-hero-candidate-meta">
-                                        <p><strong>NIK:</strong> {candidate.nik}</p>
-                                        <p><strong>Department:</strong> {candidate.department}</p>
-                                        <p><strong>Site:</strong> {candidate.site}</p>
-                                    </div>
-
-                                    <p><strong>Visi:</strong> {candidate.vision}</p>
-                                    <div>
-                                        <p><strong>Misi:</strong></p>
-                                        {renderMissionContent(candidate.mission, 'landing-mission-list')}
-                                    </div>
-                                    <p><strong>Motto:</strong> {candidate.motto}</p>
-                                </div>
-                            </article>
-                        ))}
-                    </div>
-
-                    {landingCandidates.length === 0 ? (
-                        <p className="landing-hero-candidates-subtitle" style={{ marginTop: '0.85rem' }}>
-                            Belum ada kandidat aktif di database.
-                        </p>
-                    ) : null}
-
-                    <div className="landing-cta-group" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', flexDirection: 'column', alignItems: 'center' }}>
+                    <div className="landing-cta-group" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', flexDirection: 'column', alignItems: 'center', marginTop: '1.5rem' }}>
                         <button
                             className="btn btn-primary btn-lg landing-otp-button"
                             onClick={() => navigate('/otp')}
                             disabled={!canStartOtp}
                             title={canStartOtp ? 'Masuk ke verifikasi OTP' : 'Verifikasi OTP belum dibuka.'}
                         >
-                            {ctaText}
+                            🎉 Klaim Hadiahmu Sekarang! 🎁✨
                         </button>
                         {!canStartOtp ? (
                             <p className="landing-hero-candidates-subtitle" style={{ marginTop: '0.35rem' }}>
@@ -587,6 +539,68 @@ export default function LandingPage() {
                             </p>
                         ) : null}
                     </div>
+                </section>
+
+                <section className="landing-hero-candidates">
+                    <button
+                        className="landing-candidates-toggle"
+                        onClick={() => setIsCandidatesOpen(prev => !prev)}
+                        aria-expanded={isCandidatesOpen}
+                    >
+                        <span>👥 Kandidat Calon Ketua KKM 2026-2029</span>
+                        <span className={`toggle-chevron ${isCandidatesOpen ? 'open' : ''}`}>▼</span>
+                    </button>
+
+                    <div className={`landing-candidates-body ${isCandidatesOpen ? 'is-open' : ''}`}>
+                        <div className="landing-candidates-inner">
+                            <p className="landing-hero-candidates-subtitle">
+                                Yuk kenalan dengan kandidat Ketua Koperasi Karya Mandiri yang siap membawa koperasi kita lebih maju!
+                            </p>
+
+                            <div className="landing-hero-candidate-grid">
+                                {landingCandidates.map((candidate) => (
+                                    <article key={candidate.key} className="landing-hero-candidate-card">
+                                        {candidate.photo && !imageFallback[candidate.id] ? (
+                                            <img
+                                                src={candidate.photo}
+                                                alt={candidate.name}
+                                                className="landing-hero-candidate-photo"
+                                                onError={() => setImageFallback((prev) => ({ ...prev, [candidate.id]: true }))}
+                                            />
+                                        ) : (
+                                            <div className="candidate-photo-placeholder candidate-photo-placeholder--text">Foto kandidat belum tersedia</div>
+                                        )}
+
+                                        <div className="landing-hero-candidate-body">
+                                            <p className="landing-candidate-number">No. {candidate.orderNo}</p>
+                                            <h4 className="landing-candidate-name">{candidate.name}</h4>
+                                            <p><strong>Posisi Pencalonan:</strong> Ketua KKM</p>
+
+                                            <div className="landing-hero-candidate-meta">
+                                                <p><strong>NIK:</strong> {candidate.nik}</p>
+                                                <p><strong>Department:</strong> {candidate.department}</p>
+                                                <p><strong>Site:</strong> {candidate.site}</p>
+                                            </div>
+
+                                            <p><strong>Visi:</strong> {candidate.vision}</p>
+                                            <div>
+                                                <p><strong>Misi:</strong></p>
+                                                {renderMissionContent(candidate.mission, 'landing-mission-list')}
+                                            </div>
+                                            <p><strong>Motto:</strong> {candidate.motto}</p>
+                                        </div>
+                                    </article>
+                                ))}
+                            </div>
+
+                            {landingCandidates.length === 0 ? (
+                                <p className="landing-hero-candidates-subtitle" style={{ marginTop: '0.85rem' }}>
+                                    Belum ada kandidat aktif di database.
+                                </p>
+                            ) : null}
+                        </div>
+                    </div>
+
 
                 </section>
             </main>

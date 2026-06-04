@@ -342,6 +342,12 @@
   border: 1px solid #f2a8a8;
 }
 
+.landing-status-badge.status-claim {
+  background: #e0eeff;
+  color: #1549a3;
+  border: 1px solid #93b8f5;
+}
+
 .landing-hero h3 {
   margin: 0 0 0.9rem;
   font-size: 1.8rem;
@@ -580,6 +586,62 @@
   padding: 1.25rem;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16);
   text-align: center;
+}
+
+/* Spoiler toggle button */
+.landing-candidates-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #1d2340;
+  gap: 0.6rem;
+  text-align: left;
+}
+
+.landing-candidates-toggle:hover {
+  color: #3b53d0;
+}
+
+.toggle-chevron {
+  font-size: 0.7rem;
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+  color: #636d8f;
+}
+
+.toggle-chevron.open {
+  transform: rotate(180deg);
+}
+
+/* Collapsible body - outer wrapper controls the animation */
+.landing-candidates-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.4s ease;
+  overflow: hidden;
+}
+
+.landing-candidates-body.is-open {
+  grid-template-rows: 1fr;
+}
+
+/* Inner wrapper: must have min-height: 0 for grid trick to work */
+.landing-candidates-inner {
+  min-height: 0;
+  padding-top: 0;
+  transition: padding-top 0.4s ease;
+}
+
+.landing-candidates-body.is-open .landing-candidates-inner {
+  padding-top: 1rem;
 }
 
 .landing-hero-candidates h3 {

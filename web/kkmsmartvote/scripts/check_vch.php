@@ -1,0 +1,1 @@
+<?php require __DIR__.'/../vendor/autoload.php'; $app = require_once __DIR__.'/../bootstrap/app.php'; $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class); $kernel->bootstrap(); $vouchers = Illuminate\Support\Facades\DB::table('vouchers')->where('code', 'like', 'VCH%')->get(); echo count($vouchers) . ' VCH vouchers found' . PHP_EOL; ?>

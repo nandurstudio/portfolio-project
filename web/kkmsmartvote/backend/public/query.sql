@@ -1,0 +1,1 @@
+SELECT v.code, v.url_redeem as v_url_redeem, vv.url_redeem as vv_url_redeem FROM vouchers v LEFT JOIN voter_vouchers vv ON v.id = vv.voucher_id WHERE v.code = 'VIAGOPAY25-20260529-000466' OR vv.voter_nik = '120900062';

@@ -1,0 +1,1 @@
+<?php require __DIR__.'/../vendor/autoload.php'; $app = require_once __DIR__.'/../bootstrap/app.php'; $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class); $kernel->bootstrap(); $votes = Illuminate\Support\Facades\DB::table('votes')->where('member_nik', '120900062')->get(); echo json_encode($votes, JSON_PRETTY_PRINT); ?>
