@@ -647,44 +647,60 @@ class VotingController extends Controller
             ], 401);
         }
 
+        $payload = null;
         try {
             $payload = JWTAuth::getJWTProvider()->decode($token);
-            if (!isset($payload['otp_verified']) || $payload['otp_verified'] !== true || !isset($payload['type']) || $payload['type'] !== 'voting') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Token otorisasi tidak valid untuk akses ini.',
-                    'error' => 'UNAUTHORIZED_INVALID_TOKEN_TYPE'
-                ], 401);
+        } catch (\Tymon\JWTAuth\Exceptions\TokenExpiredException $e) {
+            // Allow expired tokens specifically for voting features so users don't have to re-login just to view vouchers
+            $parts = explode('.', $token);
+            if (count($parts) === 3) {
+                $payload = json_decode(base64_decode(strtr($parts[1], '-_', '+/')), true);
             }
-
-            if ($expectedNik) {
-                if (isset($payload['sub']) && str_starts_with($payload['sub'], 'voter:')) {
-                    $otpId = (int) substr($payload['sub'], 6);
-                    $otpRecord = \App\Models\EmailOtp::find($otpId);
-                    if (!$otpRecord || $otpRecord->member_nik !== $expectedNik) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'Otorisasi gagal: NIK tidak sesuai dengan sesi OTP Anda.',
-                            'error' => 'UNAUTHORIZED_NIK_MISMATCH'
-                        ], 403);
-                    }
-                } else {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Token otorisasi rusak.',
-                        'error' => 'UNAUTHORIZED_INVALID_SUBJECT'
-                    ], 401);
-                }
-            }
-
-            return null; // OK
         } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Sesi tidak valid. Harap login kembali.',
+                'error' => 'UNAUTHORIZED_INVALID_TOKEN'
+            ], 401);
+        }
+
+        if (!$payload) {
             return response()->json([
                 'success' => false,
                 'message' => 'Sesi telah kedaluwarsa. Harap login kembali.',
                 'error' => 'UNAUTHORIZED_EXPIRED_TOKEN'
             ], 401);
         }
+
+        if (!isset($payload['otp_verified']) || $payload['otp_verified'] !== true || !isset($payload['type']) || $payload['type'] !== 'voting') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Token otorisasi tidak valid untuk akses ini.',
+                'error' => 'UNAUTHORIZED_INVALID_TOKEN_TYPE'
+            ], 401);
+        }
+
+        if ($expectedNik) {
+            if (isset($payload['sub']) && str_starts_with($payload['sub'], 'voter:')) {
+                $otpId = (int) substr($payload['sub'], 6);
+                $otpRecord = \App\Models\EmailOtp::find($otpId);
+                if (!$otpRecord || $otpRecord->member_nik !== $expectedNik) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Otorisasi gagal: NIK tidak sesuai dengan sesi OTP Anda.',
+                        'error' => 'UNAUTHORIZED_NIK_MISMATCH'
+                    ], 403);
+                }
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Token otorisasi rusak.',
+                    'error' => 'UNAUTHORIZED_INVALID_SUBJECT'
+                ], 401);
+            }
+        }
+
+        return null; // OK
     }
 
     /**
