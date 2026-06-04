@@ -418,25 +418,39 @@ class VotingController extends Controller
             $departmentName = (string) ($member->department ?? '-');
 
             // OK: Return member data
+            $responsePayload = [
+                'id' => $member->id,
+                'nik' => $member->nik,
+                'name' => $member->name,
+                'email' => $member->email,
+                'email_masked' => !empty($member->email) ? $this->maskEmail((string) $member->email) : null,
+                'is_eligible' => $member->is_eligible,
+                'has_voted' => $member->has_voted,
+                'can_vote' => !$member->has_voted,
+                'existing_vote' => $member->has_voted ? $this->buildExistingVoteSummary($member) : null,
+                'department' => $member->department ? [
+                    'id' => null,
+                    'code' => null,
+                    'name' => (string) $member->department,
+                ] : null,
+                'site' => $resolvedSite
+            ];
+
+            // Security patch: Only return voucher secrets if authorized
+            if ($member->has_voted && $responsePayload['existing_vote']) {
+                $tokenPayload = $this->validateVotingToken($request, $nik);
+                if ($tokenPayload instanceof \Illuminate\Http\JsonResponse) {
+                    if (isset($responsePayload['existing_vote']['voucher'])) {
+                        unset($responsePayload['existing_vote']['voucher']['url_redeem']);
+                        unset($responsePayload['existing_vote']['voucher']['claim_url']);
+                        unset($responsePayload['existing_vote']['voucher']['code']);
+                    }
+                }
+            }
+
             return response()->json([
                 'success' => true,
-                'data' => [
-                    'id' => $member->id,
-                    'nik' => $member->nik,
-                    'name' => $member->name,
-                    'email' => $member->email,
-                    'email_masked' => !empty($member->email) ? $this->maskEmail((string) $member->email) : null,
-                    'is_eligible' => $member->is_eligible,
-                    'has_voted' => $member->has_voted,
-                    'can_vote' => !$member->has_voted,
-                    'existing_vote' => $member->has_voted ? $this->buildExistingVoteSummary($member) : null,
-                    'department' => $member->department ? [
-                        'id' => null,
-                        'code' => null,
-                        'name' => (string) $member->department,
-                    ] : null,
-                    'site' => $resolvedSite
-                ]
+                'data' => $responsePayload
             ]);
         } catch (\Exception $e) {
             Log::error("Member lookup failed for NIK {$nik}: " . $e->getMessage());
