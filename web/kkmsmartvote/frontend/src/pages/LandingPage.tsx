@@ -449,8 +449,8 @@ export default function LandingPage() {
                                     style={{ 
                                         width: '100%', 
                                         marginBottom: '1rem', 
-                                        padding: '1.2rem',
-                                        fontSize: '1.1rem',
+                                        padding: '1rem 0.5rem',
+                                        fontSize: '0.9rem',
                                         fontWeight: 800,
                                         background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
                                         color: '#ffffff',
@@ -459,12 +459,15 @@ export default function LandingPage() {
                                         boxShadow: '0 10px 25px rgba(245, 158, 11, 0.4)',
                                         cursor: 'pointer',
                                         textTransform: 'uppercase',
-                                        letterSpacing: '1px',
+                                        letterSpacing: '0.5px',
                                         transition: 'all 0.3s ease',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        gap: '10px'
+                                        gap: '5px',
+                                        flexWrap: 'wrap',
+                                        textAlign: 'center',
+                                        lineHeight: '1.4'
                                     }}
                                     onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 15px 30px rgba(245, 158, 11, 0.6)'; }}
                                     onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 10px 25px rgba(245, 158, 11, 0.4)'; }}
