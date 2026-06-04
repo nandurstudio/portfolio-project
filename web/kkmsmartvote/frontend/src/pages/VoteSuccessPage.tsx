@@ -102,7 +102,24 @@ export default function VoteSuccessPage() {
             }
         };
 
+        const fetchLatestVote = async () => {
+            try {
+                const token = voterSession.getToken();
+                if (!token) return;
+                
+                const res = await votingApi.myVote();
+                if (res?.data?.success && res.data.data) {
+                    const freshVote = res.data.data as VoteData;
+                    setCurrentVote(freshVote);
+                    voterSession.setLastVote(freshVote);
+                }
+            } catch (err) {
+                console.error('Failed to fetch latest vote:', err);
+            }
+        };
+
         loadReward();
+        fetchLatestVote();
     }, []);
 
     if (!vote || !member) {

@@ -429,7 +429,7 @@ class VotingController extends Controller
                     'is_eligible' => $member->is_eligible,
                     'has_voted' => $member->has_voted,
                     'can_vote' => !$member->has_voted,
-                    'existing_vote' => $member->has_voted ? $this->buildExistingVoteSummary($member) : null,
+                    'existing_vote' => $member->has_voted ? $this->buildExistingVoteSummary($member, false) : null,
                     'department' => $member->department ? [
                         'id' => null,
                         'code' => null,
@@ -1244,7 +1244,7 @@ class VotingController extends Controller
     /**
      * Build an existing-vote payload that can be consumed by frontend when ALREADY_VOTED.
      */
-    private function buildExistingVoteSummary(Member $member): ?array
+    private function buildExistingVoteSummary(Member $member, bool $includeVoucher = true): ?array
     {
         $vote = Vote::query()
             ->with('candidate')
@@ -1267,7 +1267,7 @@ class VotingController extends Controller
         $gopaySubmittedAt = null;
         $voucherRow = null;
 
-        if (Schema::hasTable('vouchers')) {
+        if ($includeVoucher && Schema::hasTable('vouchers')) {
             $voucherQuery = DB::table('vouchers');
 
             if (Schema::hasColumn('vouchers', 'vote_id')) {
@@ -1292,8 +1292,9 @@ class VotingController extends Controller
                 $gopaySubmittedAt = $voucherRow->gopay_submitted_at ?? null;
                 $urlRedeem = $voucherRow->url_redeem ?? $voucherRow->claim_url ?? null;
             }
+        }
 
-            if (!$voucherRow && Schema::hasTable('voter_vouchers')) {
+        if ($includeVoucher && !$voucherRow && Schema::hasTable('voter_vouchers')) {
                 $legacyVoucherRow = DB::table('voter_vouchers as vv')
                     ->join('vouchers as v', 'v.id', '=', 'vv.voucher_id')
                     ->where('vv.voter_nik', $member->nik)
@@ -1315,33 +1316,37 @@ class VotingController extends Controller
                     $gopaySubmittedAt = $legacyVoucherRow->gopay_submitted_at ?? null;
                     $urlRedeem = $legacyVoucherRow->url_redeem ?? $legacyVoucherRow->claim_url ?? null;
                 }
-            }
         }
 
-        return [
-            'vote_id' => $vote->id,
-            'member_nik' => $member->nik,
-            'member_name' => $vote->member_name ?: $member->name,
+        $summary = [
+            'voted_at' => $vote->created_at->toDateTimeString(),
+            'member_nik' => $vote->member_nik,
+            'member_name' => $vote->member_name,
             'candidate' => [
-                'id' => $vote->candidate?->id,
-                'name' => $vote->candidate?->name,
-                'position' => $vote->candidate?->position,
+                'id' => $vote->candidate->id ?? null,
+                'name' => $vote->candidate->name ?? null,
             ],
-            'voted_at' => $vote->created_at,
-            'voucher' => [
+            'site' => [
+                'id' => $vote->site_id,
+                'name' => $vote->site ?? '-',
+            ]
+        ];
+
+        if ($includeVoucher) {
+            $summary['voucher'] = [
                 'code' => $voucherCode,
-                'vote_id' => $vote->id,
-                'member_nik' => $member->nik,
-                'candidate_name' => $vote->candidate?->name,
-                'created_at' => $voucherCreatedAt ?: $vote->created_at,
                 'status' => $voucherStatus,
+                'created_at' => $voucherCreatedAt,
                 'gopay_number' => $gopayNumber,
                 'gopay_owner_name' => $gopayOwnerName,
                 'gopay_is_owner_self' => $gopayIsOwnerSelf,
                 'gopay_submitted_at' => $gopaySubmittedAt,
-                'url_redeem' => $urlRedeem ?? null,
-            ],
-        ];
+                'url_redeem' => $urlRedeem,
+                'claim_url' => $urlRedeem,
+            ];
+        }
+
+        return $summary;
     }
 
     /**
@@ -1355,5 +1360,38 @@ class VotingController extends Controller
 
         $masked = substr($local, 0, 3) . str_repeat('*', max(0, strlen($local) - 3)) . '@' . $domain;
         return $masked;
+    }
+
+    /**
+     * GET /api/voting/my-vote
+     * Allows a logged-in voter (via OTP token) to securely fetch their latest vote and voucher data.
+     */
+    public function myVote(Request $request)
+    {
+        $payload = $this->validateVotingToken($request);
+        if ($payload instanceof \Illuminate\Http\JsonResponse) {
+            return $payload;
+        }
+
+        $memberNik = $payload['nik'] ?? null;
+        if (!$memberNik) {
+            return response()->json(['success' => false, 'message' => 'Token invalid'], 401);
+        }
+
+        $member = Member::where('nik', $memberNik)->first();
+        if (!$member) {
+            return response()->json(['success' => false, 'message' => 'Member not found'], 404);
+        }
+
+        if (!$member->has_voted) {
+            return response()->json(['success' => false, 'message' => 'You have not voted yet'], 400);
+        }
+
+        $existingVote = $this->buildExistingVoteSummary($member, true);
+
+        return response()->json([
+            'success' => true,
+            'data' => $existingVote
+        ]);
     }
 }
