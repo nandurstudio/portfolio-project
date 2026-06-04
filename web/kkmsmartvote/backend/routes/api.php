@@ -18,7 +18,6 @@ Route::post('/auth/admin/login', [AuthController::class, 'adminLogin']);
 // Voting with Email OTP (no login required)
 Route::post('/voting/request-otp', [VotingController::class, 'requestOtp']);
 Route::post('/voting/verify-otp', [VotingController::class, 'verifyOtp']);
-Route::get('/voting/my-vote', [VotingController::class, 'myVote']);
 Route::get('/voting/member-lookup/{nik}', [VotingController::class, 'memberLookup']);
 Route::get('/voting/sites', [VotingController::class, 'sites']);
 Route::get('/voting/candidates-with-details', [VotingController::class, 'candidatesWithDetails']);

@@ -103,13 +103,11 @@ export default function VoteSuccessPage() {
         };
 
         const fetchLatestVote = async () => {
+            if (!member?.nik) return;
             try {
-                const token = voterSession.getToken();
-                if (!token) return;
-                
-                const res = await votingApi.myVote();
-                if (res?.data?.success && res.data.data) {
-                    const freshVote = res.data.data as VoteData;
+                const res = await votingApi.memberLookup(member.nik);
+                if (res?.data?.success && res.data.data?.existing_vote) {
+                    const freshVote = res.data.data.existing_vote as VoteData;
                     setCurrentVote(freshVote);
                     voterSession.setLastVote(freshVote);
                 }
@@ -120,7 +118,7 @@ export default function VoteSuccessPage() {
 
         loadReward();
         fetchLatestVote();
-    }, []);
+    }, [member?.nik]);
 
     if (!vote || !member) {
         return (

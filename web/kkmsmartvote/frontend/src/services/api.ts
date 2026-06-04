@@ -116,8 +116,6 @@ export const votingApi = {
       headers: { "x-skip-global-swal": "1" },
     }),
 
-  myVote: () => api.get(`/voting/my-vote?_t=${new Date().getTime()}`),
-
   // Public site list for voting flow
   sites: () => api.get("/voting/sites"),
 
