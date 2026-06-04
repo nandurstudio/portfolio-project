@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import api from '../../services/api'
 import { notify } from '../../utils/notify'
 import type { WinnersData, ResultItem } from '../../types'
+import { getStoredAdminUser } from '../../components/admin/authStorage'
 
 type RankedResult = ResultItem & {
     rank: number
@@ -14,6 +15,8 @@ const formatPercent = (value: number) => `${value.toLocaleString('id-ID', { maxi
 
 const animateValue = (target: number, progress: number) => Math.round(target * progress)
 
+const PUBLIC_REVEAL_CACHE_KEY = 'kkm_public_winners_revealed'
+
 export default function WinnersPage() {
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
@@ -23,6 +26,10 @@ export default function WinnersPage() {
     const [congratsVisible, setCongratsVisible] = useState(false)
     const [data, setData] = useState<WinnersData | null>(null)
     const [progress, setProgress] = useState(0)
+    const [publicRevealSeen, setPublicRevealSeen] = useState<boolean>(() => localStorage.getItem(PUBLIC_REVEAL_CACHE_KEY) === 'true')
+    const [simulateMode, setSimulateMode] = useState(() => new URLSearchParams(window.location.search).has('simulateReveal'))
+    const adminUser = getStoredAdminUser()
+    const isAdminViewer = Boolean(adminUser)
 
     const loadWinners = async () => {
         setLoading(true)
@@ -42,10 +49,56 @@ export default function WinnersPage() {
         loadWinners()
     }, [])
 
-    const revealEnabled = Boolean(data?.winners_revealed)
+    const revealEnabled = Boolean(data?.winners_revealed) && !simulateMode
+    const showRevealState = (data?.winners_revealed ?? publicRevealSeen) && !simulateMode
 
     useEffect(() => {
-        if (!revealEnabled) {
+        if (typeof data?.winners_revealed === 'boolean') {
+            setPublicRevealSeen(data.winners_revealed)
+            localStorage.setItem(PUBLIC_REVEAL_CACHE_KEY, data.winners_revealed ? 'true' : 'false')
+            return
+        }
+
+        localStorage.setItem(PUBLIC_REVEAL_CACHE_KEY, publicRevealSeen ? 'true' : 'false')
+    }, [data?.winners_revealed, publicRevealSeen])
+
+    useEffect(() => {
+        if (simulateMode && data && data.winners_revealed) {
+            setCountdownValue(10)
+            setCountdownVisible(true)
+            
+            const onKey = (e: KeyboardEvent) => {
+                if (e.key === '0') {
+                    window.removeEventListener('keydown', onKey)
+                    setCountdownValue(0)
+                    setCountdownVisible(false)
+                    setSimulateMode(false)
+                }
+            }
+            window.addEventListener('keydown', onKey)
+
+            const id = window.setInterval(() => {
+                setCountdownValue((v) => {
+                    if (v <= 1) {
+                        clearInterval(id)
+                        window.removeEventListener('keydown', onKey)
+                        setCountdownVisible(false)
+                        setSimulateMode(false)
+                        return 0
+                    }
+                    return v - 1
+                })
+            }, 1000)
+
+            return () => {
+                clearInterval(id)
+                window.removeEventListener('keydown', onKey)
+            }
+        }
+    }, [simulateMode, data])
+
+    useEffect(() => {
+        if (!showRevealState) {
             setProgress(0)
             setCongratsVisible(false)
             return undefined
@@ -66,7 +119,7 @@ export default function WinnersPage() {
 
         frame = window.requestAnimationFrame(step)
         return () => window.cancelAnimationFrame(frame)
-    }, [revealEnabled, data?.results?.length, animationDurationMs])
+    }, [showRevealState, data?.results?.length, animationDurationMs])
 
     const rankedResults = useMemo<RankedResult[]>(() => {
         const totalValid = Number(data?.total_valid || 0)
@@ -93,19 +146,23 @@ export default function WinnersPage() {
     const hiddenLeader = rankedResults.find((item) => item.is_leader) || leader
     const electionStatus = data?.status || 'NO_MAJORITY'
     const totalVotesText = Number(data?.total_valid || 0).toLocaleString('id-ID')
-    const statusText = revealEnabled ? 'Terbuka' : 'Terkunci'
-    const revealCopy = revealEnabled
+    const statusText = showRevealState ? 'Terbuka' : 'Terkunci'
+    const revealCopy = showRevealState
         ? 'Hasil voting sedang ditampilkan lengkap dengan animasi count-up sesuai durasi yang disetel di pengaturan.'
         : 'Kandidat juara sudah dihitung, tetapi angka voting dan persentasenya masih dikunci sampai reveal dibuka.'
 
     const leaderImage = hiddenLeader?.photo_url || null
+    const isAnimationDone = progress >= 0.999
 
     useEffect(() => {
         // show congrats overlay when animation completes
-        if (revealEnabled && progress >= 0.999 && leader) {
+        if (showRevealState && isAnimationDone && leader) {
             setCongratsVisible(true)
+            if (window.parent !== window) {
+                window.parent.postMessage({ type: 'WINNERS_REVEAL_DONE' }, '*');
+            }
         }
-    }, [progress, revealEnabled, leader])
+    }, [isAnimationDone, showRevealState, leader])
 
     const toggleReveal = async (nextState: boolean) => {
         setSaving(true)
@@ -170,7 +227,7 @@ export default function WinnersPage() {
         <section className="admin-simple-card winners-page">
             <div className="winners-header">
                 <div>
-                    <span className="winners-eyebrow">Admin / Winners</span>
+                    <span className="winners-eyebrow">Winners</span>
                     <h2>Reveal Hasil Pemilihan</h2>
                     <p>
                         Kontrol ini membuka atau menutup tampilan hasil kandidat ketua, lengkap dengan animasi hitung suara sesuai durasi yang disetel.
@@ -178,24 +235,26 @@ export default function WinnersPage() {
                 </div>
 
                 <div className="winners-controls">
-                    <span className={`winners-status-pill ${revealEnabled ? 'is-open' : 'is-closed'}`}>
+                    <span className={`winners-status-pill ${showRevealState ? 'is-open' : 'is-closed'}`}>
                         {statusText}
                     </span>
-                    {/* duration input removed as requested */}
-                    {revealEnabled ? (
-                        <button type="button" onClick={() => toggleReveal(false)} disabled={saving || loading} className="winners-action-button winners-action-button--small">
-                            Unreveal
-                        </button>
-                    ) : (
-                        <button type="button" onClick={() => startCountdownAndReveal()} disabled={saving || loading} className="winners-action-button">
-                            Reveal Hasil
-                        </button>
-                    )}
+                    {isAdminViewer ? (
+                        <>
+                            {showRevealState ? (
+                                <button type="button" onClick={() => toggleReveal(false)} disabled={saving || loading} className="winners-action-button winners-action-button--small">
+                                    Unreveal
+                                </button>
+                            ) : (
+                                <button type="button" onClick={() => startCountdownAndReveal()} disabled={saving || loading} className="winners-action-button">
+                                    Reveal Hasil
+                                </button>
+                            )}
 
-                    <button type="button" onClick={async () => { setSaving(true); try { await api.put('/admin/election/settings',{ winners_revealed: false }); notify.toast('Reset', 'Setting reset.', 'success'); await loadWinners(); } catch(err:any){ notify.toast('Reset Gagal', err?.response?.data?.message||'Gagal reset','error') } finally{ setSaving(false) } }} disabled={saving || loading} className="winners-reset-button winners-reset-button--small">
-                        Reset
-                    </button>
-                    {/* save duration removed */}
+                            <button type="button" onClick={async () => { setSaving(true); try { await api.put('/admin/election/settings', { winners_revealed: false }); notify.toast('Reset', 'Setting reset.', 'success'); await loadWinners(); } catch (err: any) { notify.toast('Reset Gagal', err?.response?.data?.message || 'Gagal reset', 'error') } finally { setSaving(false) } }} disabled={saving || loading} className="winners-reset-button winners-reset-button--small">
+                                Reset
+                            </button>
+                        </>
+                    ) : null}
                 </div>
             </div>
 
@@ -203,25 +262,25 @@ export default function WinnersPage() {
                 <p>Memuat data winners...</p>
             ) : (
                 <>
-                    <div className={`winners-hero ${!revealEnabled ? 'winners-hero--hidden' : ''}`}>
+                    <div className={`winners-hero ${!showRevealState ? 'winners-hero--hidden' : ''}`}>
                         <div className="winners-hero-copy">
                             <span className="winners-hero-tag">Status: {electionStatus}</span>
-                            <h3>{revealEnabled && hiddenLeader ? `Kandidat Ketua Terpilih: ${hiddenLeader.name}` : 'Kandidat Ketua Terpilih: Tersembunyi'}</h3>
+                            <h3>{revealEnabled && hiddenLeader && isAnimationDone ? `Kandidat Ketua Terpilih: ${hiddenLeader.name}` : 'Kandidat Ketua Terpilih: Rahasia'}</h3>
                             <p>{revealEnabled ? revealCopy : 'Data kandidat tersembunyi sampai fitur reveal diaktifkan.'}</p>
                         </div>
 
                         <div className="winners-hero-leader">
                             <div className="winners-hero-photo-wrap">
-                                {revealEnabled && leaderImage ? (
+                                {showRevealState && isAnimationDone && leaderImage ? (
                                     <img src={leaderImage} alt={hiddenLeader?.name || 'Kandidat Ketua'} className="winners-hero-photo" />
                                 ) : (
-                                    <div className="winners-hero-photo winners-hero-photo--masked">Tersembunyi</div>
+                                    <div className="winners-hero-photo winners-hero-photo--masked">Rahasia</div>
                                 )}
                             </div>
 
                             <div className="winners-hero-stat">
-                                <strong>{revealEnabled && leader ? `${formatPercent(leader.animated_percentage || 0)}` : '•'}</strong>
-                                <span>{revealEnabled && leader ? `${leader.animated_votes.toLocaleString('id-ID')} suara dari ${totalVotesText} suara masuk` : 'Tersembunyi'}</span>
+                                <strong>{showRevealState && leader ? `${formatPercent(leader.animated_percentage || 0)}` : '•'}</strong>
+                                <span>{showRevealState && leader ? `${leader.animated_votes.toLocaleString('id-ID')} suara dari ${totalVotesText} suara masuk` : 'Tersembunyi'}</span>
                             </div>
                         </div>
                     </div>
@@ -229,8 +288,14 @@ export default function WinnersPage() {
                     {countdownVisible && (
                         <div className="winners-countdown-overlay" role="dialog" aria-modal>
                             <div>
-                                <div className="count-value">{countdownValue}</div>
-                                <div style={{textAlign:'center', marginTop:12}}>Press <strong>0</strong> to reveal immediately</div>
+                                <div 
+                                    className="count-value"
+                                    style={{ cursor: 'pointer', userSelect: 'none' }}
+                                    onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: '0' }))}
+                                >
+                                    {countdownValue}
+                                </div>
+                                <div style={{ textAlign: 'center', marginTop: 12 }}>Press <strong>0</strong> atau tap angka untuk reveal</div>
                             </div>
                         </div>
                     )}
@@ -248,7 +313,7 @@ export default function WinnersPage() {
 
                     {/* duration settings removed */}
 
-                    <div className={`winners-grid ${revealEnabled ? 'is-revealed' : 'is-hidden'}`}>
+                    <div className={`winners-grid ${showRevealState ? 'is-revealed' : 'is-hidden'}`}>
                         {rankedResults.map((item) => (
                             <article key={item.id} className={`winner-card ${item.is_leader ? 'winner-card--leader' : ''}`}>
                                 <div className="winner-card-top">
@@ -257,14 +322,14 @@ export default function WinnersPage() {
                                 </div>
 
                                 <div className="winner-photo-wrap">
-                                    {item.photo_url ? (
+                                    {revealEnabled && isAnimationDone && item.photo_url ? (
                                         <img src={item.photo_url} alt={item.name} className="winner-photo" />
                                     ) : (
-                                        <div className="winner-photo winner-photo--empty">No Photo</div>
+                                        <div className="winner-photo winner-photo--empty">Rahasia</div>
                                     )}
                                 </div>
 
-                                <h4>{item.name}</h4>
+                                <h4>{revealEnabled && isAnimationDone ? item.name : 'Kandidat Rahasia'}</h4>
                                 <p>{item.position || 'Kandidat Ketua'}</p>
 
                                 <div className="winner-counter-row">
@@ -290,9 +355,6 @@ export default function WinnersPage() {
                         ))}
                     </div>
 
-                    <div className="winners-footer-note">
-                        <strong>Setting yang dipakai:</strong> <span>election_settings.winners_revealed + winners_animation_duration_ms</span>
-                    </div>
                 </>
             )}
         </section>

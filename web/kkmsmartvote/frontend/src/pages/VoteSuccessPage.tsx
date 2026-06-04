@@ -15,6 +15,8 @@ type VoucherState = {
     gopay_owner_name?: string | null;
     gopay_is_owner_self?: boolean | null;
     gopay_submitted_at?: string | null;
+    url_redeem?: string | null;
+    claim_url?: string | null;
 };
 
 type VoteData = {
@@ -122,6 +124,28 @@ export default function VoteSuccessPage() {
         notify.success('Berhasil', 'Kode voucher disalin!');
     };
 
+    const handleRedeemClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
+        if (isVoucherLocked) return;
+        
+        try {
+            const res = await votingApi.redeemVoucher({ code: voucherCode, member_nik: member.nik });
+            if (res.data.success) {
+                const updated = {
+                    ...(currentVote || vote),
+                    voucher: {
+                        ...(currentVote?.voucher || vote.voucher),
+                        status: 'redeemed'
+                    }
+                } as VoteData;
+                setCurrentVote(updated);
+                voterSession.setLastVote(updated);
+                notify.success('Voucher Diklaim', 'Status voucher otomatis diubah menjadi redeemed.');
+            }
+        } catch (error) {
+            console.error('Redeem error:', error);
+        }
+    };
+
     /**
      * Download voucher as image/PDF (optional)
      */
@@ -223,6 +247,8 @@ export default function VoteSuccessPage() {
     };
 
     const voucherData = (currentVote || vote) as VoteData;
+    const isCodeUrl = voucherCode.startsWith('http');
+    const actualRedeemUrl = voucherData.voucher?.url_redeem || voucherData.voucher?.claim_url || (isCodeUrl ? voucherCode : null);
 
     return (
         <div className="voting-container success-page">
@@ -259,8 +285,23 @@ export default function VoteSuccessPage() {
                         </div>
 
                         <div className="voucher-content">
-                            <p className="voucher-label">Kode Voucher:</p>
-                            <p className="voucher-code">{voucherCode}</p>
+                            <p className="voucher-label">Kode Voucher / Link Redeem:</p>
+                            <p className="voucher-code" style={{ wordBreak: 'break-all' }}>
+                                {actualRedeemUrl ? (
+                                    <a 
+                                        href={actualRedeemUrl} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer" 
+                                        onClick={handleRedeemClick}
+                                        style={{ color: '#0ea5e9', textDecoration: 'underline' }}
+                                        title="Klik untuk membuka URL klaim"
+                                    >
+                                        {isCodeUrl ? 'Buka Link Klaim' : voucherCode}
+                                    </a>
+                                ) : (
+                                    voucherCode
+                                )}
+                            </p>
 
                             <div className="voucher-details">
                                 <div className="detail-row">
@@ -287,12 +328,21 @@ export default function VoteSuccessPage() {
                                 </div>
                             </div>
 
-                            <p className="voucher-note">
-                                📝 Simpan kode ini untuk verifikasi dengan panitia pemilihan
-                            </p>
+                            {actualRedeemUrl ? (
+                                <p className="voucher-note">
+                                    📝 Silakan klik tombol/link Klaim Voucher untuk mendapatkan reward Anda
+                                </p>
+                            ) : (
+                                <p className="voucher-note">
+                                    📝 Simpan kode ini untuk verifikasi dengan panitia pemilihan
+                                </p>
+                            )}
+                            
                             {!isVoucherLocked ? (
                                 <p className="voucher-note voucher-note--highlight">
-                                    ✏️ Data GoPay masih bisa diubah sampai voucher diubah menjadi redeemed oleh admin.
+                                    {actualRedeemUrl 
+                                        ? "✏️ Data GoPay masih bisa diubah sampai Anda mengklaim voucher melalui link di atas."
+                                        : "✏️ Data GoPay masih bisa diubah sampai voucher diubah menjadi redeemed oleh admin."}
                                 </p>
                             ) : (
                                 <p className="voucher-note voucher-note--locked">
@@ -303,12 +353,25 @@ export default function VoteSuccessPage() {
                     </div>
 
                     <div className="voucher-actions">
-                        <button
-                            onClick={copyToClipboard}
-                            className="btn btn-primary success-action-primary"
-                        >
-                            📋 Salin Kode Voucher
-                        </button>
+                        {actualRedeemUrl ? (
+                            <a
+                                href={actualRedeemUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={handleRedeemClick}
+                                className="btn btn-primary success-action-primary"
+                                style={{ display: 'block', textDecoration: 'none', textAlign: 'center' }}
+                            >
+                                🎁 Klaim Voucher Sekarang
+                            </a>
+                        ) : (
+                            <button
+                                onClick={copyToClipboard}
+                                className="btn btn-primary success-action-primary"
+                            >
+                                📋 Salin Kode Voucher
+                            </button>
+                        )}
 
                         <div className="voucher-actions-row">
                             <button

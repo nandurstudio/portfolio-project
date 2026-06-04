@@ -10,6 +10,10 @@ class Voucher extends Model
 
     protected $fillable = [
         'code',
+        'claim_token',
+        'claim_url',
+        'claim_visits',
+        'claim_expires_at',
         'vote_id',
         'member_nik',
         'member_name',
@@ -30,6 +34,8 @@ class Voucher extends Model
     protected $casts = [
         'gopay_is_owner_self' => 'boolean',
         'gopay_submitted_at' => 'datetime',
+        'claim_expires_at' => 'datetime',
+        'claim_visits' => 'integer',
         'claimed_at' => 'datetime',
         'redeemed_at' => 'datetime',
         'created_at' => 'datetime',

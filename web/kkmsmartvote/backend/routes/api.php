@@ -24,12 +24,14 @@ Route::get('/voting/candidates-with-details', [VotingController::class, 'candida
 Route::get('/voting/election-status', [VotingController::class, 'electionStatus']);
 Route::post('/voting/submit', [VotingController::class, 'submitVote']);
 Route::post('/voting/voucher/gopay', [VotingController::class, 'updateVoucherGopay']);
+Route::post('/voting/voucher/redeem', [VotingController::class, 'redeemVoucher']);
 
 // Public data
 Route::get('/candidates', [CandidateController::class, 'publicIndex']);
 Route::get('/election/info', [ElectionSettingController::class, 'publicInfo']);
 Route::get('/election/stats', [ElectionSettingController::class, 'publicStats']);
 Route::get('/results/public', [AdminController::class, 'publicResults']);
+Route::get('/admin/winners', [AdminController::class, 'winners']);
 
 // ── Authenticated routes ───────────────────────────────────────────────────
 Route::middleware('jwt.auth')->group(function () {
@@ -47,7 +49,6 @@ Route::middleware('jwt.auth')->group(function () {
         // Votes
         Route::get('/admin/votes', [AdminController::class, 'votes']);
         Route::get('/admin/results', [AdminController::class, 'results']);
-        Route::get('/admin/winners', [AdminController::class, 'winners']);
 
         // Audit
         Route::get('/admin/audit-log', [AuditLogController::class, 'index']);

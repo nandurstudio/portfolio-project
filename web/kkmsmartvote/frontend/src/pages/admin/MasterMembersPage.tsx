@@ -45,6 +45,11 @@ type PagedResponse<T> = {
     meta?: {
         total_karyawan?: number
         total_eligible?: number
+        total_voted?: number
+        total_gopay?: number
+        total_registered?: number
+        total_otp_verified?: number
+        total_redeemed?: number
     }
 }
 
@@ -125,6 +130,13 @@ export default function MasterMembersPage() {
     const [form, setForm] = useState<MemberFormState>(defaultForm)
     const [totalKaryawan, setTotalKaryawan] = useState(0)
     const [totalEligible, setTotalEligible] = useState(0)
+    const [summary, setSummary] = useState({
+        voted: 0,
+        withGopay: 0,
+        registered: 0,
+        otpVerified: 0,
+        redeemed: 0
+    })
 
     const loadMembers = async (targetPage = page) => {
         setLoading(true)
@@ -150,6 +162,13 @@ export default function MasterMembersPage() {
             setTotal(payload?.total || 0)
             setTotalKaryawan(Number(payload?.meta?.total_karyawan || 0))
             setTotalEligible(Number(payload?.meta?.total_eligible || 0))
+            setSummary({
+                voted: Number(payload?.meta?.total_voted || 0),
+                withGopay: Number(payload?.meta?.total_gopay || 0),
+                registered: Number(payload?.meta?.total_registered || 0),
+                otpVerified: Number(payload?.meta?.total_otp_verified || 0),
+                redeemed: Number(payload?.meta?.total_redeemed || 0)
+            })
         } catch (err: any) {
             notify.error('Load Master Member Gagal', err?.response?.data?.message || 'Tidak bisa memuat data member')
         } finally {
@@ -306,14 +325,7 @@ export default function MasterMembersPage() {
         }
     }
 
-    const summary = useMemo(() => {
-        const voted = rows.filter((r) => r.has_voted).length
-        const withGopay = rows.filter((r) => (r.gopay_number || '').trim() !== '' || r.status?.has_gopay_submitted).length
-        const registered = rows.filter((r) => r.status?.is_registered).length
-        const otpVerified = rows.filter((r) => r.status?.has_otp_verified).length
-        const redeemed = rows.filter((r) => r.status?.has_redeemed).length
-        return { voted, withGopay, registered, otpVerified, redeemed }
-    }, [rows])
+    // Summary comes from backend now (set in loadMembers)
 
     return (
         <section className="admin-simple-card">

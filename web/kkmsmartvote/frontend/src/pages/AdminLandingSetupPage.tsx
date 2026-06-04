@@ -328,6 +328,15 @@ export default function AdminLandingSetupPage() {
                             />
                             <span>Tampilkan activity log (landing)</span>
                         </label>
+                        {form.is_finalized ? (
+                            <button
+                                type="button"
+                                className="setup-btn"
+                                onClick={() => window.open('/', '_blank', 'noopener,noreferrer')}
+                            >
+                                Tampilkan tombol OTP
+                            </button>
+                        ) : null}
                     </div>
                 </section>
 

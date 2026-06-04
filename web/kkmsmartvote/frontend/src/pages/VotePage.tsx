@@ -307,8 +307,10 @@ export default function VotePage() {
                 voterSession.setMember(updatedMember);
                 setLockedVote(voteData);
 
-                // Show success page with voucher
-                navigate('/vote-success', {
+                const claimToken = voteData?.voucher?.claim_token;
+
+                // Show voucher page if claim token exists, otherwise fallback to legacy success page.
+                navigate(claimToken ? `/v/${claimToken}` : '/vote-success', {
                     state: {
                         vote: voteData,
                         member: updatedMember,

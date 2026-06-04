@@ -70,6 +70,11 @@ class MemberController extends Controller
 
         $totalKaryawan = (int) Member::query()->count();
         $totalEligible = (int) Member::query()->where('is_eligible', true)->count();
+        $totalVoted = (int) Member::query()->where('has_voted', true)->count();
+        $totalGopay = (int) Member::whereRaw('EXISTS(SELECT 1 FROM voter_vouchers vv2 JOIN vouchers v3 ON v3.id = vv2.voucher_id WHERE vv2.voter_nik = members.nik AND COALESCE(v3.gopay_number, "") <> "")')->count();
+        $totalRegistered = (int) Member::whereRaw('EXISTS(SELECT 1 FROM users u WHERE u.member_nik = members.nik)')->count();
+        $totalOtpVerified = (int) Member::whereRaw('EXISTS(SELECT 1 FROM email_otps o2 WHERE (o2.member_nik = members.nik OR (members.email IS NOT NULL AND members.email <> "" AND o2.email = members.email)) AND o2.is_used = 1)')->count();
+        $totalRedeemed = (int) Member::whereRaw('EXISTS(SELECT 1 FROM voter_vouchers vv JOIN vouchers v ON v.id = vv.voucher_id WHERE vv.voter_nik = members.nik AND (UPPER(COALESCE(v.status, "")) = "REDEEMED" OR vv.redeemed_at IS NOT NULL OR v.redeemed_at IS NOT NULL))')->count();
 
         $query = Member::query()
             ->leftJoin('departments', 'departments.id', '=', 'members.department_id')
@@ -180,6 +185,11 @@ class MemberController extends Controller
         $payload['meta'] = [
             'total_karyawan' => $totalKaryawan,
             'total_eligible' => $totalEligible,
+            'total_voted' => $totalVoted,
+            'total_gopay' => $totalGopay,
+            'total_registered' => $totalRegistered,
+            'total_otp_verified' => $totalOtpVerified,
+            'total_redeemed' => $totalRedeemed,
         ];
 
         return response()->json($payload);

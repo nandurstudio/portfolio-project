@@ -182,10 +182,10 @@ export default function VotingVerificationPage() {
                 const res = await votingApi.electionStatus();
                 const data = res?.data?.data || res?.data || {};
                 const rawStatus = String(data.status || data.election_status || 'coming_soon').toLowerCase();
-                const isOpen = rawStatus === 'open' || rawStatus === 'vote_progress';
+                const isOpen = rawStatus === 'open' || rawStatus === 'vote_progress' || rawStatus === 'closed';
 
                 if (!isOpen) {
-                    notify.info('Voting Belum Dibuka', 'Akses OTP hanya tersedia saat status OPEN / VOTE PROGRESS.');
+                    notify.info('Voting Belum Dibuka', 'Akses OTP hanya tersedia saat status OPEN / VOTE PROGRESS / CLOSED finalisasi.');
                     navigate('/', { replace: true });
                 }
             } catch {
@@ -258,7 +258,7 @@ export default function VotingVerificationPage() {
 
             if (remaining <= 0) {
                 clearInterval(timer);
-                setStep('details');
+                setStep('otp');
                 setOtp('');
                 voterSession.clearOtpDraft();
                 notify.warning('OTP Expired', 'Silakan kirim OTP baru.');
@@ -281,22 +281,32 @@ export default function VotingVerificationPage() {
             const res = await votingApi.memberLookup(nik.trim());
             if (res.data.success) {
                 const memberData = res.data.data as LookupMember;
+                
+                // Check if member has voted FIRST
+                if (!memberData.has_voted) {
+                    await notify.error(
+                        'Akses Ditolak', 
+                        'Maaf, Anda tidak berpartisipasi dalam pemilihan ini. Halaman verifikasi ini khusus untuk pemilih yang sudah memberikan suaranya.'
+                    );
+                    navigate('/', { replace: true });
+                    return;
+                }
+
                 setMember(memberData);
                 setMaskedEmail(memberData.email_masked || '');
                 setEmail(memberData.email || '');
 
                 const matchedSiteId = findMatchingSiteId(memberData, sites);
                 setSelectedSiteId(matchedSiteId ?? null);
+                
+                // Advance to details step to allow requesting OTP
                 setStep('details');
                 voterSession.setMember(memberData);
                 if (memberData.existing_vote) {
                     voterSession.setLastVote(memberData.existing_vote);
                 }
-                if (memberData.has_voted) {
-                    notify.info('NIK Ditemukan', `Halo ${memberData.name}. Anda sudah vote, lanjut OTP untuk login.`);
-                } else {
-                    notify.success('NIK Ditemukan', `Halo ${memberData.name}!`);
-                }
+                
+                notify.info('NIK Ditemukan', `Halo ${memberData.name}. Anda sudah vote, lanjut konfirmasi email untuk kirim OTP.`);
             }
         } catch (error: unknown) {
             const err = error as any;

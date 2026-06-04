@@ -4,6 +4,7 @@ import VotingVerificationPage from './pages/VotingVerificationPage'
 import MemberLookupPage from './pages/MemberLookupPage'
 import VotePage from './pages/VotePage'
 import VoteSuccessPage from './pages/VoteSuccessPage'
+import VoucherPage from './pages/VoucherPage'
 import AdminLandingSetupPage from './pages/AdminLandingSetupPage'
 import AdminLayout from './components/admin/AdminLayout'
 import RoleGuard from './components/admin/RoleGuard'
@@ -26,6 +27,8 @@ export default function App() {
       <Route path="/member-lookup" element={<MemberLookupPage />} />
       <Route path="/vote" element={<VotePage />} />
       <Route path="/vote-success" element={<VoteSuccessPage />} />
+      <Route path="/v/:token" element={<VoucherPage />} />
+      <Route path="/admin/winners" element={<WinnersPage />} />
 
       {/* Admin routes with role-based menu */}
       <Route path="/admin" element={<AdminLayout />}>
@@ -75,14 +78,6 @@ export default function App() {
           element={
             <RoleGuard allowedRoles={['super_admin', 'admin', 'panitia', 'saksi_forensik']}>
               <VotesMonitorPage />
-            </RoleGuard>
-          }
-        />
-        <Route
-          path="winners"
-          element={
-            <RoleGuard allowedRoles={['super_admin', 'admin']}>
-              <WinnersPage />
             </RoleGuard>
           }
         />

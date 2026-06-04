@@ -6,7 +6,7 @@ import '../styles/pages/voting.css';
 
 type ElectionState = 'coming_soon' | 'open' | 'closed';
 
-type LandingCandidate = {
+export type LandingCandidate = {
     key: number;
     id: number;
     orderNo: number;
@@ -19,6 +19,7 @@ type LandingCandidate = {
     mission: string;
     motto: string;
     photo: string;
+    voteCount: number;
 };
 
 function stripHtml(text: string): string {
@@ -106,6 +107,18 @@ export default function LandingPage() {
     const [countdown, setCountdown] = useState<number>(0);
     const [dbCandidates, setDbCandidates] = useState<LandingCandidate[]>([]);
     const [imageFallback, setImageFallback] = useState<Record<number, boolean>>({});
+    const [isRevealOpen, setIsRevealOpen] = useState<boolean>(false);
+    const [isRevealDone, setIsRevealDone] = useState<boolean>(false);
+
+    useEffect(() => {
+        const handleMessage = (event: MessageEvent) => {
+            if (event.data?.type === 'WINNERS_REVEAL_DONE') {
+                setIsRevealDone(true);
+            }
+        };
+        window.addEventListener('message', handleMessage);
+        return () => window.removeEventListener('message', handleMessage);
+    }, []);
 
     useEffect(() => {
         if (loadedOnceRef.current) return;
@@ -124,11 +137,15 @@ export default function LandingPage() {
 
                 const electionData = electionRes?.data?.data || electionRes?.data || {};
                 const rawStatus = String(electionData.status || electionData.election_status || 'coming_soon').toLowerCase();
-                const currentStatus =
-                    rawStatus === 'open' || rawStatus === 'vote_progress'
-                        ? 'open'
-                        : rawStatus === 'closed'
-                            ? 'closed'
+                const isFinalized = Boolean(electionData.is_finalized);
+                const isActive = Boolean(electionData.is_active);
+                const hasExpired = Boolean(electionData.has_expired);
+                const currentStatus = (isActive && !hasExpired)
+                    ? 'open'
+                    : isFinalized || rawStatus === 'closed'
+                        ? 'closed'
+                        : rawStatus === 'open' || rawStatus === 'vote_progress'
+                            ? 'open'
                             : rawStatus === 'draft'
                                 ? 'coming_soon'
                                 : rawStatus;
@@ -136,14 +153,23 @@ export default function LandingPage() {
                     setStatus(currentStatus);
                 }
 
-                setHeroTitle(electionData.hero_title || 'SUARAKAN ASPIRASIMU!');
+                setHeroTitle(
+                    electionData.election_name ||
+                    electionData.hero_title ||
+                    'SUARAKAN ASPIRASIMU!'
+                );
                 setHeroDescription(
                     electionData.hero_description ||
                     'Mari sukseskan Pemilihan Ketua Koperasi Karya Mandiri periode 2026-2029. Jangan sampai golput, karena arah koperasi kita ditentukan oleh suara seluruh anggota. Kami menunggu partisipasi dan suara terbaik Anda semua.',
                 );
                 setCtaText(electionData.cta_text || 'Lanjut Verifikasi OTP');
 
-                setAgendaTitle(electionData.agenda_title || electionData.title || '');
+                setAgendaTitle(
+                    electionData.agenda_title ||
+                    electionData.election_name ||
+                    electionData.title ||
+                    ''
+                );
                 setAgendaDescription(electionData.agenda_description || '');
                 setAgendaLocation(electionData.agenda_location || '');
 
@@ -227,6 +253,7 @@ export default function LandingPage() {
                             mission: String(candidate.mission || '-'),
                             motto: String(candidate.motto || '-'),
                             photo: String(candidate.full_photo_url || candidate.photo_url || ''),
+                            voteCount: Number(candidate.vote_count || 0),
                         };
                     });
 
@@ -308,7 +335,7 @@ export default function LandingPage() {
 
     const targetDate = useMemo(() => {
         if (status === 'open') return endAt;
-        if (status === 'closed') return announcementAt;
+        if (status === 'closed') return endAt; // Menggunakan Tanggal Selesai (endAt) untuk masa claim voucher
         return startAt;
     }, [status, startAt, endAt, announcementAt]);
 
@@ -339,21 +366,21 @@ export default function LandingPage() {
         status === 'open'
             ? 'Voting Sedang Berlangsung'
             : status === 'closed'
-                ? 'Voting Ditutup'
+                ? 'Masa Claim Voucher Berlangsung'
                 : 'Menuju Pembukaan Voting';
 
     const statusBadge =
         status === 'open'
             ? 'OPEN / VOTE PROGRESS'
             : status === 'closed'
-                ? 'CLOSED'
+                ? 'VOUCHER CLAIM OPEN'
                 : 'COMING SOON';
 
     const countdownLabel =
         status === 'open'
             ? 'Periode voting berakhir dalam'
             : status === 'closed'
-                ? 'Pengumuman dimulai dalam'
+                ? 'Batas waktu claim voucher berakhir dalam'
                 : 'Voting dimulai dalam';
 
     const participationTone =
@@ -365,7 +392,7 @@ export default function LandingPage() {
                     ? 'success'
                     : 'primary';
 
-    const canStartOtp = status === 'open';
+    const canStartOtp = status !== 'coming_soon';
     const dynamicYear = startAt ? new Date(startAt).getFullYear() : new Date().getFullYear();
     const landingCandidates: LandingCandidate[] = dbCandidates;
 
@@ -373,7 +400,7 @@ export default function LandingPage() {
         <div className="voting-container landing-page">
             <header className="voting-header landing-header">
                 <h1>🗳️ KKM Smart Vote {dynamicYear}</h1>
-                <p className={`landing-status-badge status-${status}`}>{statusBadge}</p>
+                    <div className={`landing-status-badge status-${status}`}>{statusBadge}</div>
                 <h2>{statusLabel}</h2>
             </header>
 
@@ -415,8 +442,68 @@ export default function LandingPage() {
                     <div className="landing-agenda">
                         <h4>{agendaTitle}</h4>
                         <p>{agendaDescription}</p>
-                        {agendaLocation ? <p><strong>Lokasi:</strong> {agendaLocation}</p> : null}
-                        {startAt && <p><strong>Mulai:</strong> {new Date(startAt).toLocaleString('id-ID')}</p>}
+                        {status === 'closed' ? (
+                            <div className="landing-local-reveal" style={{ marginTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.5rem' }}>
+                                <button 
+                                    className="btn" 
+                                    style={{ 
+                                        width: '100%', 
+                                        marginBottom: '1rem', 
+                                        padding: '1.2rem',
+                                        fontSize: '1.1rem',
+                                        fontWeight: 800,
+                                        background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                                        color: '#ffffff',
+                                        border: 'none',
+                                        borderRadius: '12px',
+                                        boxShadow: '0 10px 25px rgba(245, 158, 11, 0.4)',
+                                        cursor: 'pointer',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '1px',
+                                        transition: 'all 0.3s ease',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '10px'
+                                    }}
+                                    onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 15px 30px rgba(245, 158, 11, 0.6)'; }}
+                                    onMouseOut={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 10px 25px rgba(245, 158, 11, 0.4)'; }}
+                                    onClick={() => { setIsRevealOpen(true); setIsRevealDone(false); }}
+                                >
+                                    🏆 Lihat Hasil Rekapitulasi Suara 🏆
+                                </button>
+                                
+                                {isRevealOpen && (
+                                    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 99999, background: 'var(--bg, #000)' }}>
+                                        <div style={{ position: 'absolute', bottom: 30, left: '50%', transform: 'translateX(-50%)', zIndex: 100000, display: 'flex', gap: '1rem', width: 'max-content', maxWidth: '90vw', flexWrap: 'nowrap', justifyContent: 'center', opacity: isRevealDone ? 1 : 0, pointerEvents: isRevealDone ? 'auto' : 'none', transition: 'opacity 1s ease' }}>
+                                            <button 
+                                                onClick={() => setIsRevealOpen(false)}
+                                                style={{ background: '#dc2626', color: '#ffffff', border: 'none', padding: '12px 30px', borderRadius: '50px', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 4px 12px rgba(0,0,0,0.5)', fontSize: '1.1rem', flex: '1 1 auto', whiteSpace: 'nowrap' }}
+                                            >
+                                                Tutup Hasil (X)
+                                            </button>
+                                            <button 
+                                                onClick={() => {
+                                                    setIsRevealOpen(false);
+                                                    navigate('/otp');
+                                                }}
+                                                className="btn btn-primary btn-lg landing-otp-button"
+                                                title="Masuk ke verifikasi OTP"
+                                                style={{ padding: '12px 30px', borderRadius: '50px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)', fontSize: '1.1rem', margin: 0, flex: '1 1 auto', whiteSpace: 'nowrap' }}
+                                            >
+                                                Lanjut Verifikasi OTP
+                                            </button>
+                                        </div>
+                                        <iframe src="/admin/winners?simulateReveal=1" style={{ width: '100%', height: '100%', border: 'none', background: 'var(--bg)' }} title="Winner Reveal" />
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <>
+                                {agendaLocation ? <p><strong>Lokasi:</strong> {agendaLocation}</p> : null}
+                                {startAt && <p><strong>Mulai:</strong> {new Date(startAt).toLocaleString('id-ID')}</p>}
+                            </>
+                        )}
                     </div>
 
                     <div className={`landing-reward-box ${rewardEnabled ? 'reward-on' : 'reward-off'}`}>
@@ -482,20 +569,21 @@ export default function LandingPage() {
                         </p>
                     ) : null}
 
-                    {canStartOtp ? (
-                        <div className="landing-cta-group" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
-                            <button
-                                className="btn btn-primary btn-lg landing-otp-button"
-                                onClick={() => navigate('/otp')}
-                            >
-                                {ctaText}
-                            </button>
-                        </div>
-                    ) : (
-                        <p className="landing-hero-candidates-subtitle" style={{ marginTop: '0.85rem' }}>
-                            Verifikasi OTP akan dibuka saat status pemilihan OPEN / VOTE PROGRESS.
-                        </p>
-                    )}
+                    <div className="landing-cta-group" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', flexDirection: 'column', alignItems: 'center' }}>
+                        <button
+                            className="btn btn-primary btn-lg landing-otp-button"
+                            onClick={() => navigate('/otp')}
+                            disabled={!canStartOtp}
+                            title={canStartOtp ? 'Masuk ke verifikasi OTP' : 'Verifikasi OTP belum dibuka.'}
+                        >
+                            {ctaText}
+                        </button>
+                        {!canStartOtp ? (
+                            <p className="landing-hero-candidates-subtitle" style={{ marginTop: '0.35rem' }}>
+                                Verifikasi OTP belum dibuka.
+                            </p>
+                        ) : null}
+                    </div>
 
                 </section>
             </main>
@@ -503,20 +591,11 @@ export default function LandingPage() {
             <footer className="voting-footer landing-footer">
                 <p>
                     <a href="https://nandurstudio.com" target="_blank" rel="noreferrer">©2026 Nandur Studio</a>
-                    {' '}|{' '}
-                    <button
-                        type="button"
+                </p>
+                <p style={{ marginTop: '0.5rem' }}>
+                    <button 
                         onClick={() => navigate('/admin')}
-                        style={{
-                            background: 'none',
-                            border: 'none',
-                            padding: 0,
-                            margin: 0,
-                            color: 'inherit',
-                            textDecoration: 'underline',
-                            cursor: 'pointer',
-                            fontSize: '0.9rem',
-                        }}
+                        style={{ background: 'none', border: 'none', color: 'inherit', textDecoration: 'underline', cursor: 'pointer', fontSize: '0.9rem', opacity: 0.8 }}
                     >
                         Akses Admin
                     </button>

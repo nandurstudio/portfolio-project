@@ -389,7 +389,7 @@ class VotingController extends Controller
      * GET /api/voting/member-lookup/{nik}
      * Check: exists, has_voted, is_eligible
      */
-    public function memberLookup(Request $request, $nik)
+    public function memberLookup(Request $request, string $nik)
     {
         try {
             $member = Member::query()
@@ -620,6 +620,60 @@ class VotingController extends Controller
     }
 
     /**
+     * Helper: Validate voting token manually for anti-hijacking
+     */
+    private function validateVotingToken(Request $request, $expectedNik = null)
+    {
+        $token = $request->bearerToken();
+        if (!$token) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses ditolak: Sesi tidak valid. Harap login OTP ulang.',
+                'error' => 'UNAUTHORIZED_NO_TOKEN'
+            ], 401);
+        }
+
+        try {
+            $payload = JWTAuth::getJWTProvider()->decode($token);
+            if (!isset($payload['otp_verified']) || $payload['otp_verified'] !== true || !isset($payload['type']) || $payload['type'] !== 'voting') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Token otorisasi tidak valid untuk akses ini.',
+                    'error' => 'UNAUTHORIZED_INVALID_TOKEN_TYPE'
+                ], 401);
+            }
+
+            if ($expectedNik) {
+                if (isset($payload['sub']) && str_starts_with($payload['sub'], 'voter:')) {
+                    $otpId = (int) substr($payload['sub'], 6);
+                    $otpRecord = \App\Models\EmailOtp::find($otpId);
+                    if (!$otpRecord || $otpRecord->member_nik !== $expectedNik) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Otorisasi gagal: NIK tidak sesuai dengan sesi OTP Anda.',
+                            'error' => 'UNAUTHORIZED_NIK_MISMATCH'
+                        ], 403);
+                    }
+                } else {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Token otorisasi rusak.',
+                        'error' => 'UNAUTHORIZED_INVALID_SUBJECT'
+                    ], 401);
+                }
+            }
+
+            return null; // OK
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Sesi telah kedaluwarsa. Harap login kembali.',
+                'error' => 'UNAUTHORIZED_EXPIRED_TOKEN'
+            ], 401);
+        }
+    }
+
+    /**
      * Submit Vote (Final Layer - Triple Check)
      * POST /api/voting/submit
      */
@@ -630,6 +684,12 @@ class VotingController extends Controller
             'candidate_id' => 'required|integer|exists:candidates,id',
             'site_id' => 'nullable|integer'
         ]);
+
+        // Anti-hijacking validation
+        $authError = $this->validateVotingToken($request, $request->member_nik);
+        if ($authError) {
+            return $authError;
+        }
 
         DB::beginTransaction();
         try {
@@ -760,11 +820,14 @@ class VotingController extends Controller
                     'voted_at' => $vote->created_at,
                     'voucher' => [
                         'code' => $voucher['code'],
+                        'claim_token' => $voucher['claim_token'] ?? null,
+                        'claim_url' => $voucher['claim_url'] ?? null,
                         'vote_id' => $vote->id,
                         'member_nik' => $member->nik,
                         'candidate_name' => $voucher['candidate_name'] ?? $candidate->name,
                         'created_at' => $voucher['created_at'],
-                        'status' => $voucher['status'] ?? 'available'
+                        'status' => $voucher['status'] ?? 'available',
+                        'url_redeem' => $voucher['claim_url'] ?? null
                     ]
                 ]
             ]);
@@ -796,6 +859,12 @@ class VotingController extends Controller
             'gopay_is_owner_self' => 'required|boolean',
             'gopay_owner_name' => 'nullable|string|max:255',
         ]);
+
+        // Anti-hijacking validation
+        $authError = $this->validateVotingToken($request, $request->member_nik);
+        if ($authError) {
+            return $authError;
+        }
 
         try {
             $voucher = $this->findVoucherForGopay(
@@ -898,6 +967,69 @@ class VotingController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat menyimpan data GoPay',
+                'error' => 'INTERNAL_ERROR',
+            ], 500);
+        }
+    }
+
+    /**
+     * Mark a voucher as redeemed when clicked.
+     * POST /api/voting/voucher/redeem
+     */
+    public function redeemVoucher(Request $request)
+    {
+        $request->validate([
+            'code' => 'nullable|string',
+            'member_nik' => 'required|string|max:20'
+        ]);
+
+        // Anti-hijacking validation
+        $authError = $this->validateVotingToken($request, $request->member_nik);
+        if ($authError) {
+            return $authError;
+        }
+
+        try {
+            $voucher = $this->findVoucherForGopay(
+                (string) $request->code,
+                (string) $request->member_nik
+            );
+
+            if (!$voucher) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Voucher tidak ditemukan',
+                    'error' => 'VOUCHER_NOT_FOUND',
+                ], 404);
+            }
+
+            $updatePayload = ['status' => 'redeemed'];
+
+            if (Schema::hasColumn('vouchers', 'claimed_at') && !$voucher->claimed_at) {
+                $updatePayload['claimed_at'] = now();
+            }
+
+            $voucher->update($updatePayload);
+
+            AuditLog::record($voucher->member_name ?? 'Guest', 'Voucher Di-redeem', [
+                'member_nik' => $voucher->member_nik,
+                'code' => $voucher->code ?? $voucher->voucher_code,
+                'status' => 'redeemed',
+            ], $request->ip());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Voucher berhasil di-redeem',
+                'data' => [
+                    'code' => $voucher->code ?? $voucher->voucher_code,
+                    'status' => 'redeemed'
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Redeem voucher failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat redeem voucher',
                 'error' => 'INTERNAL_ERROR',
             ], 500);
         }
@@ -1021,11 +1153,20 @@ class VotingController extends Controller
         $createdAt = now();
 
         $voucherId = null;
+        $claimToken = null;
+        $claimUrl = null;
 
         try {
             // Try modern schema first: vouchers with vote_id/member_nik/... columns
+            $claimToken = Schema::hasColumn('vouchers', 'claim_token') ? bin2hex(random_bytes(24)) : null;
+            $claimUrl = Schema::hasColumn('vouchers', 'claim_url') && $claimToken
+                ? rtrim((string) config('app.url'), '/') . '/v/' . $claimToken
+                : null;
+
             $voucher = Voucher::create([
                 'code' => $code,
+                'claim_token' => $claimToken,
+                'claim_url' => $claimUrl,
                 'vote_id' => $vote->id,
                 'member_nik' => $member->nik,
                 'member_name' => $member->name,
@@ -1053,6 +1194,12 @@ class VotingController extends Controller
             if (!empty($createdBy)) {
                 $insertPayload = [
                     'code' => $code,
+                    'claim_token' => $claimToken = (Schema::hasColumn('vouchers', 'claim_token') ? bin2hex(random_bytes(24)) : null),
+                    'claim_url' => Schema::hasColumn('vouchers', 'claim_url') && $claimToken
+                        ? rtrim((string) config('app.url'), '/') . '/v/' . $claimToken
+                        : null,
+                    'claim_visits' => 0,
+                    'claim_expires_at' => now()->addMonths(6),
                     'value' => 25000,
                     'status' => 'active',
                     'expires_at' => now()->addMonths(6),
@@ -1086,6 +1233,8 @@ class VotingController extends Controller
         return [
             'id' => $voucherId,
             'code' => $code,
+            'claim_token' => $voucher->claim_token ?? ($claimToken ?? null),
+            'claim_url' => $voucher->claim_url ?? (($claimToken ?? null) ? rtrim((string) config('app.url'), '/') . '/v/' . $claimToken : null),
             'candidate_name' => $candidateName,
             'created_at' => $createdAt,
             'status' => 'available',
@@ -1108,6 +1257,7 @@ class VotingController extends Controller
             return null;
         }
 
+        $urlRedeem = null;
         $voucherCode = null;
         $voucherStatus = 'available';
         $voucherCreatedAt = null;
@@ -1140,6 +1290,7 @@ class VotingController extends Controller
                     ? (bool) $voucherRow->gopay_is_owner_self
                     : $gopayIsOwnerSelf;
                 $gopaySubmittedAt = $voucherRow->gopay_submitted_at ?? null;
+                $urlRedeem = $voucherRow->url_redeem ?? $voucherRow->claim_url ?? null;
             }
 
             if (!$voucherRow && Schema::hasTable('voter_vouchers')) {
@@ -1162,6 +1313,7 @@ class VotingController extends Controller
                         ? (bool) $legacyVoucherRow->gopay_is_owner_self
                         : $gopayIsOwnerSelf;
                     $gopaySubmittedAt = $legacyVoucherRow->gopay_submitted_at ?? null;
+                    $urlRedeem = $legacyVoucherRow->url_redeem ?? $legacyVoucherRow->claim_url ?? null;
                 }
             }
         }
@@ -1187,6 +1339,7 @@ class VotingController extends Controller
                 'gopay_owner_name' => $gopayOwnerName,
                 'gopay_is_owner_self' => $gopayIsOwnerSelf,
                 'gopay_submitted_at' => $gopaySubmittedAt,
+                'url_redeem' => $urlRedeem ?? null,
             ],
         ];
     }

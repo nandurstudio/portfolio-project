@@ -157,11 +157,27 @@ class AdminController extends Controller
     public function winners(): JsonResponse
     {
         $setting = ElectionSetting::current();
+        $isRevealed = (bool) ($setting?->winners_revealed ?? false);
+        $isAuthenticated = auth('api')->check();
+        
+        $payload = $this->buildResultsPayload();
+        
+        if (!$isAuthenticated && !$isRevealed) {
+            $payload['total_valid'] = 0;
+            $payload['results'] = collect($payload['results'])->map(function($r) {
+                $r['vote_count'] = 0;
+                $r['percentage'] = 0;
+                $r['is_winner'] = false;
+                return $r;
+            });
+            $payload['status'] = 'NO_MAJORITY';
+            $payload['winner'] = null;
+        }
 
         return response()->json([
-            ...$this->buildResultsPayload(),
+            ...$payload,
             'election' => $setting,
-            'winners_revealed' => (bool) ($setting?->winners_revealed ?? false),
+            'winners_revealed' => $isRevealed,
         ]);
     }
 

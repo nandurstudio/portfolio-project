@@ -141,6 +141,10 @@ export const votingApi = {
     gopay_is_owner_self: boolean;
     gopay_owner_name?: string;
   }) => api.post("/voting/voucher/gopay", payload),
+
+  // Redeem voucher when clicked
+  redeemVoucher: (payload: { code: string; member_nik: string }) =>
+    api.post("/voting/voucher/redeem", payload),
 };
 
 // ── STATISTICS API ────────────────────────────────────────────────────────
