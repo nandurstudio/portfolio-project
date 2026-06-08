@@ -1033,7 +1033,10 @@ class VotingController extends Controller
                 ], 404);
             }
 
-            $updatePayload = ['status' => 'redeemed'];
+            $updatePayload = [
+                'status' => 'redeemed',
+                'redeemed_at' => now(),
+            ];
 
             if (Schema::hasColumn('vouchers', 'claimed_at') && !$voucher->claimed_at) {
                 $updatePayload['claimed_at'] = now();

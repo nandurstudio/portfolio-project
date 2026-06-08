@@ -8,6 +8,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ElectionSettingController;
+use App\Http\Controllers\VoucherClaimController;
 use Illuminate\Support\Facades\Route;
 
 // ── Public routes ──────────────────────────────────────────────────────────
@@ -25,6 +26,7 @@ Route::get('/voting/election-status', [VotingController::class, 'electionStatus'
 Route::post('/voting/submit', [VotingController::class, 'submitVote']);
 Route::post('/voting/voucher/gopay', [VotingController::class, 'updateVoucherGopay']);
 Route::post('/voting/voucher/redeem', [VotingController::class, 'redeemVoucher']);
+Route::get('/v/{token}', [VoucherClaimController::class, 'visit']);
 
 // Public data
 Route::get('/candidates', [CandidateController::class, 'publicIndex']);

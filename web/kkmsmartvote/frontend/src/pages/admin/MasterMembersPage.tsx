@@ -297,6 +297,9 @@ export default function MasterMembersPage() {
             if (search) params.search = search
             if (filters.has_voted) params.has_voted = filters.has_voted === '1' ? 'true' : 'false'
             if (filters.is_eligible) params.is_eligible = filters.is_eligible === '1' ? 'true' : 'false'
+            if (filters.has_redeemed) params.has_redeemed = filters.has_redeemed === '1' ? 'true' : 'false'
+            if (filters.is_registered) params.is_registered = filters.is_registered === '1' ? 'true' : 'false'
+            if (filters.has_gopay) params.has_gopay = filters.has_gopay === '1' ? 'true' : 'false'
 
             const res = await api.get('/admin/master-members/export', {
                 params,

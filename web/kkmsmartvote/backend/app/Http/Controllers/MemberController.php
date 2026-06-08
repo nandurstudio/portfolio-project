@@ -74,7 +74,7 @@ class MemberController extends Controller
         $totalGopay = (int) Member::whereRaw('EXISTS(SELECT 1 FROM voter_vouchers vv2 JOIN vouchers v3 ON v3.id = vv2.voucher_id WHERE vv2.voter_nik = members.nik AND COALESCE(v3.gopay_number, "") <> "")')->count();
         $totalRegistered = (int) Member::whereRaw('EXISTS(SELECT 1 FROM users u WHERE u.member_nik = members.nik)')->count();
         $totalOtpVerified = (int) Member::whereRaw('EXISTS(SELECT 1 FROM email_otps o2 WHERE (o2.member_nik = members.nik OR (members.email IS NOT NULL AND members.email <> "" AND o2.email = members.email)) AND o2.is_used = 1)')->count();
-        $totalRedeemed = (int) Member::whereRaw('EXISTS(SELECT 1 FROM voter_vouchers vv JOIN vouchers v ON v.id = vv.voucher_id WHERE vv.voter_nik = members.nik AND (UPPER(COALESCE(v.status, "")) = "REDEEMED" OR vv.redeemed_at IS NOT NULL OR v.redeemed_at IS NOT NULL))')->count();
+        $totalRedeemed = (int) Member::whereRaw('EXISTS(SELECT 1 FROM vouchers v LEFT JOIN voter_vouchers vv ON vv.voucher_id = v.id AND vv.voter_nik = members.nik WHERE (vv.voter_nik = members.nik OR v.member_nik = members.nik) AND (v.status = "redeemed" OR vv.redeemed_at IS NOT NULL OR v.redeemed_at IS NOT NULL))')->count();
 
         $query = Member::query()
             ->leftJoin('departments', 'departments.id', '=', 'members.department_id')
@@ -94,12 +94,12 @@ class MemberController extends Controller
             ->selectRaw('EXISTS(SELECT 1 FROM users u WHERE u.member_nik = members.nik) as is_registered')
             ->selectRaw('EXISTS(SELECT 1 FROM email_otps o WHERE (o.member_nik = members.nik OR (members.email IS NOT NULL AND members.email <> "" AND o.email = members.email))) as has_otp_requested')
             ->selectRaw('EXISTS(SELECT 1 FROM email_otps o2 WHERE (o2.member_nik = members.nik OR (members.email IS NOT NULL AND members.email <> "" AND o2.email = members.email)) AND o2.is_used = 1) as has_otp_verified')
-            ->selectRaw('EXISTS(SELECT 1 FROM voter_vouchers vv JOIN vouchers v ON v.id = vv.voucher_id WHERE vv.voter_nik = members.nik AND (UPPER(COALESCE(v.status, "")) = "REDEEMED" OR vv.redeemed_at IS NOT NULL OR v.redeemed_at IS NOT NULL)) as has_redeemed')
+            ->selectRaw('EXISTS(SELECT 1 FROM vouchers v LEFT JOIN voter_vouchers vv ON vv.voucher_id = v.id AND vv.voter_nik = members.nik WHERE (vv.voter_nik = members.nik OR v.member_nik = members.nik) AND (v.status = "redeemed" OR vv.redeemed_at IS NOT NULL OR v.redeemed_at IS NOT NULL)) as has_redeemed')
             ->selectRaw('EXISTS(SELECT 1 FROM voter_vouchers vv2 JOIN vouchers v3 ON v3.id = vv2.voucher_id WHERE vv2.voter_nik = members.nik AND COALESCE(v3.gopay_number, "") <> "") as has_gopay_submitted')
             ->selectRaw('EXISTS(SELECT 1 FROM audit_logs al WHERE (JSON_UNQUOTE(JSON_EXTRACT(al.detail, "$.member_nik")) = members.nik OR al.actor = members.name) AND LOWER(al.action) like "%login%") as has_login_activity')
             ->selectRaw('(SELECT MAX(o3.created_at) FROM email_otps o3 WHERE (o3.member_nik = members.nik OR (members.email IS NOT NULL AND members.email <> "" AND o3.email = members.email))) as last_otp_requested_at')
             ->selectRaw('(SELECT MAX(o4.updated_at) FROM email_otps o4 WHERE (o4.member_nik = members.nik OR (members.email IS NOT NULL AND members.email <> "" AND o4.email = members.email)) AND o4.is_used = 1) as last_otp_verified_at')
-            ->selectRaw('(SELECT MAX(COALESCE(v2.redeemed_at, vv3.redeemed_at)) FROM voter_vouchers vv3 JOIN vouchers v2 ON v2.id = vv3.voucher_id WHERE vv3.voter_nik = members.nik) as last_redeemed_at')
+            ->selectRaw('(SELECT MAX(COALESCE(v.redeemed_at, vv.redeemed_at)) FROM vouchers v LEFT JOIN voter_vouchers vv ON vv.voucher_id = v.id AND vv.voter_nik = members.nik WHERE (vv.voter_nik = members.nik OR v.member_nik = members.nik)) as last_redeemed_at')
             ->selectRaw('(SELECT v.code FROM voter_vouchers vv4 JOIN vouchers v ON v.id = vv4.voucher_id WHERE vv4.voter_nik = members.nik ORDER BY vv4.id DESC LIMIT 1) as voucher_code')
             ->selectRaw('(SELECT COUNT(*) FROM votes vv WHERE vv.member_nik = members.nik AND vv.is_valid = 1) as total_valid_votes')
             ->selectRaw('(SELECT s.name FROM votes vsite LEFT JOIN sites s ON s.id = vsite.site_id WHERE vsite.member_nik = members.nik AND vsite.site_id IS NOT NULL ORDER BY vsite.id DESC LIMIT 1) as voted_site_name')
@@ -208,9 +208,28 @@ class MemberController extends Controller
                 'departments.name as department_master_name',
                 'members.is_eligible',
                 'members.has_voted',
+                'members.gopay_number',
+                'members.is_gopay_owner_self',
+                'members.gopay_owner_number',
+                'members.updated_at',
             ])
+            ->selectRaw('EXISTS(SELECT 1 FROM users u WHERE u.member_nik = members.nik) as is_registered')
+            ->selectRaw('EXISTS(SELECT 1 FROM email_otps o WHERE (o.member_nik = members.nik OR (members.email IS NOT NULL AND members.email <> "" AND o.email = members.email))) as has_otp_requested')
+            ->selectRaw('EXISTS(SELECT 1 FROM email_otps o2 WHERE (o2.member_nik = members.nik OR (members.email IS NOT NULL AND members.email <> "" AND o2.email = members.email)) AND o2.is_used = 1) as has_otp_verified')
+            ->selectRaw('EXISTS(SELECT 1 FROM vouchers v LEFT JOIN voter_vouchers vv ON vv.voucher_id = v.id AND vv.voter_nik = members.nik WHERE (vv.voter_nik = members.nik OR v.member_nik = members.nik) AND (v.status = "redeemed" OR vv.redeemed_at IS NOT NULL OR v.redeemed_at IS NOT NULL)) as has_redeemed')
+            ->selectRaw('EXISTS(SELECT 1 FROM voter_vouchers vv2 JOIN vouchers v3 ON v3.id = vv2.voucher_id WHERE vv2.voter_nik = members.nik AND COALESCE(v3.gopay_number, "") <> "") as has_gopay_submitted')
+            ->selectRaw('EXISTS(SELECT 1 FROM audit_logs al WHERE (JSON_UNQUOTE(JSON_EXTRACT(al.detail, "$.member_nik")) = members.nik OR al.actor = members.name) AND LOWER(al.action) like "%login%") as has_login_activity')
+            ->selectRaw('(SELECT MAX(o3.created_at) FROM email_otps o3 WHERE (o3.member_nik = members.nik OR (members.email IS NOT NULL AND members.email <> "" AND o3.email = members.email))) as last_otp_requested_at')
+            ->selectRaw('(SELECT MAX(o4.updated_at) FROM email_otps o4 WHERE (o4.member_nik = members.nik OR (members.email IS NOT NULL AND members.email <> "" AND o4.email = members.email)) AND o4.is_used = 1) as last_otp_verified_at')
+            ->selectRaw('(SELECT MAX(COALESCE(v.redeemed_at, vv.redeemed_at)) FROM vouchers v LEFT JOIN voter_vouchers vv ON vv.voucher_id = v.id AND vv.voter_nik = members.nik WHERE (vv.voter_nik = members.nik OR v.member_nik = members.nik)) as last_redeemed_at')
+            ->selectRaw('(SELECT v.code FROM voter_vouchers vv4 JOIN vouchers v ON v.id = vv4.voucher_id WHERE vv4.voter_nik = members.nik ORDER BY vv4.id DESC LIMIT 1) as voucher_code')
+            ->selectRaw('(SELECT vr.url_redeem FROM voter_vouchers vv5 JOIN vouchers vr ON vr.id = vv5.voucher_id WHERE vv5.voter_nik = members.nik ORDER BY vv5.id DESC LIMIT 1) as url_redeem')
             ->selectRaw('(SELECT COUNT(*) FROM votes vv WHERE vv.member_nik = members.nik AND vv.is_valid = 1) as total_valid_votes')
-            ->selectRaw('(SELECT MAX(vv2.created_at) FROM votes vv2 WHERE vv2.member_nik = members.nik AND vv2.is_valid = 1) as last_valid_vote_at');
+            ->selectRaw('(SELECT MAX(vv2.created_at) FROM votes vv2 WHERE vv2.member_nik = members.nik AND vv2.is_valid = 1) as last_valid_vote_at')
+            ->selectRaw('(SELECT s.name FROM votes vsite LEFT JOIN sites s ON s.id = vsite.site_id WHERE vsite.member_nik = members.nik AND vsite.site_id IS NOT NULL ORDER BY vsite.id DESC LIMIT 1) as voted_site_name')
+            ->selectRaw('(SELECT vgp.gopay_number FROM voter_vouchers vvx JOIN vouchers vgp ON vgp.id = vvx.voucher_id WHERE vvx.voter_nik = members.nik ORDER BY vvx.id DESC LIMIT 1) as voucher_gopay_number')
+            ->selectRaw('(SELECT vgo.gopay_is_owner_self FROM voter_vouchers vvy JOIN vouchers vgo ON vgo.id = vvy.voucher_id WHERE vvy.voter_nik = members.nik ORDER BY vvy.id DESC LIMIT 1) as voucher_gopay_is_owner_self')
+            ->selectRaw('(SELECT vgn.gopay_owner_name FROM voter_vouchers vvz JOIN vouchers vgn ON vgn.id = vvz.voucher_id WHERE vvz.voter_nik = members.nik ORDER BY vvz.id DESC LIMIT 1) as voucher_gopay_owner_name');
 
         if ($request->filled('search')) {
             $keyword = trim((string) $request->search);
@@ -231,9 +250,24 @@ class MemberController extends Controller
             $query->where('members.has_voted', filter_var($request->has_voted, FILTER_VALIDATE_BOOLEAN));
         }
 
+        if ($request->filled('is_registered')) {
+            $isRegistered = filter_var($request->is_registered, FILTER_VALIDATE_BOOLEAN);
+            $query->whereRaw('EXISTS(SELECT 1 FROM users u WHERE u.member_nik = members.nik) = ?', [$isRegistered ? 1 : 0]);
+        }
+
+        if ($request->filled('has_redeemed')) {
+            $hasRedeemed = filter_var($request->has_redeemed, FILTER_VALIDATE_BOOLEAN);
+            $query->whereRaw('EXISTS(SELECT 1 FROM voter_vouchers vv JOIN vouchers v ON v.id = vv.voucher_id WHERE vv.voter_nik = members.nik AND (UPPER(COALESCE(v.status, "")) = "REDEEMED" OR vv.redeemed_at IS NOT NULL OR v.redeemed_at IS NOT NULL)) = ?', [$hasRedeemed ? 1 : 0]);
+        }
+
+        if ($request->filled('has_gopay')) {
+            $hasGopay = filter_var($request->has_gopay, FILTER_VALIDATE_BOOLEAN);
+            $query->whereRaw('EXISTS(SELECT 1 FROM voter_vouchers vv2 JOIN vouchers v3 ON v3.id = vv2.voucher_id WHERE vv2.voter_nik = members.nik AND COALESCE(v3.gopay_number, "") <> "") = ?', [$hasGopay ? 1 : 0]);
+        }
+
         $query->orderBy('members.name');
 
-        $fileName = 'master-members-komparasi-vote-' . now()->format('Ymd-His') . '.csv';
+        $fileName = 'master-members-lengkap-' . now()->format('Ymd-His') . '.csv';
 
         return response()->streamDownload(function () use ($query) {
             $out = fopen('php://output', 'w');
@@ -241,21 +275,35 @@ class MemberController extends Controller
                 return;
             }
 
-            // UTF-8 BOM so Excel opens UTF-8 text correctly.
             fwrite($out, "\xEF\xBB\xBF");
 
             fputcsv($out, [
                 'NIK',
                 'Nama',
                 'Email',
+                'Updated At',
                 'Site',
                 'Department',
+                'GoPay Number',
+                'GoPay Self Owner',
+                'GoPay Owner Number',
+                'Voucher Code',
+                'Redeem Link',
                 'Eligible',
-                'Flag Has Voted (members.has_voted)',
-                'Total Valid Vote (table votes)',
+                'Has Voted (Flag)',
+                'Total Valid Votes',
                 'Komparasi Status Vote',
                 'Konsistensi Flag vs Vote',
                 'Last Valid Vote At',
+                'Registered',
+                'OTP Requested',
+                'OTP Verified',
+                'Login Activity',
+                'Redeemed',
+                'Has GoPay Submitted',
+                'Last OTP Requested At',
+                'Last OTP Verified At',
+                'Last Redeemed At',
             ]);
 
             $query->chunk(500, function ($rows) use ($out) {
@@ -266,18 +314,39 @@ class MemberController extends Controller
                     $comparisonStatus = $realHasVoted ? 'SUDAH_VOTE' : 'BELUM_VOTE';
                     $consistency = ($flagHasVoted === $realHasVoted) ? 'MATCH' : 'MISMATCH';
 
+                    $gopayNumber = (string) ($row->voucher_gopay_number ?: $row->gopay_number ?: '');
+                    $isGopayOwnerSelf = $row->voucher_gopay_is_owner_self !== null ? (bool) $row->voucher_gopay_is_owner_self : (($row->is_gopay_owner_self !== null) ? (bool) $row->is_gopay_owner_self : true);
+                    $gopayOwnerNumber = (string) ($row->voucher_gopay_owner_name ?: $row->gopay_owner_number ?: '');
+                    $voucherCode = (string) ($row->voucher_code ?? '');
+                    $redeemLink = (string) ($row->url_redeem ?? '');
+
                     fputcsv($out, [
                         (string) $row->nik,
                         (string) $row->name,
                         (string) ($row->email ?? ''),
-                        (string) ($row->site ?? ''),
+                        (string) ($row->updated_at ?? ''),
+                        (string) ($row->voted_site_name ?: $row->site ?: ''),
                         (string) ($row->department_master_name ?: $row->department ?: ''),
+                        $gopayNumber,
+                        $isGopayOwnerSelf ? 'YA' : 'TIDAK',
+                        $gopayOwnerNumber,
+                        $voucherCode,
+                        $redeemLink,
                         $row->is_eligible ? 'YA' : 'TIDAK',
                         $flagHasVoted ? 'YA' : 'TIDAK',
                         $totalValidVotes,
                         $comparisonStatus,
                         $consistency,
                         (string) ($row->last_valid_vote_at ?? ''),
+                        (bool) $row->is_registered ? 'YA' : 'TIDAK',
+                        (bool) $row->has_otp_requested ? 'YA' : 'TIDAK',
+                        (bool) $row->has_otp_verified ? 'YA' : 'TIDAK',
+                        (bool) $row->has_login_activity ? 'YA' : 'TIDAK',
+                        (bool) $row->has_redeemed ? 'YA' : 'TIDAK',
+                        ((bool) $row->has_gopay_submitted || !empty($gopayNumber)) ? 'YA' : 'TIDAK',
+                        (string) ($row->last_otp_requested_at ?? ''),
+                        (string) ($row->last_otp_verified_at ?? ''),
+                        (string) ($row->last_redeemed_at ?? ''),
                     ]);
                 }
             });
