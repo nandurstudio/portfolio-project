@@ -500,17 +500,22 @@ class MemberController extends Controller
 
             if ($redeemedTarget) {
                 if (strtoupper((string) $voucher->status) !== 'REDEEMED') {
-                    $voucher->update([
-                        'status' => 'REDEEMED',
+                    $update = [
+                        'status' => 'redeemed',
                         'redeemed_at' => now(),
-                        'redeemed_by' => auth('api')->id(),
-                    ]);
+                        'redeemed_by' => auth('api')->user()->name,
+                    ];
+                    if (!$voucher->claimed_at) {
+                        $update['claimed_at'] = now();
+                    }
+                    $voucher->update($update);
                 }
             } else {
                 if (strtoupper((string) $voucher->status) === 'REDEEMED') {
                     $voucher->update([
-                        'status' => 'CLAIMED',
+                        'status' => 'active',
                         'redeemed_at' => null,
+                        'claimed_at' => null,
                         'redeemed_by' => null,
                     ]);
                 }
