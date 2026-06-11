@@ -309,7 +309,7 @@ class KoperasiController extends Controller
         return response()->json(['message' => 'Anggota berhasil dibuat', 'data' => $member]);
     }
 
-    public function updateMember(Request $request, $id)
+    public function updateMember(Request $request, int $id)
     {
         $member = User::findOrFail($id);
         
@@ -338,7 +338,7 @@ class KoperasiController extends Controller
         return response()->json($savings);
     }
 
-    public function verifySaving(Request $request, $id)
+    public function verifySaving(Request $request, int $id)
     {
         $request->validate([
             'status' => 'required|string|in:approved,rejected'
@@ -358,7 +358,7 @@ class KoperasiController extends Controller
         return response()->json($loans);
     }
 
-    public function verifyLoan(Request $request, $id)
+    public function verifyLoan(Request $request, int $id)
     {
         $request->validate([
             'status' => 'required|string|in:approved,rejected'
@@ -378,7 +378,7 @@ class KoperasiController extends Controller
         return response()->json($installments);
     }
 
-    public function verifyInstallment(Request $request, $id)
+    public function verifyInstallment(Request $request, int $id)
     {
         $request->validate([
             'status' => 'required|string|in:approved,rejected'
