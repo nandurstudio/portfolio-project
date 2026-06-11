@@ -822,8 +822,9 @@ location /n8n/ {
 
 ### Branching
 
-- **Production**: `prod` branch (main development branch)
-- **Deployment**: Push to `prod` → SSH to server → `git pull` → restart services
+- **Development**: `dev` branch (main active development and integration branch).
+- **Production**: `prod` branch (stable branch for server deployment).
+- **Deployment**: Push to `dev` → SSH to server → `git pull origin dev` → restart services.
 
 ### Working with `undangan/` (separate repo)
 
@@ -1300,6 +1301,21 @@ curl -I https://nandurstudio.com/
 - **Monitoring**: Prometheus + Grafana for metrics and alerting
 - **CI/CD**: GitHub Actions for automated testing and deployment
 - **AI Chatbot**: Ollama + LangChain RAG system with n8n orchestration for PDF-based Q&A
+
+## 🧠 Di mana Memori & Learning AI (Neng Stella) Tersimpan?
+
+Sebagai AI Assistant (Antigravity/Neng Stella), seluruh memori, skill, preferensi, dan pembelajaran Neng Stella disimpan secara lokal di PC Aa Ndur pada folder-folder berikut:
+
+1. **Knowledge Items (KIs) (Persisten Lintas Sesi)**:
+   - Terletak di: `C:\Users\Nandang.Duryat\.gemini\antigravity-ide\knowledge\`
+   - *preferences.md* menyimpan preferensi panggil nama Aa, **Mode Stella Manja**, serta aturan privasi.
+   - *koperasidesa-db-lessons-learned* menyimpan best practice database migration & safety net.
+2. **Conversation Artifacts (Persisten per Percakapan)**:
+   - Terletak di: `C:\Users\Nandang.Duryat\.gemini\antigravity-ide\brain\<conversation-id>\artifacts\`
+   - Menyimpan *implementation_plan.md*, *task.md*, dan *walkthrough.md* yang melacak progress pengerjaan tugas secara terstruktur.
+3. **Conversation Logs (Kronologis Lengkap)**:
+   - Terletak di: `C:\Users\Nandang.Duryat\.gemini\antigravity-ide\brain\<conversation-id>\.system_generated\logs\transcript.jsonl`
+   - Menyimpan detail mentah perintah terminal, modifikasi file, dan histori chat secara menyeluruh.
 
 ## Documentation References
 

@@ -12,7 +12,8 @@ web/
 │   ├── js/
 │   ├── bootstrap/
 │   └── image/
-└── image/         # Portfolio images (optional, can be in assets)
+├── kkmsmartvote/  # Smart Voting system (React frontend + Laravel backend)
+└── koperasidesa/  # Koperasi Desa management system (React frontend + Laravel backend)
 ```
 
 ## Nginx Serving

@@ -88,22 +88,21 @@ folioflix/
 ## 🔧 Development Workflow
 
 ### Branches
-- **prod** - Production branch (main development branch)
-- All work happens on `prod` branch
+- **dev** - Development branch (main active integration branch)
+- **prod** - Production branch (linked to live deployment on server)
 
 ### New / important scripts
-- `scripts/deploy-undangan.sh` / `scripts/deploy-undangan.ps1` — deploy `undangan/` → `/opt/stack/web/kkmrat` (supports `--create-db`, `--import-sql`).
-- `scripts/create-undangan-db.sh` — idempotent DB + user creation for `kkmrat`.
-- `scripts/monitor-cert-undangan.ps1` — monitor DNS and request Let's Encrypt for `kkmrat.web.id`.
-<<<<<<< HEAD
-=======
-- `scripts/monitor-services.sh` — periodic health checks for core services (runs via cron; writes to `/opt/stack/logs/monitor-services.log`).
->>>>>>> chore/docs-kkmrat-migration
-- `scripts/cleanup-undangan.sh` — remove temp artifacts (dry‑run by default).
-- `backups/` — encrypted local backups (gitignored).
+- `scripts/undangan/deploy-undangan.sh` / `deploy-undangan.ps1` — deploy `undangan/` → `/opt/stack/web/kkmrat`.
+- `scripts/undangan/create-undangan-db.sh` — idempotent DB + user creation for `kkmrat`.
+- `scripts/undangan/monitor-cert-undangan.ps1` — monitor DNS and request Let's Encrypt for `kkmrat.web.id`.
+- `scripts/portfolio/monitor-services.sh` — periodic health checks for core services (runs via cron; writes to `/opt/stack/logs/monitor-services.log`).
+- `scripts/undangan/cleanup-undangan.sh` — remove temp artifacts.
+- `backups/` — local backups directory (now fully gitignored).
+- `web/kkmsmartvote/` — Smart Voting system (React + Laravel 11 API).
+- `web/koperasidesa/` — Koperasi Desa management system (React + Laravel 11 API).
 
 ### Standard Workflow
-1. **Development**: Work on `prod` branch in VSCode
+1. **Development**: Work on `dev` branch in VSCode
 2. **Commit Changes**: 
    ```bash
    git add .
@@ -111,7 +110,7 @@ folioflix/
    ```
 3. **Push to GitHub**: 
    ```bash
-   git push origin prod
+   git push origin dev
    ```
 4. **Deploy to Production**: 
    ```bash
