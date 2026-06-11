@@ -37,6 +37,7 @@ services:
       - ./web/kkmrat:/var/www/html/kkmrat
       - ./web/undangan:/var/www/html/undangan
       - ./web/kkmsmartvote:/var/www/html/kkmsmartvote
+      - ./web/koperasidesa:/var/www/html/koperasidesa
     environment:
       # Main Laravel App (MySQL)
       - DB_CONNECTION=mysql

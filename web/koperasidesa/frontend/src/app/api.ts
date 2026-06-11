@@ -1,4 +1,6 @@
-const API_URL = 'http://localhost:8000/api';
+const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:8000/api'
+  : '/kopdig/api';
 
 interface FetchOptions extends RequestInit {
   body?: any;
@@ -32,7 +34,7 @@ async function request(endpoint: string, options: FetchOptions = {}) {
   if (response.status === 401) {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    window.location.href = '/';
+    window.location.href = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? '/' : '/kopdig/';
     throw new Error('Unauthorized');
   }
 

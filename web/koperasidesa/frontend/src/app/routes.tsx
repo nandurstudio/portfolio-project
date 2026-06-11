@@ -76,4 +76,6 @@ export const router = createBrowserRouter([
     path: "/admin/laporan",
     Component: LaporanKeuangan,
   },
-]);
+], {
+  basename: "/kopdig"
+});
