@@ -137,18 +137,13 @@ ssh portfolio-droplet "cd /opt/stack && sudo docker compose restart nginx"
 
 ## 📚 Documentation
 
-### Quick References
-- **[DEPLOYMENT-STATUS.md](DEPLOYMENT-STATUS.md)** - Current deployment state, all services status
-- **[CONFIG-SYNC-STATUS.md](CONFIG-SYNC-STATUS.md)** - Configuration sync status (local ↔ server)
-- **[N8N-SETUP-GUIDE.md](N8N-SETUP-GUIDE.md)** - n8n workflow automation setup & usage
-- **[NGINX-N8N-CONFIG.md](NGINX-N8N-CONFIG.md)** - Detailed nginx configuration for n8n subpath
-- **[DOCKER-DEPLOYMENT.md](DOCKER-DEPLOYMENT.md)** - Docker stack deployment guide
-- **[SSH-Port-ISP-Blocking-Explanation.md](SSH-Port-ISP-Blocking-Explanation.md)** - SSH troubleshooting
+### Master Reference
+- **[SourceOfTruth.md](docs/SourceOfTruth.md)** - Authoritative project state, Docker stack architecture, API endpoints, and database configurations.
+- **[.github/copilot-instructions.md](.github/copilot-instructions.md)** - AI coding assistant guidelines and memory reference.
 
-### Architecture Documents
-- **[Architecture.md](Architecture.md)** - Planned architecture & tech stack
-- **[SourceOfTruth.md](SourceOfTruth.md)** - Authoritative project state
-- **[.github/copilot-instructions.md](.github/copilot-instructions.md)** - AI coding assistant guidelines
+### Helper Guides
+- **[LARAGON-LOCAL-TESTING.md](docs/LARAGON-LOCAL-TESTING.md)** - Setup steps for local Testing on Laragon.
+- **[PROJECT-STRUCTURE.md](docs/PROJECT-STRUCTURE.md)** - Detailed directory layout of the workspace.
 
 ---
 

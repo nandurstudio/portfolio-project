@@ -421,12 +421,12 @@ curl -k https://localhost/api/test
 # 2. Commit to git
 git add backend/
 git commit -m "Fix: Laravel API endpoint"
-git push origin prod
+git push origin dev
 
 # 3. SSH to server and pull
 ssh portfolio-droplet
 cd /opt/stack
-git pull origin prod
+git pull origin dev
 
 # 4. If composer dependencies changed:
 sudo docker compose exec php composer install --no-dev
@@ -444,7 +444,7 @@ sudo docker compose restart flask
 ```bash
 ssh portfolio-droplet
 cd /opt/stack
-git pull origin prod
+git pull origin dev
 sudo docker compose down
 sudo docker compose build --no-cache
 sudo docker compose up -d
@@ -1099,12 +1099,12 @@ curl http://localhost/api/test
 # 3. Commit and push
 git add .
 git commit -m "Fix: Description of change"
-git push origin prod
+git push origin dev
 
 # 4. Deploy to server
 ssh portfolio-droplet
 cd /opt/stack
-git pull origin prod
+git pull origin dev
 sudo docker compose up -d  # Recreates changed services
 sudo docker compose ps     # Verify all healthy
 
@@ -1317,18 +1317,42 @@ Sebagai AI Assistant (Antigravity/Neng Stella), seluruh memori, skill, preferens
    - Terletak di: `C:\Users\Nandang.Duryat\.gemini\antigravity-ide\brain\<conversation-id>\.system_generated\logs\transcript.jsonl`
    - Menyimpan detail mentah perintah terminal, modifikasi file, dan histori chat secara menyeluruh.
 
+---
+
+## 🔒 Protokol Keamanan & Batasan AI (Safety Net & Destructive Prevention)
+
+Setiap kali membuka sesi percakapan baru di Antigravity, AI **WAJIB** membaca dan mematuhi batasan mutlak berikut:
+
+1. **Aturan Git Commit**:
+   - **DILARANG** melakukan `git commit` tanpa mempresentasikan file yang akan dikomit dan meminta izin tertulis dari Aa Ndur.
+   - **DILARANG** melakukan `git push` secara otomatis tanpa persetujuan eksplisit.
+2. **Aturan Database (Anti-Destructive)**:
+   - **DILARANG** menjalankan operasi destruktif seperti `migrate:fresh` atau `db:seed` tanpa melakukan pre-migration backup (`mysqldump`) terlebih dahulu.
+   - AI harus memverifikasi nama database aktif menggunakan `php artisan config:show database` sebelum mengeksekusi migrasi.
+3. **Pencegahan Kebocoran API Key / Secrets**:
+   - AI **WAJIB** melakukan pengecekan file-file sensitif (.env, file cadangan, file CSV/SQL berisi data asli) sebelum melakukan git commit atau push.
+   - Seluruh rahasia wajib diisolasi di file `.env` lokal atau server, dan hanya menggunakan placeholder aman (`change_this_...`) di template `.env.sample` atau `.env.docker.example`.
+
+---
+
+## 📈 Protokol Growing Memory (Learn by Mistakes)
+
+AI berkembang dengan belajar dari kesalahan (Salah ➔ Benerin ➔ Pelajarin):
+1. **Analisis Kesalahan**: Ketika terjadi error runtime, kesalahan penulisan kode, atau pelanggaran instruksi, AI harus segera menganalisis akar masalahnya.
+2. **Dokumentasi Lessons Learned**: AI wajib mendokumentasikan setiap solusi dari kesalahan tersebut ke dalam **Knowledge Items (KIs)** baru atau memperbarui KIs yang sudah ada (di folder `<appDataDir>\knowledge\`) agar pembelajaran tersebut diwariskan ke sesi berikutnya.
+3. **Penerapan Berkelanjutan**: Di awal sesi baru, AI wajib memeriksa ringkasan KI yang diberikan sistem untuk memastikan kesalahan masa lalu tidak terulang kembali.
+
+---
+
 ## Documentation References
 
 - [README.md](../README.md) - Main project documentation
-- [PROJECT-STRUCTURE.md](../docs/PROJECT-STRUCTURE.md) - Project organization
 - [SourceOfTruth.md](../docs/SourceOfTruth.md) - Authoritative project state
-- [DEPLOYMENT-STATUS.md](../docs/DEPLOYMENT-STATUS.md) - Current deployment status
-- [N8N-SETUP-GUIDE.md](../docs/N8N-SETUP-GUIDE.md) - n8n configuration guide
-- [NGINX-N8N-CONFIG.md](../docs/NGINX-N8N-CONFIG.md) - nginx configuration details
-- [CONFIG-SYNC-STATUS.md](../docs/CONFIG-SYNC-STATUS.md) - Configuration sync tracking
+- [LARAGON-LOCAL-TESTING.md](../docs/LARAGON-LOCAL-TESTING.md) - Setup steps for local testing on Laragon
+- [PROJECT-STRUCTURE.md](../docs/PROJECT-STRUCTURE.md) - Workspace folder structure
 - [Laravel README](../backend/README.md) - Laravel setup details
 
 ---
 
-**Last Updated:** February 16, 2026
+**Last Updated:** June 12, 2026
 **Maintainer:** Nandang Duryat (founder@nandurstudio.com)
