@@ -27,6 +27,7 @@ type MemberRow = {
     email?: string | null
     gopay_number?: string | null
     voucher_code?: string | null
+    url_redeem?: string | null
     is_gopay_owner_self?: boolean
     gopay_owner_number?: string | null
     is_eligible: boolean
@@ -343,7 +344,25 @@ export default function MasterMembersPage() {
                 <span className="admin-chip">Sudah Isi GoPay: {summary.withGopay}</span>
                 <span className="admin-chip">Sudah Register: {summary.registered}</span>
                 <span className="admin-chip">OTP Verified: {summary.otpVerified}</span>
-                <span className="admin-chip">Sudah Redeem: {summary.redeemed}</span>
+                <span className="admin-chip">
+                    Sudah Redeem: {summary.redeemed} ({summary.voted > 0 ? ((summary.redeemed / summary.voted) * 100).toFixed(1) : 0}%)
+                </span>
+            </div>
+
+            <div style={{ marginTop: '15px', marginBottom: '20px', background: '#f8fafc', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontWeight: 'bold', fontSize: '0.95rem', color: '#334155' }}>
+                    <span>Total Redeemed</span>
+                    <span>{summary.redeemed} dari {summary.voted} ({summary.voted > 0 ? ((summary.redeemed / summary.voted) * 100).toFixed(1) : 0}%)</span>
+                </div>
+                <div style={{ width: '100%', height: '12px', background: '#cbd5e1', borderRadius: '6px', overflow: 'hidden' }}>
+                    <div style={{ 
+                        width: `${summary.voted > 0 ? Math.min(100, (summary.redeemed / summary.voted) * 100) : 0}%`, 
+                        height: '100%', 
+                        background: '#10b981', 
+                        borderRadius: '6px',
+                        transition: 'width 0.5s ease-out'
+                    }} />
+                </div>
             </div>
 
             <div className="votes-monitor-filters">
@@ -472,20 +491,30 @@ export default function MasterMembersPage() {
                                     <div>Self Owner: {boolText(row.is_gopay_owner_self !== false)}</div>
                                     <div>Owner No: {row.gopay_owner_number || '-'}</div>
                                     {canSeeVoucherCode ? (
-                                        <div>
-                                            Voucher:{' '}
-                                            {row.voucher_code ? (
-                                                /^https?:\/\//i.test(row.voucher_code) ? (
-                                                    <a href={row.voucher_code} target="_blank" rel="noreferrer">
+                                        <>
+                                            <div>
+                                                Voucher:{' '}
+                                                {row.voucher_code ? (
+                                                    /^https?:\/\//i.test(row.voucher_code) ? (
+                                                        <a href={row.voucher_code} target="_blank" rel="noreferrer">
+                                                            Buka Link
+                                                        </a>
+                                                    ) : (
+                                                        <span>{row.voucher_code}</span>
+                                                    )
+                                                ) : (
+                                                    '-'
+                                                )}
+                                            </div>
+                                            {row.url_redeem && (
+                                                <div>
+                                                    Link:{' '}
+                                                    <a href={row.url_redeem} target="_blank" rel="noreferrer">
                                                         Buka Link
                                                     </a>
-                                                ) : (
-                                                    <span>{row.voucher_code}</span>
-                                                )
-                                            ) : (
-                                                '-'
+                                                </div>
                                             )}
-                                        </div>
+                                        </>
                                     ) : null}
                                 </td>
                                 <td data-label="Status">
@@ -571,14 +600,44 @@ export default function MasterMembersPage() {
             </div>
 
             {showModal ? (
-                <div className="admin-modal-backdrop" onClick={() => setShowModal(false)}>
-                    <div className="admin-modal-card admin-modal-card--wide" onClick={(e) => e.stopPropagation()}>
+                <div className="admin-modal-backdrop">
+                    <div className="admin-modal-card admin-modal-card--wide">
                         <div className="admin-modal-header">
                             <h3>{editingId ? `Edit Member #${editingId}` : 'Tambah Member Baru'}</h3>
                             <button type="button" className="admin-modal-close" onClick={() => setShowModal(false)}>×</button>
                         </div>
 
                         <form className="admin-auth-form" onSubmit={handleSubmit}>
+                            {editingId && rows.find((r) => r.id === editingId)?.url_redeem && (
+                                <div style={{ 
+                                    gridColumn: '1 / -1', 
+                                    background: '#f0f9ff', 
+                                    border: '1px solid #bae6fd', 
+                                    padding: '12px 16px', 
+                                    borderRadius: '8px', 
+                                    marginBottom: '15px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '6px'
+                                }}>
+                                    <span style={{ fontSize: '0.85rem', color: '#0369a1', fontWeight: 'bold' }}>Link Redeem Voucher (UVCR):</span>
+                                    <a 
+                                        href={rows.find((r) => r.id === editingId)?.url_redeem ?? ''} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer" 
+                                        style={{ 
+                                            color: '#0284c7', 
+                                            textDecoration: 'underline', 
+                                            fontWeight: 'bold',
+                                            wordBreak: 'break-all',
+                                            fontSize: '0.95rem'
+                                        }}
+                                    >
+                                        {rows.find((r) => r.id === editingId)?.url_redeem}
+                                    </a>
+                                </div>
+                            )}
+
                             <label>
                                 NIK
                                 <input

@@ -122,13 +122,13 @@ class ElectionSettingController extends Controller
             }
 
             $totalMembers = Member::where('is_eligible', true)->count();
-            $totalVoters = Member::where('is_eligible', true)
-                ->where('has_voted', true)
-                ->count();
+            $totalVoters = Member::where('has_voted', true)->count();
             $totalVoters = min($totalVoters, $totalMembers);
             $participationPercentage = $totalMembers > 0
                 ? round(($totalVoters / $totalMembers) * 100, 2)
                 : 0;
+
+            $totalRedeemed = \Illuminate\Support\Facades\DB::table('vouchers')->where('status', 'redeemed')->count();
 
             return response()->json([
                 'success' => true,
@@ -139,6 +139,7 @@ class ElectionSettingController extends Controller
                     'total_members' => $totalMembers,
                     'total_voters' => $totalVoters,
                     'participation_percentage' => $participationPercentage,
+                    'total_redeemed' => $totalRedeemed,
                 ]
             ]);
         } catch (\Exception $e) {

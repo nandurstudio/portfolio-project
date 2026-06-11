@@ -1111,6 +1111,25 @@
 }
 
 @media (max-width: 768px) {
+  .admin-shell, .admin-content, .admin-main-panel {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  .admin-table-wrap {
+    overflow-x: hidden !important;
+    overflow-y: hidden !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    display: block !important;
+  }
+
+  .admin-table--mobile-friendly td {
+    word-break: break-all !important;
+    word-wrap: break-word !important;
+    white-space: normal !important;
+  }
+
   .admin-content {
     padding: 10px;
   }

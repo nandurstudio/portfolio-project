@@ -98,6 +98,9 @@ export default function LandingPage() {
     const [totalVoters, setTotalVoters] = useState<number>(0);
     const [participationPct, setParticipationPct] = useState<number>(0);
     const [animatedPct, setAnimatedPct] = useState<number>(0);
+    const [totalRedeemed, setTotalRedeemed] = useState<number>(0);
+    const [redeemedPct, setRedeemedPct] = useState<number>(0);
+    const [animatedRedeemedPct, setAnimatedRedeemedPct] = useState<number>(0);
     const [seoTitle, setSeoTitle] = useState<string>('');
     const [seoDescription, setSeoDescription] = useState<string>('');
     const [ogTitle, setOgTitle] = useState<string>('');
@@ -211,14 +214,20 @@ export default function LandingPage() {
                     const members = Number(statsData.total_members || 0);
                     const voters = Number(statsData.total_voters || 0);
                     const pct = Number(statsData.participation_percentage || 0);
+                    const redeemed = Number(statsData.total_redeemed || 0);
 
                     setTotalMembers(Number.isFinite(members) ? members : 0);
                     setTotalVoters(Number.isFinite(voters) ? voters : 0);
                     setParticipationPct(Number.isFinite(pct) ? Math.max(0, Math.min(100, pct)) : 0);
+                    setTotalRedeemed(Number.isFinite(redeemed) ? redeemed : 0);
+                    const rPct = voters > 0 ? (redeemed / voters) * 100 : 0;
+                    setRedeemedPct(Math.max(0, Math.min(100, rPct)));
                 } catch {
                     setTotalMembers(0);
                     setTotalVoters(0);
                     setParticipationPct(0);
+                    setTotalRedeemed(0);
+                    setRedeemedPct(0);
                 }
 
                 // Candidate cards on landing should come from DB (admin configurable).
@@ -327,12 +336,14 @@ export default function LandingPage() {
 
     useEffect(() => {
         setAnimatedPct(0);
+        setAnimatedRedeemedPct(0);
         const timer = window.setTimeout(() => {
             setAnimatedPct(participationPct);
+            setAnimatedRedeemedPct(redeemedPct);
         }, 120);
 
         return () => window.clearTimeout(timer);
-    }, [participationPct]);
+    }, [participationPct, redeemedPct]);
 
     const targetDate = useMemo(() => {
         if (status === 'open') return endAt;
@@ -429,13 +440,31 @@ export default function LandingPage() {
                         </div>
 
                         <p className="landing-participation-caption">
-                            {totalVoters} pemilih dari {totalMembers} anggota eligible
+                            {totalVoters} pemilih dari {totalMembers} anggota eligible (Belum Vote: {Math.max(0, totalMembers - totalVoters)})
                         </p>
 
                         <div className="landing-progress-track" role="progressbar" aria-valuenow={Math.round(participationPct)} aria-valuemin={0} aria-valuemax={100}>
                             <div
                                 className={`landing-progress-fill tone-${participationTone}`}
                                 style={{ width: `${animatedPct}%` }}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="landing-participation-box tone-success" style={{ marginTop: '1rem' }}>
+                        <div className="landing-participation-head">
+                            <h4>Total Redeemed</h4>
+                            <span className="landing-participation-percentage heartbeat-pill">{redeemedPct.toFixed(2)}%</span>
+                        </div>
+
+                        <p className="landing-participation-caption">
+                            Sudah Redeem: {totalRedeemed} (dari {totalVoters} Sudah Vote) | Belum Redeem: {Math.max(0, totalVoters - totalRedeemed)}
+                        </p>
+
+                        <div className="landing-progress-track" role="progressbar" aria-valuenow={Math.round(redeemedPct)} aria-valuemin={0} aria-valuemax={100}>
+                            <div
+                                className="landing-progress-fill tone-success"
+                                style={{ width: `${animatedRedeemedPct}%` }}
                             />
                         </div>
                     </div>
@@ -478,11 +507,11 @@ export default function LandingPage() {
                                 </button>
                                 
                                 {isRevealOpen && (
-                                    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 99999, background: 'var(--bg, #000)' }}>
-                                        <div style={{ position: 'absolute', bottom: 30, left: '50%', transform: 'translateX(-50%)', zIndex: 100000, display: 'flex', gap: '1rem', width: '90vw', maxWidth: '500px', flexWrap: 'wrap', justifyContent: 'center', opacity: isRevealDone ? 1 : 0, pointerEvents: isRevealDone ? 'auto' : 'none', transition: 'opacity 1s ease' }}>
+                                    <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 99999, background: 'var(--bg, #000)' }}>
+                                        <div style={{ position: 'absolute', bottom: 30, left: '50%', transform: 'translateX(-50%)', zIndex: 100000, display: 'flex', gap: '1rem', width: '90%', maxWidth: '500px', flexWrap: 'wrap', justifyContent: 'center', opacity: isRevealDone ? 1 : 0, pointerEvents: isRevealDone ? 'auto' : 'none', transition: 'opacity 1s ease' }}>
                                             <button 
                                                 onClick={() => setIsRevealOpen(false)}
-                                                style={{ background: '#dc2626', color: '#ffffff', border: 'none', padding: '12px 20px', borderRadius: '50px', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 4px 12px rgba(0,0,0,0.5)', fontSize: '1rem', flex: '1 1 200px', whiteSpace: 'nowrap' }}
+                                                style={{ background: '#dc2626', color: '#ffffff', border: 'none', padding: '12px 20px', borderRadius: '50px', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 4px 12px rgba(0,0,0,0.5)', fontSize: '1rem', flex: '1 1 200px' }}
                                             >
                                                 Kembali ke Beranda
                                             </button>
@@ -493,7 +522,7 @@ export default function LandingPage() {
                                                 }}
                                                 className="btn btn-primary landing-otp-button"
                                                 title="Masuk ke verifikasi OTP"
-                                                style={{ padding: '12px 20px', borderRadius: '50px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)', fontSize: '1rem', margin: 0, flex: '1 1 200px', whiteSpace: 'nowrap', textAlign: 'center' }}
+                                                style={{ padding: '12px 20px', borderRadius: '50px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)', fontSize: '1rem', margin: 0, flex: '1 1 200px', textAlign: 'center' }}
                                             >
                                                 {ctaText}
                                             </button>

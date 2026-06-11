@@ -74,7 +74,7 @@ class MemberController extends Controller
         $totalGopay = (int) Member::whereRaw('EXISTS(SELECT 1 FROM voter_vouchers vv2 JOIN vouchers v3 ON v3.id = vv2.voucher_id WHERE vv2.voter_nik = members.nik AND COALESCE(v3.gopay_number, "") <> "")')->count();
         $totalRegistered = (int) Member::whereRaw('EXISTS(SELECT 1 FROM users u WHERE u.member_nik = members.nik)')->count();
         $totalOtpVerified = (int) Member::whereRaw('EXISTS(SELECT 1 FROM email_otps o2 WHERE (o2.member_nik = members.nik OR (members.email IS NOT NULL AND members.email <> "" AND o2.email = members.email)) AND o2.is_used = 1)')->count();
-        $totalRedeemed = (int) Member::whereRaw('EXISTS(SELECT 1 FROM vouchers v LEFT JOIN voter_vouchers vv ON vv.voucher_id = v.id AND vv.voter_nik = members.nik WHERE (vv.voter_nik = members.nik OR v.member_nik = members.nik) AND (v.status = "redeemed" OR vv.redeemed_at IS NOT NULL OR v.redeemed_at IS NOT NULL))')->count();
+        $totalRedeemed = (int) \Illuminate\Support\Facades\DB::table('vouchers')->where('status', 'redeemed')->count();
 
         $query = Member::query()
             ->leftJoin('departments', 'departments.id', '=', 'members.department_id')
@@ -101,6 +101,7 @@ class MemberController extends Controller
             ->selectRaw('(SELECT MAX(o4.updated_at) FROM email_otps o4 WHERE (o4.member_nik = members.nik OR (members.email IS NOT NULL AND members.email <> "" AND o4.email = members.email)) AND o4.is_used = 1) as last_otp_verified_at')
             ->selectRaw('(SELECT MAX(COALESCE(v.redeemed_at, vv.redeemed_at)) FROM vouchers v LEFT JOIN voter_vouchers vv ON vv.voucher_id = v.id AND vv.voter_nik = members.nik WHERE (vv.voter_nik = members.nik OR v.member_nik = members.nik)) as last_redeemed_at')
             ->selectRaw('(SELECT v.code FROM voter_vouchers vv4 JOIN vouchers v ON v.id = vv4.voucher_id WHERE vv4.voter_nik = members.nik ORDER BY vv4.id DESC LIMIT 1) as voucher_code')
+            ->selectRaw('(SELECT vr.url_redeem FROM voter_vouchers vv5 JOIN vouchers vr ON vr.id = vv5.voucher_id WHERE vv5.voter_nik = members.nik ORDER BY vv5.id DESC LIMIT 1) as url_redeem')
             ->selectRaw('(SELECT COUNT(*) FROM votes vv WHERE vv.member_nik = members.nik AND vv.is_valid = 1) as total_valid_votes')
             ->selectRaw('(SELECT s.name FROM votes vsite LEFT JOIN sites s ON s.id = vsite.site_id WHERE vsite.member_nik = members.nik AND vsite.site_id IS NOT NULL ORDER BY vsite.id DESC LIMIT 1) as voted_site_name')
             ->selectRaw('(SELECT vgp.gopay_number FROM voter_vouchers vvx JOIN vouchers vgp ON vgp.id = vvx.voucher_id WHERE vvx.voter_nik = members.nik ORDER BY vvx.id DESC LIMIT 1) as voucher_gopay_number')
@@ -160,6 +161,7 @@ class MemberController extends Controller
                     'email' => $row->email,
                     'gopay_number' => $row->voucher_gopay_number,
                     'voucher_code' => $row->voucher_code,
+                    'url_redeem' => $row->url_redeem,
                     'is_gopay_owner_self' => isset($row->voucher_gopay_is_owner_self) ? (bool) $row->voucher_gopay_is_owner_self : true,
                     'gopay_owner_number' => $row->voucher_gopay_owner_name,
                     'is_eligible' => (bool) $row->is_eligible,

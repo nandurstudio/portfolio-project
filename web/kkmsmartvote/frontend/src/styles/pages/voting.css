@@ -3,6 +3,17 @@
  * For: VotingVerificationPage, VotingPage, ResultsPage
  */
 
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body, html {
+  max-width: 100vw;
+  overflow-x: hidden !important;
+  margin: 0;
+  padding: 0;
+}
+
 .voting-container {
   min-height: 100vh;
   display: flex;
@@ -10,6 +21,8 @@
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #333;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  max-width: 100vw;
+  overflow-x: hidden !important;
 }
 
 /* Header */
@@ -1527,6 +1540,7 @@
   .btn {
     padding: 0.75rem 1.25rem;
     font-size: 0.95rem;
+    white-space: normal !important;
   }
 
   .landing-hero h3 {
@@ -1543,7 +1557,7 @@
   }
 
   .landing-hero-candidate-grid {
-    grid-template-columns: minmax(0, 360px);
+    grid-template-columns: minmax(0, 100%);
     justify-content: center;
   }
 
