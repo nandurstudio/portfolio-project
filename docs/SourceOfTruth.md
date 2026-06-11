@@ -487,6 +487,36 @@ n8n manages its own schema automatically. Key tables include:
 
 ---
 
+## Database Mapping & Connection Reference
+
+### 📊 Existing Databases & Containers
+
+1. **MySQL - Portfolio Database Container (`portfolio_db`)**
+   - **Internal Port**: `3306`
+   - **Database Names & Credentials** (Actual values managed via `.env`):
+     - `portfolio` (Laravel core data): User `portfolio_user`, password configured in `.env`.
+     - `db_undangan_rat` (Undangan/KKMRat site): User `reki`, password configured in `.env`.
+     - `db_koperasidesa` (Koperasi Desa): User `koperasidesa_user`, password configured in `.env`.
+     - `db_koperasi_vote` (KKM Smart Vote): User `koperasi_user`, password configured in `.env`.
+
+2. **PostgreSQL - n8n Database Container (`portfolio_postgres`)**
+   - **Internal Port**: `5432`
+   - **Database**: `n8n`, User `n8n`, password configured in `.env`.
+
+3. **Qdrant - Vector Database Container (`portfolio_qdrant`)**
+   - **Internal Port**: `6333` (REST API), `6334` (gRPC)
+   - **Configuration**: API keys configured via `.env`.
+
+---
+
+### 🔐 Adminer & DBeaver Access
+
+- **Adminer URL**: `https://nandurstudio.com/adminer/` (Secured via HTTP Basic Auth using credentials defined in `.env`).
+- **External Connections (DBeaver/Navicat)**:
+  - Access to databases from outside the server requires SSH tunneling (Port Forwarding) via the DigitalOcean IP (`146.190.87.175`) using the private SSH key, mapping localhost ports to the target containers (`portfolio_db:3306`, `portfolio_postgres:5432`).
+
+---
+
 ## API Endpoints (Current Production)
 
 | Method | Endpoint | Description | Auth Required | Status |
@@ -813,12 +843,10 @@ sudo docker compose up -d --force-recreate
 - Console: DigitalOcean Dashboard → Droplet → Console (web-based, always works)
 
 **Documentation:**
-- Main: [README.md](README.md)
-- Architecture: [Architecture.md](Architecture.md)
-- Deployment: [DEPLOYMENT-STATUS.md](DEPLOYMENT-STATUS.md)
-- n8n Setup: [N8N-SETUP-GUIDE.md](N8N-SETUP-GUIDE.md)
-- nginx Config: [NGINX-N8N-CONFIG.md](NGINX-N8N-CONFIG.md)
-- Config Sync: [CONFIG-SYNC-STATUS.md](CONFIG-SYNC-STATUS.md)
+- Main: [README.md](../README.md)
+- Master Reference: [SourceOfTruth.md](SourceOfTruth.md)
+- Local Testing: [LARAGON-LOCAL-TESTING.md](LARAGON-LOCAL-TESTING.md)
+- Project Structure: [PROJECT-STRUCTURE.md](PROJECT-STRUCTURE.md)
 
 ---
 
