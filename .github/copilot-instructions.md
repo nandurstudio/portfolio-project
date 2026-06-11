@@ -1265,6 +1265,16 @@ curl -I https://nandurstudio.com/
 - **SSH**: Key-based authentication preferred over passwords
 - **Basic Auth**: n8n requires admin credentials (change from default)
 
+## Database Safety & Migration Protocol (CRITICAL SAFETY NET)
+
+- **Mandatory Pre-Execution Active Database Check**: Before running ANY database-modifying Artisan command (e.g., `migrate:fresh`, `db:seed`, `migrate`), the developer/AI agent MUST run `php artisan config:show database` or equivalent to confirm the database name resolved at runtime.
+- **Docker Environment Variable Collision Avoidance**: Be aware that Laravel `env()` checks Docker environment variables before the local `.env` file. Do not run commands inside containers without verifying that env variables (like `KOPERASI_DB_DATABASE` or `DB_DATABASE`) are not pointing to another service's database (like `koperasi_vote` for `kkmsmartvote`).
+- **Mandatory Pre-Migration Database Dump**: Always run `mysqldump` to back up the active database target before running any destructive commands on the server:
+  ```bash
+  ssh portfolio-droplet "cd /opt/stack && sudo docker compose exec db mysqldump -u root -p[password] [database_name] > /opt/stack/backups/db-dumps/[database_name]-pre-migration-$(date +%Y%m%d%H%M%S).sql"
+  ```
+- **Explicit User Review for Destructive Operations**: Never run `migrate:fresh` or any command that drops/modifies tables on a live server without first explicitly presenting the exact database name, host, and connection details to the user and asking for approval.
+
 ## Performance Tips
 
 - **nginx**: Gzip compression enabled for text assets
