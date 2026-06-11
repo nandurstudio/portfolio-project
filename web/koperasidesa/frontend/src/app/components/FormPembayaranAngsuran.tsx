@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { ArrowLeft, CreditCard, Loader2 } from 'lucide-react';
 import { api } from '../api';
+import Swal from 'sweetalert2';
 
 export default function FormPembayaranAngsuran() {
   const navigate = useNavigate();
@@ -44,8 +45,14 @@ export default function FormPembayaranAngsuran() {
         loan_id: activeLoan.id,
         amount: Number(formData.nominalBayar)
       });
-      alert('Pembayaran angsuran berhasil diajukan! Menunggu persetujuan admin.');
-      navigate('/anggota/dashboard');
+      Swal.fire({
+        icon: 'success',
+        title: 'Pengajuan Berhasil',
+        text: 'Pembayaran angsuran berhasil diajukan! Menunggu persetujuan admin.',
+        confirmButtonColor: '#2563eb'
+      }).then(() => {
+        navigate('/anggota/dashboard');
+      });
     } catch (err: any) {
       setError(err.message || 'Gagal mengirim pembayaran angsuran.');
     } finally {

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { ArrowLeft, Eye, CheckCircle, XCircle, User, FileText, DollarSign, Loader2 } from 'lucide-react';
 import { api } from '../api';
+import Swal from 'sweetalert2';
 
 export default function VerifikasiPinjaman() {
   const navigate = useNavigate();
@@ -26,21 +27,41 @@ export default function VerifikasiPinjaman() {
     fetchLoans();
   }, []);
 
-  const handleAction = async (id: number, status: 'approved' | 'rejected') => {
-    if (!confirm(`Apakah Anda yakin ingin ${status === 'approved' ? 'menyetujui' : 'menolak'} pengajuan pinjaman ini?`)) {
-      return;
-    }
-    setIsVerifying(true);
-    try {
-      await api.verifyLoan(id, status);
-      alert(`Pengajuan pinjaman telah ${status === 'approved' ? 'disetujui' : 'ditolak'}!`);
-      setSelectedId(null);
-      fetchLoans();
-    } catch (err: any) {
-      alert(err.message || 'Gagal memproses verifikasi.');
-    } finally {
-      setIsVerifying(false);
-    }
+  const handleAction = (id: number, status: 'approved' | 'rejected') => {
+    Swal.fire({
+      title: 'Konfirmasi Tindakan',
+      text: `Apakah Anda yakin ingin ${status === 'approved' ? 'menyetujui' : 'menolak'} pengajuan pinjaman ini?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: status === 'approved' ? '#16a34a' : '#dc2626',
+      cancelButtonColor: '#4b5563',
+      confirmButtonText: status === 'approved' ? 'Ya, Setujui' : 'Ya, Tolak',
+      cancelButtonText: 'Batal'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        setIsVerifying(true);
+        try {
+          await api.verifyLoan(id, status);
+          Swal.fire({
+            icon: 'success',
+            title: 'Berhasil',
+            text: `Pengajuan pinjaman telah ${status === 'approved' ? 'disetujui' : 'ditolak'}!`,
+            confirmButtonColor: '#2563eb'
+          });
+          setSelectedId(null);
+          fetchLoans();
+        } catch (err: any) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Gagal',
+            text: err.message || 'Gagal memproses verifikasi.',
+            confirmButtonColor: '#2563eb'
+          });
+        } finally {
+          setIsVerifying(false);
+        }
+      }
+    });
   };
 
   const selected = loans.find(p => p.id === selectedId);

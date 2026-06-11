@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { ArrowLeft, Send, Loader2 } from 'lucide-react';
 import { api } from '../api';
+import Swal from 'sweetalert2';
 
 export default function FormPengajuanPinjaman() {
   const navigate = useNavigate();
@@ -40,8 +41,14 @@ export default function FormPengajuanPinjaman() {
         duration_months: Number(formData.tenor),
         description: `Tujuan: ${formData.tujuan}. Pencairan via ${formData.metodePencairan}`
       });
-      alert('Pengajuan pinjaman berhasil diajukan! Menunggu persetujuan admin.');
-      navigate('/anggota/dashboard');
+      Swal.fire({
+        icon: 'success',
+        title: 'Pengajuan Berhasil',
+        text: 'Pengajuan pinjaman berhasil diajukan! Menunggu persetujuan admin.',
+        confirmButtonColor: '#2563eb'
+      }).then(() => {
+        navigate('/anggota/dashboard');
+      });
     } catch (err: any) {
       setError(err.message || 'Gagal mengajukan pinjaman.');
     } finally {

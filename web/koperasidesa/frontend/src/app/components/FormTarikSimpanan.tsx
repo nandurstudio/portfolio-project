@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { ArrowLeft, Send, Loader2 } from 'lucide-react';
 import { api } from '../api';
+import Swal from 'sweetalert2';
 
 export default function FormTarikSimpanan() {
   const navigate = useNavigate();
@@ -44,8 +45,14 @@ export default function FormTarikSimpanan() {
         amount: Number(formData.nominal),
         description: `Penarikan via ${formData.metodePenarikan === 'cash' ? 'Cash' : 'Transfer bank ke rek ' + formData.nomorRekening}`
       });
-      alert('Pengajuan penarikan berhasil! Menunggu persetujuan admin.');
-      navigate('/anggota/dashboard');
+      Swal.fire({
+        icon: 'success',
+        title: 'Pengajuan Berhasil',
+        text: 'Pengajuan penarikan berhasil! Menunggu persetujuan admin.',
+        confirmButtonColor: '#2563eb'
+      }).then(() => {
+        navigate('/anggota/dashboard');
+      });
     } catch (err: any) {
       setError(err.message || 'Gagal mengajukan penarikan.');
     } finally {

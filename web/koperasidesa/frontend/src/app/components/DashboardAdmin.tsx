@@ -4,6 +4,8 @@ import { Users, Wallet, TrendingUp, Activity, LogOut, FileText, UsersRound, Chec
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { api } from '../api';
 
+import Swal from 'sweetalert2';
+
 export default function DashboardAdmin() {
   const navigate = useNavigate();
   const [stats, setStats] = useState<any[]>([]);
@@ -26,15 +28,28 @@ export default function DashboardAdmin() {
     fetchData();
   }, []);
 
-  const handleLogout = async () => {
-    try {
-      await api.logout();
-    } catch (e) {
-      // ignore
-    }
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/');
+  const handleLogout = () => {
+    Swal.fire({
+      title: 'Konfirmasi Logout',
+      text: 'Apakah Anda yakin ingin keluar dari sistem?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#2563eb',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Ya, Logout',
+      cancelButtonText: 'Batal'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await api.logout();
+        } catch (e) {
+          // ignore
+        }
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/');
+      }
+    });
   };
 
   const chartData = [

@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router';
 import { Wallet, TrendingUp, CreditCard, LogOut, Plus, Minus, FileText, DollarSign, Info, Clock, Loader2 } from 'lucide-react';
 import { api } from '../api';
 
+import Swal from 'sweetalert2';
+
 export default function DashboardAnggota() {
   const navigate = useNavigate();
   const [stats, setStats] = useState<any[]>([]);
@@ -33,15 +35,28 @@ export default function DashboardAnggota() {
     fetchData();
   }, []);
 
-  const handleLogout = async () => {
-    try {
-      await api.logout();
-    } catch (e) {
-      // ignore
-    }
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/');
+  const handleLogout = () => {
+    Swal.fire({
+      title: 'Konfirmasi Logout',
+      text: 'Apakah Anda yakin ingin keluar dari sistem?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#2563eb',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Ya, Logout',
+      cancelButtonText: 'Batal'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await api.logout();
+        } catch (e) {
+          // ignore
+        }
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/');
+      }
+    });
   };
 
   const getIcon = (iconName: string) => {

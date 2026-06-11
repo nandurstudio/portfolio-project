@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { UserPlus, Building2, ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
 import { api } from '../api';
+import Swal from 'sweetalert2';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -32,8 +33,14 @@ export default function RegisterPage() {
         password: formData.password
       });
 
-      alert('Pendaftaran berhasil! Silakan login.');
-      navigate('/');
+      Swal.fire({
+        icon: 'success',
+        title: 'Pendaftaran Berhasil',
+        text: 'Akun Anda telah terdaftar. Silakan login.',
+        confirmButtonColor: '#2563eb'
+      }).then(() => {
+        navigate('/');
+      });
     } catch (err: any) {
       setError(err.message || 'Pendaftaran gagal, silakan coba lagi.');
     } finally {

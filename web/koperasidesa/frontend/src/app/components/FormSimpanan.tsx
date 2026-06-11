@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { ArrowLeft, Save, Smartphone, Banknote, CheckCircle, Loader2 } from 'lucide-react';
 import { api } from '../api';
+import Swal from 'sweetalert2';
 
 export default function FormSimpanan() {
   const navigate = useNavigate();
@@ -30,8 +31,14 @@ export default function FormSimpanan() {
         amount: Number(formData.nominal),
         description: `Setoran via ${formData.metodeSetor === 'online' ? 'Online/Transfer' : 'Tunai/Cash'}`,
       });
-      alert('Simpanan berhasil diajukan! Menunggu persetujuan admin.');
-      navigate('/anggota/dashboard');
+      Swal.fire({
+        icon: 'success',
+        title: 'Pengajuan Berhasil',
+        text: 'Simpanan berhasil diajukan! Menunggu persetujuan admin.',
+        confirmButtonColor: '#2563eb'
+      }).then(() => {
+        navigate('/anggota/dashboard');
+      });
     } catch (err: any) {
       setError(err.message || 'Gagal mengajukan simpanan.');
     } finally {

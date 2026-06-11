@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { ArrowLeft, Search, UserPlus, ToggleLeft, ToggleRight, Loader2, Save, X } from 'lucide-react';
+import Swal from 'sweetalert2';
 import { api } from '../api';
 
 export default function DataAnggota() {
@@ -63,19 +64,34 @@ export default function DataAnggota() {
           username: formUsername,
           password: formPassword
         });
-        alert('Anggota berhasil ditambahkan!');
+        Swal.fire({
+          title: 'Berhasil!',
+          text: 'Anggota berhasil ditambahkan!',
+          icon: 'success',
+          confirmButtonColor: '#2563eb'
+        });
       } else {
         await api.updateAdminMember(selectedAnggota.id, {
           name: formName,
           status: formStatus,
           password: formPassword || undefined
         });
-        alert('Anggota berhasil diupdate!');
+        Swal.fire({
+          title: 'Berhasil!',
+          text: 'Anggota berhasil diupdate!',
+          icon: 'success',
+          confirmButtonColor: '#2563eb'
+        });
       }
       setShowModal(false);
       fetchMembers();
     } catch (err: any) {
-      alert(err.message || 'Gagal menyimpan data.');
+      Swal.fire({
+        title: 'Gagal!',
+        text: err.message || 'Gagal menyimpan data.',
+        icon: 'error',
+        confirmButtonColor: '#2563eb'
+      });
     } finally {
       setIsSaving(false);
     }
@@ -83,14 +99,38 @@ export default function DataAnggota() {
 
   const toggleStatus = async (item: any) => {
     const nextStatus = item.status === 'aktif' ? 'nonaktif' : 'aktif';
-    try {
-      await api.updateAdminMember(item.id, {
-        name: item.name,
-        status: nextStatus
-      });
-      fetchMembers();
-    } catch (err: any) {
-      alert(err.message || 'Gagal mengubah status.');
+    const result = await Swal.fire({
+      title: 'Apakah Anda yakin?',
+      text: `Mengubah status anggota ${item.name} menjadi ${nextStatus}?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#2563eb',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Ya, ubah!',
+      cancelButtonText: 'Batal'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await api.updateAdminMember(item.id, {
+          name: item.name,
+          status: nextStatus
+        });
+        Swal.fire({
+          title: 'Berhasil!',
+          text: 'Status anggota berhasil diubah.',
+          icon: 'success',
+          confirmButtonColor: '#2563eb'
+        });
+        fetchMembers();
+      } catch (err: any) {
+        Swal.fire({
+          title: 'Gagal!',
+          text: err.message || 'Gagal mengubah status.',
+          icon: 'error',
+          confirmButtonColor: '#2563eb'
+        });
+      }
     }
   };
 

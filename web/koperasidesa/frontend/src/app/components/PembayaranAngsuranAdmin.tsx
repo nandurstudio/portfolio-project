@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { ArrowLeft, Search, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { api } from '../api';
+import Swal from 'sweetalert2';
 
 export default function PembayaranAngsuranAdmin() {
   const navigate = useNavigate();
@@ -26,20 +27,40 @@ export default function PembayaranAngsuranAdmin() {
     fetchInstallments();
   }, []);
 
-  const handleAction = async (id: number, status: 'approved' | 'rejected') => {
-    if (!confirm(`Apakah Anda yakin ingin ${status === 'approved' ? 'menyetujui' : 'menolak'} angsuran ini?`)) {
-      return;
-    }
-    setIsVerifying(true);
-    try {
-      await api.verifyInstallment(id, status);
-      alert(`Angsuran berhasil ${status === 'approved' ? 'disetujui' : 'ditolak'}!`);
-      fetchInstallments();
-    } catch (err: any) {
-      alert(err.message || 'Gagal memproses verifikasi.');
-    } finally {
-      setIsVerifying(false);
-    }
+  const handleAction = (id: number, status: 'approved' | 'rejected') => {
+    Swal.fire({
+      title: 'Konfirmasi Tindakan',
+      text: `Apakah Anda yakin ingin ${status === 'approved' ? 'menyetujui' : 'menolak'} angsuran ini?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: status === 'approved' ? '#16a34a' : '#dc2626',
+      cancelButtonColor: '#4b5563',
+      confirmButtonText: status === 'approved' ? 'Ya, Setujui' : 'Ya, Tolak',
+      cancelButtonText: 'Batal'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        setIsVerifying(true);
+        try {
+          await api.verifyInstallment(id, status);
+          Swal.fire({
+            icon: 'success',
+            title: 'Berhasil',
+            text: `Angsuran berhasil ${status === 'approved' ? 'disetujui' : 'ditolak'}!`,
+            confirmButtonColor: '#2563eb'
+          });
+          fetchInstallments();
+        } catch (err: any) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Gagal',
+            text: err.message || 'Gagal memproses verifikasi.',
+            confirmButtonColor: '#2563eb'
+          });
+        } finally {
+          setIsVerifying(false);
+        }
+      }
+    });
   };
 
   const filteredData = installments.filter(
