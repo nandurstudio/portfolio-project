@@ -64,9 +64,16 @@ class DatabaseSeeder extends Seeder
         Saving::create(['user_id' => $budi->id, 'type' => 'wajib', 'amount' => 250000, 'description' => 'Simpanan Wajib Juni (Pending Approval)', 'status' => 'pending']);
         // Ani
         Saving::create(['user_id' => $ani->id, 'type' => 'pokok', 'amount' => 1000000, 'description' => 'Simpanan Pokok Awal', 'status' => 'approved']);
-        Saving::create(['user_id' => $ani->id, 'type' => 'wajib', 'amount' => 250000, 'description' => 'Simpanan Wajib Mei', 'status' => 'approved']);
+        Saving::create(['user_id' => $ani->id, 'type' => 'wajib', 'amount' => 2000000, 'description' => 'Simpanan Wajib Bulanan', 'status' => 'approved']);
+        Saving::create(['user_id' => $ani->id, 'type' => 'sukarela', 'amount' => 5000000, 'description' => 'Simpanan Sukarela Terencana', 'status' => 'approved']);
         // Dedi
         Saving::create(['user_id' => $dedi->id, 'type' => 'pokok', 'amount' => 1000000, 'description' => 'Simpanan Pokok Awal', 'status' => 'approved']);
+        Saving::create(['user_id' => $dedi->id, 'type' => 'wajib', 'amount' => 3000000, 'description' => 'Simpanan Wajib Akumulasi', 'status' => 'approved']);
+        Saving::create(['user_id' => $dedi->id, 'type' => 'sukarela', 'amount' => 8000000, 'description' => 'Simpanan Sukarela Berjangka', 'status' => 'approved']);
+        // Citra
+        Saving::create(['user_id' => $citra->id, 'type' => 'pokok', 'amount' => 1000000, 'description' => 'Simpanan Pokok Awal', 'status' => 'approved']);
+        Saving::create(['user_id' => $citra->id, 'type' => 'wajib', 'amount' => 4000000, 'description' => 'Simpanan Wajib Terkumpul', 'status' => 'approved']);
+        Saving::create(['user_id' => $citra->id, 'type' => 'sukarela', 'amount' => 10000000, 'description' => 'Simpanan Sukarela Hari Raya', 'status' => 'approved']);
 
         // 4. Seed Withdrawals (Penarikan)
         Withdrawal::create(['user_id' => $budi->id, 'amount' => 200000, 'description' => 'Tarik tunai kebutuhan darurat', 'status' => 'approved']);
@@ -79,7 +86,7 @@ class DatabaseSeeder extends Seeder
             'amount' => 25000000,
             'duration_months' => 12,
             'monthly_installment' => 2200000, // 25M / 12 + interest
-            'remaining_amount' => 20600000, // already paid 2 installments (4.4M, so 25M - 4.4M = 20.6M remaining simple logic)
+            'remaining_amount' => 20600000, // outstanding balance (25M - 2 * 2.2M paid = 20.6M)
             'description' => 'Modal Usaha Sembako',
             'status' => 'approved'
         ]);
