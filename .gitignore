@@ -110,3 +110,6 @@ web/kkmsmartvote/frontend/nginx.conf
 KOPKARMANDIRI_Gopay25K_020626.csv
 web/kkmsmartvote/*.sql
 web/kkmsmartvote/*.csv
+.backups/
+web/kkmsmartvote/backups/
+web/kkmsmartvote/docs/DATABASE_API/
