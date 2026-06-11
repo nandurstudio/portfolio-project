@@ -150,6 +150,15 @@ Files affected: X files
 
 ---
 
+### Rule 6: Credentials and Environment Variables Management
+
+**🔴 CRITICAL: NEVER hardcode or commit sensitive credentials, API keys, or passwords.**
+- Always store all credentials, API keys, and sensitive environment variables in the global `.env` file at the root of the workspace (`/folioflix/.env`).
+- For reference guides, tutorials, or scripts, ALWAYS refer to the global `.env` keys (e.g., `DB_PASSWORD`, `MAIL_PASSWORD`) instead of hardcoding any placeholder values or real credentials.
+- Ensure the global `.env` remains in `.gitignore` so it is never pushed to public repositories.
+
+---
+
 ## Project Overview
 
 FolioFlix is Nandang Duryat's personal portfolio website with a Docker-based microservices architecture:
@@ -168,6 +177,7 @@ FolioFlix is Nandang Duryat's personal portfolio website with a Docker-based mic
 - KKM Smart Vote: https://kkmsmartvote.web.id (voting platform - new domain)
 - Undangan/Doorprize: https://undangan.kkmrat.web.id (invitation site)
 - Koperasi Admin: https://kkmrat.web.id (voting/koperasi app)
+- Koperasi Desa (KopDig): https://nandurstudio.com/kopdig/ (UAS standalone project)
 
 ## Architecture & Data Flow
 
@@ -912,6 +922,30 @@ location /n8n/ {
   - ✅ Environment files: .env files copied from backup
   - ⏳ Next: Deploy actual application code to server, database migration, testing
   - 📝 Remaining: Merge backend docker-compose, integrate frontend routing in nginx
+
+#### Koperasi Desa (KopDig) / nandurstudio.com/kopdig 🆕
+
+- **Purpose & URL**: Standalone UAS web application for village cooperative management (Admin and Member portals) — hosted at `https://nandurstudio.com/kopdig`.
+- **Source & Server Paths**:
+  - Local repo: `web/koperasidesa/` (part of main portfolio repo).
+  - Server path: `/opt/stack/web/koperasidesa` → mounted in PHP container as `/var/www/html/koperasidesa`.
+  - Frontend SPA dist: `/opt/stack/web/koperasidesa/frontend/dist/`.
+  - Backend API: `/opt/stack/web/koperasidesa/backend/public/`.
+- **Nginx Subpath Configuration**:
+  - SPA served at `/kopdig/` using Nginx `alias` to the frontend `dist/` folder.
+  - API requests proxied at `/kopdig/api/` via Nginx named location `@kopdig_api` targeting PHP-FPM port 9000, passing `SCRIPT_NAME /kopdig/index.php`.
+  - Slash redirect: `location = /kopdig { return 301 /kopdig/; }` to prevent 404s.
+- **Database**: Dedicated MySQL database `db_koperasidesa` populated using Laravel seeders.
+- **Local Dev Workflow**:
+  - Run `web/koperasidesa/run-and-sync.ps1` to sync files to Laragon (`F:\laragon\www\koperasi-desa`) and spin up local dev servers (frontend: port 5173, backend: port 8000).
+  - Always commit from portfolio repo, do not push to GitHub if it contains push-blocked keys.
+- **Current Status**:
+  - ✅ Restructured and separated frontend/backend.
+  - ✅ JWT Authentication and MySQL integration completed.
+  - ✅ Local dev and sync environment `run-and-sync.ps1` set up.
+  - ✅ Nginx named location proxy and slash redirect configured.
+  - ✅ Database migrations and seeders deployed on production.
+  - ✅ Favicon and Open Graph rich preview meta cards added and live.
 
 ##### OTP Voting System (Email-based Verification)
 
