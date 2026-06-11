@@ -107,3 +107,4 @@ web/kkmsmartvote/frontend/build/
 # Sensitive configs (versioned in backup only)
 web/kkmsmartvote/docker-compose.yml
 web/kkmsmartvote/frontend/nginx.conf
+KOPKARMANDIRI_Gopay25K_020626.csv
