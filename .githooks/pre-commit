@@ -14,5 +14,8 @@ if [ -d "$REPO/.git" ]; then
     fi
   fi
 fi
-# Do NOT block the commit (user asked for warning only)
+# Run GitGuardian scan
+node "$(dirname "$0")/../scripts/shared/gitguardian-scan.js"
+
+# Do NOT block the commit for other warnings (user asked for warning only)
 exit 0
